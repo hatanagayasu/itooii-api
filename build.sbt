@@ -12,5 +12,8 @@ libraryDependencies ++= Seq(
   javaEbean,
   cache,
   javaWs,
-  "org.projectlombok" % "lombok" % "1.16.2"
+  "org.jongo" % "jongo" % "1.1",
+  "org.mongodb" % "mongo-java-driver" % "2.13.0",
+  "org.projectlombok" % "lombok" % "1.16.2",
+  "redis.clients"% "jedis" % "2.6.2"
 )

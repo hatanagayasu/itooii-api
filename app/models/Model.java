@@ -1,17 +1,74 @@
 package models;
 
+import play.*;
+
 import java.lang.reflect.Field;
+import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mongodb.DB;
+import com.mongodb.MongoClient;
 import org.apache.commons.codec.binary.Hex;
+import org.jongo.Jongo;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class Model
 {
     public static ObjectMapper mapper = new ObjectMapper();
+
+    public static DB mongodb;
+    public static Jongo jongo;
+
+    private static JedisPool jedisPool;
+    private static int redisDB;
+
+    public static void init()
+    {
+        Configuration conf = Play.application().configuration();
+
+        String mongodbHost = conf.getString("mongodb.host");
+        int mongodbPort = conf.getInt("mongodb.port");
+        String mongodbDB = conf.getString("mongodb.db");
+
+        String redisHost = conf.getString("redis.host", "localhost");
+        int redisPort = conf.getInt("redis.port", 6379);
+        redisDB = conf.getInt("redis.db", 0);
+
+        try
+        {
+            mongodb = new MongoClient(mongodbHost, mongodbPort).getDB(mongodbDB);
+            jongo = new Jongo(mongodb);
+
+            jedisPool = new JedisPool(redisHost, redisPort);
+        }
+        catch (UnknownHostException e)
+        {
+            //TODO
+        }
+        catch (JedisConnectionException e)
+        {
+            //TODO
+        }
+    }
+
+    public static Jedis getJedis()
+    {
+        Jedis jedis = jedisPool.getResource();
+        jedis.select(redisDB);
+
+        return jedis;
+    }
+
+    public static void returnJedis(Jedis jedis)
+    {
+        jedisPool.returnResource(jedis);
+    }
 
     public static ObjectNode toJson(Object object)
     {
