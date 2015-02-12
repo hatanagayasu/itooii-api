@@ -79,11 +79,11 @@ public class DispatchController extends AppController
         }
         catch (FileNotFoundException e)
         {
-            //TODO
+            errorlog(e);
         }
         catch (IOException e)
         {
-            //TODO
+            errorlog(e);
         }
     }
 
@@ -149,12 +149,13 @@ public class DispatchController extends AppController
         }
         catch (ClassNotFoundException|NoSuchMethodException|IllegalAccessException e)
         {
+            errorlog(e);
+
             return error(Error.NOT_FOUND);
         }
         catch (InvocationTargetException e)
         {
-            Throwable cause = e.getCause();
-            Class<?> causeClass = cause.getClass();
+            errorlog(e);
 
             return error(Error.INTERNAL_SERVER_ERROR);
         }
