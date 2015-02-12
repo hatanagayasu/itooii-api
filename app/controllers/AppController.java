@@ -5,6 +5,8 @@ import play.mvc.*;
 
 import controllers.constants.Error;
 
+import models.Model;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -21,6 +23,11 @@ public class AppController extends Controller
         EMAIL = "EMAIL",
         NOT_EMPTY = "NOT_EMPTY",
         UUID = "UUID";
+
+    public static Results.Status ok(Model model)
+    {
+        return ok(Model.toJson(model));
+    }
 
     public static Results.Status error(Error error)
     {
