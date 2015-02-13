@@ -12,11 +12,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class UsersController extends AppController
 {
-    public static Result me(JsonNode json)
+    public static Result me(String token)
     {
-        String token = json.get("access_token").textValue();
         if (token == null || token.length() == 0)
             return Error(Error.MISSING_ACCESS_TOKEN);
+
+        String regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+        if (!token.matches(regex))
+            return Error(Error.INVALID_ACCESS_TOKEN);
 
         User user = User.getByToken(token);
         if (user == null)
@@ -25,6 +28,13 @@ public class UsersController extends AppController
         user.setPassword(null);
 
         return Ok(user);
+    }
+
+    public static Result me(JsonNode json)
+    {
+        String token = json.get("access_token").textValue();
+
+        return me(token);
     }
 
     @Anonymous
