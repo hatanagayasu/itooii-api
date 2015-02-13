@@ -88,20 +88,6 @@ public class DispatchController extends AppController
         }
     }
 
-    private static play.mvc.Result convertResult(Result result)
-    {
-        int status = result.getStatus();
-        Object content = result.getObject();
-
-        if (content == null)
-            return status(status);
-
-        if (content instanceof ObjectNode)
-            return status(status, (ObjectNode)content);
-
-        return status(status, content.toString());
-    }
-
     public static play.mvc.Result dispatch(String path)
     {
         String method = request().method();
@@ -114,7 +100,16 @@ public class DispatchController extends AppController
         ObjectNode params = parseParams(path, (Map<String,Integer>)m.get("pathParamMap"));
         Result result = invoke(controller, action, params);
 
-        return convertResult(result);
+        int status = result.getStatus();
+        Object content = result.getObject();
+
+        if (content == null)
+            return status(status);
+
+        if (content instanceof ObjectNode)
+            return status(status, (ObjectNode)content);
+
+        return status(status, content.toString());
     }
 
     private static Map<String,Object> match(String method, String path)
@@ -147,7 +142,8 @@ public class DispatchController extends AppController
             Class<?> clazz = Class.forName("controllers." + controller);
             Method method = clazz.getMethod(action, new Class[] {JsonNode.class});
 
-            if (method.getAnnotation(Anonymous.class) == null)
+            // only websocket request has a param method
+            if (!params.has("method") && method.getAnnotation(Anonymous.class) == null)
             {
                 Result result = UsersController.me(params);
 
@@ -356,51 +352,73 @@ public class DispatchController extends AppController
         return value.matches(regex);
     }
 
-    private static String wsDispatch(String event)
+    private static Result wsDispatch(String token, String event)
     {
         try
         {
             ObjectNode params = mapper.readValue(event, ObjectNode.class);
+            if (!params.has("method"))
+                return Error(Error.MISSING_PARAM, "method");
+            if (!params.has("path"))
+                return Error(Error.MISSING_PARAM, "path");
+            params.put("access_token", token);
 
             String method = params.get("method").textValue().toUpperCase();
             String path = params.get("path").textValue().replaceFirst("^/", "");
 
             Map<String,Object>m = match(method, path);
             if (m == null)
-                return "{\"status\":\"404\"}";
+                return NotFound();
 
             String controller = (String)m.get("controller");
             String action = (String)m.get("action");
             //TODO PATH
             Result result = invoke(controller, action, params);
 
-            int status = result.getStatus();
-            Object content = result.getObject();
-
-            if (content == null)
-                return "{\"status\":\"" + status + "\"}";
-
-            return result.getObject().toString();
+            return result;
+        }
+        catch (IOException e)
+        {
+            return Error(Error.MALFORMED_JSON);
         }
         catch (Exception e)
         {
             errorlog(e);
 
-            return Error.INTERNAL_SERVER_ERROR.toString();
+            return Error(Error.INTERNAL_SERVER_ERROR);
         }
     }
 
     public static WebSocket<String> websocket()
     {
+        String token = request().getQueryString("access_token");
+
         return new WebSocket<String>()
         {
             public void onReady(WebSocket.In<String> in, WebSocket.Out<String> out)
             {
+                if (token == null)
+                {
+                    out.write(Error(Error.MISSING_ACCESS_TOKEN).toString());
+                    out.close();
+
+                    return;
+                }
+
+                Result result = UsersController.me(token);
+                if (result.getStatus() != 200)
+                {
+                    out.write(result.toString());
+                    out.close();
+
+                    return;
+                }
+
                 in.onMessage(new Callback<String>()
                 {
                     public void invoke(String event)
                     {
-                        out.write(wsDispatch(event));
+                        out.write(wsDispatch(token, event).toString());
                     }
                 });
 

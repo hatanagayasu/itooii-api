@@ -32,6 +32,9 @@ public class UsersController extends AppController
 
     public static Result me(JsonNode json)
     {
+        if (!json.has("access_token"))
+            return Error(Error.MISSING_ACCESS_TOKEN);
+
         String token = json.get("access_token").textValue();
 
         return me(token);
