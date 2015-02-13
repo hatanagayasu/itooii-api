@@ -1,7 +1,6 @@
 package controllers;
 
 import play.*;
-import play.mvc.*;
 
 import controllers.annotations.*;
 import controllers.constants.Error;
@@ -27,7 +26,7 @@ public class UsersController extends AppController
         String email = json.get("email").textValue();
         User user = User.getByEmail(email);
 
-        return user != null ? Ok(user) : NotFound();
+        return user != null ? Ok() : NotFound();
     }
 
     @Anonymous
