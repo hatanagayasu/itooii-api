@@ -16,4 +16,10 @@ public class Result
         this.status = status;
         this.object = object;
     }
+
+    public String toString()
+    {
+        return "{\"status\":\"" + status + "\"" + (object == null ? "" :
+            ",\"body\":" + object.toString()) + "}";
+    }
 }
