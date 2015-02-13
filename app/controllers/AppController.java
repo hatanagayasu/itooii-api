@@ -9,6 +9,7 @@ import models.Model;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,6 +24,11 @@ public class AppController extends Controller
         EMAIL = "EMAIL",
         NOT_EMPTY = "NOT_EMPTY",
         UUID = "UUID";
+
+    public static Map<String,Object> context()
+    {
+        return ctx().args;
+    }
 
     public static Results.Status ok(Model model)
     {
