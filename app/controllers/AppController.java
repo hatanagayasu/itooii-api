@@ -45,7 +45,7 @@ public class AppController extends Controller
         result.put("error_code", error.getCode());
         result.put("description", error.getDescription());
 
-        return new Result(error.getCode(), result);
+        return new Result(400, result);
     }
 
     public static Result Error(Error error, Object... params)
@@ -54,7 +54,7 @@ public class AppController extends Controller
         result.put("error_code", error.getCode());
         result.put("description", String.format(error.getDescription(), params));
 
-        return new Result(error.getCode(), result);
+        return new Result(400, result);
     }
 
     public static Result NotFound()
