@@ -11,6 +11,7 @@ public enum Error
     INCORRECT_PASSWORD(40102, "Incorrect Password"),
     MISSING_ACCESS_TOKEN(40103, "Missing access_token"),
     INVALID_ACCESS_TOKEN(40104, "Invalid access_token"),
+    USER_ALREADY_EXISTS(40105, "User already exists"),
 
     NOT_FOUND(40400, "Not Found"),
 

@@ -47,6 +47,15 @@ public class User extends Model
         return user;
     }
 
+    public static boolean exists(String email)
+    {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        User user = userCol.findOne("{email:#}", email).as(User.class);
+
+        return user != null;
+    }
+
     public static User getByEmail(String email)
     {
         MongoCollection userCol = jongo.getCollection("user");

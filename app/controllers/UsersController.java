@@ -29,6 +29,9 @@ public class UsersController extends AppController
         String password = json.get("password").textValue();
         String name = json.get("name").textValue();
 
+        if (User.exists(email))
+            return error(Error.USER_ALREADY_EXISTS);
+
         User user = User.add(email, password, name);
 
         return ok(user);
