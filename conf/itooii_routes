@@ -1,4 +1,5 @@
 GET     /users                      UsersController/me
+HEAD    /users                      UsersController/exist
 POST    /users                      UsersController/add
-POST    /session                    UsersController/login
-DELETE  /session                    UsersController/logout
+POST    /access_tokens              UsersController/login
+DELETE  /access_tokens              UsersController/logout

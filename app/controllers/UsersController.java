@@ -13,10 +13,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class UsersController extends AppController
 {
-    @Anonymous
     public static Result me(JsonNode json)
     {
-        return ok("me");
+        User user = (User)context().get("me");
+
+        return ok(user);
+    }
+
+    @Anonymous
+    @Validation(name="email", rule=EMAIL)
+    public static Result exist(JsonNode json)
+    {
+        String email = json.get("email").textValue();
+        User user = User.getByEmail(email);
+
+        return user != null ? ok() : status(404);
     }
 
     @Anonymous
@@ -29,7 +40,7 @@ public class UsersController extends AppController
         String password = json.get("password").textValue();
         String name = json.get("name").textValue();
 
-        if (User.exists(email))
+        if (User.getByEmail(email) != null)
             return error(Error.USER_ALREADY_EXISTS);
 
         User user = User.add(email, password, name);
