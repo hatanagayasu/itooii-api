@@ -12,6 +12,5 @@ GET     /websocket                  controllers.DispatchController.websocket()
 
 GET     /*path                      controllers.DispatchController.dispatch(path)
 DELETE  /*path                      controllers.DispatchController.dispatch(path)
-HEAD    /*path                      controllers.DispatchController.dispatch(path)
 POST    /*path                      controllers.DispatchController.dispatch(path)
 PUT     /*path                      controllers.DispatchController.dispatch(path)

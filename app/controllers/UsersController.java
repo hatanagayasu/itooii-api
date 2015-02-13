@@ -42,16 +42,6 @@ public class UsersController extends AppController
 
     @Anonymous
     @Validation(name="email", rule=EMAIL)
-    public static Result exist(JsonNode json)
-    {
-        String email = json.get("email").textValue();
-        User user = User.getByEmail(email);
-
-        return user != null ? Ok() : NotFound();
-    }
-
-    @Anonymous
-    @Validation(name="email", rule=EMAIL)
     @Validation(name="password", rule=NOT_EMPTY)
     @Validation(name="name", rule=NOT_EMPTY)
     public static Result add(JsonNode json)
