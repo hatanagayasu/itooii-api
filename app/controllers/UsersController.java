@@ -17,7 +17,7 @@ public class UsersController extends AppController
     {
         User user = (User)context().get("me");
 
-        return ok(user);
+        return Ok(user);
     }
 
     @Anonymous
@@ -27,7 +27,7 @@ public class UsersController extends AppController
         String email = json.get("email").textValue();
         User user = User.getByEmail(email);
 
-        return user != null ? ok() : status(404);
+        return user != null ? Ok(user) : NotFound();
     }
 
     @Anonymous
@@ -41,11 +41,11 @@ public class UsersController extends AppController
         String name = json.get("name").textValue();
 
         if (User.getByEmail(email) != null)
-            return error(Error.USER_ALREADY_EXISTS);
+            return Error(Error.USER_ALREADY_EXISTS);
 
         User user = User.add(email, password, name);
 
-        return ok(user);
+        return Ok(user);
     }
 
     @Anonymous
@@ -59,15 +59,15 @@ public class UsersController extends AppController
         User user = User.getByEmail(email);
 
         if (user == null)
-            return error(Error.INCORRECT_USER);
+            return Error(Error.INCORRECT_USER);
 
         if (!user.matchPassword(password))
-            return error(Error.INCORRECT_PASSWORD);
+            return Error(Error.INCORRECT_PASSWORD);
 
         ObjectNode result = mapper.createObjectNode();
         result.put("access_token", user.newToken());
 
-        return ok(result);
+        return Ok(result);
     }
 
     public static Result logout(JsonNode json)
@@ -75,6 +75,6 @@ public class UsersController extends AppController
         String token = json.get("access_token").textValue();
         User.deleteToken(token);
 
-        return ok();
+        return Ok();
     }
 }

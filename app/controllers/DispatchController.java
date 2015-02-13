@@ -89,36 +89,56 @@ public class DispatchController extends AppController
         }
     }
 
-    public static Result dispatch(String path)
+    private static play.mvc.Result convertResult(Result result)
+    {
+        int status = result.getStatus();
+        Object content = result.getObject();
+
+        if (content == null)
+            return status(status);
+
+        if (content instanceof ObjectNode)
+            return status(status, (ObjectNode)content);
+
+        return status(status, content.toString());
+    }
+
+    public static play.mvc.Result dispatch(String path)
+    {
+        Map<String,Object>m = match(path);
+        if (m == null)
+            return notFound();
+
+        String controller = (String)m.get("controller");
+        String action = (String)m.get("action");
+        ObjectNode params = parseParams(path, (Map<String,Integer>)m.get("pathParamMap"));
+        Result result = invoke(controller, action, params);
+
+        return convertResult(result);
+    }
+
+    private static Map<String,Object> match(String path)
     {
         String method = request().method();
         if (!routes.containsKey(method))
-            return error(Error.NOT_FOUND);
+            return null;
 
         Map<String,Map<String,Map<String,Object>>> segMap = routes.get(method);
         path = "/" + path;
         String[] segs = path.split("/");
         int length = segs.length;
         if (!segMap.containsKey(segs[0]))
-            return error(Error.NOT_FOUND);
+            return null;
 
         Map<String,Map<String,Object>> regexMap = segMap.get(segs[0]);
         for (Entry<String,Map<String,Object>> entry : regexMap.entrySet())
         {
             String regex = entry.getKey();
             if (path.matches(regex))
-            {
-                Map<String,Object> m = entry.getValue();
-
-                String controller = (String)m.get("controller");
-                String action = (String)m.get("action");
-                ObjectNode params = parseParams(segs, (Map<String,Integer>)m.get("pathParamMap"));
-
-                return invoke(controller, action, params);
-            }
+                return entry.getValue();
         }
 
-        return error(Error.NOT_FOUND);
+        return null;
     }
 
     private static Result invoke(String controller, String action, ObjectNode params)
@@ -133,11 +153,11 @@ public class DispatchController extends AppController
             {
                 String token = request().getQueryString("access_token");
                 if (token == null || token.length() == 0)
-                    return error(Error.MISSING_ACCESS_TOKEN);
+                    return Error(Error.MISSING_ACCESS_TOKEN);
 
                 user = User.getByToken(token);
                 if (user == null)
-                    return error(Error.INVALID_ACCESS_TOKEN);
+                    return Error(Error.INVALID_ACCESS_TOKEN);
 
                 user.setPassword(null);
                 context().put("me", user);
@@ -150,7 +170,7 @@ public class DispatchController extends AppController
                 String rule = validation.rule();
 
                 if (!name.startsWith("@") && !params.has(name))
-                    return error(Error.MISSING_PARAM, name);
+                    return Error(Error.MISSING_PARAM, name);
 
                 if (!rule.isEmpty())
                 {
@@ -158,7 +178,7 @@ public class DispatchController extends AppController
                     String value = params.get(name).textValue();
 
                     if (!validation(rule, value))
-                        return error(Error.MALFORMED_PARAM, name);
+                        return Error(Error.MALFORMED_PARAM, name);
                 }
             }
 
@@ -168,19 +188,22 @@ public class DispatchController extends AppController
         {
             errorlog(e);
 
-            return error(Error.NOT_FOUND);
+            return Error(Error.NOT_FOUND);
         }
         catch (InvocationTargetException e)
         {
             errorlog(e);
 
-            return error(Error.INTERNAL_SERVER_ERROR);
+            return Error(Error.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private static ObjectNode parseParams(String[] segs, Map<String,Integer> pathParamMap)
+    private static ObjectNode parseParams(String path, Map<String,Integer> pathParamMap)
     {
         ObjectNode params = mapper.createObjectNode();
+
+        path = "/" + path;
+        String[] segs = path.split("/");
 
         for (Entry<String, Integer> entry : pathParamMap.entrySet())
             params.put(entry.getKey(), segs[entry.getValue()]);
