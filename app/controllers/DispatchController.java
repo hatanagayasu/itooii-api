@@ -105,7 +105,8 @@ public class DispatchController extends AppController
 
     public static play.mvc.Result dispatch(String path)
     {
-        Map<String,Object>m = match(path);
+        String method = request().method();
+        Map<String,Object>m = match(method, path);
         if (m == null)
             return notFound();
 
@@ -117,9 +118,8 @@ public class DispatchController extends AppController
         return convertResult(result);
     }
 
-    private static Map<String,Object> match(String path)
+    private static Map<String,Object> match(String method, String path)
     {
-        String method = request().method();
         if (!routes.containsKey(method))
             return null;
 
@@ -286,12 +286,12 @@ public class DispatchController extends AppController
                     {
                         try
                         {
-							params.putAll(mapper.readValue(values[0], ObjectNode.class));
-						}
+                            params.putAll(mapper.readValue(values[0], ObjectNode.class));
+                        }
                         catch (Exception e)
                         {
-							throw new RuntimeException(e);
-						}
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
                 else
@@ -364,6 +364,40 @@ public class DispatchController extends AppController
         return value.matches(regex);
     }
 
+    private static String wsDispatch(String event)
+    {
+        try
+        {
+            ObjectNode params = mapper.readValue(event, ObjectNode.class);
+
+            String method = params.get("method").textValue().toUpperCase();
+            String path = params.get("path").textValue().replaceFirst("^/", "");
+
+            Map<String,Object>m = match(method, path);
+            if (m == null)
+                return "{\"status\":\"404\"}";
+
+            String controller = (String)m.get("controller");
+            String action = (String)m.get("action");
+            //TODO PATH
+            Result result = invoke(controller, action, params);
+
+            int status = result.getStatus();
+            Object content = result.getObject();
+
+            if (content == null)
+                return "{\"status\":\"" + status + "\"}";
+
+            return result.getObject().toString();
+        }
+        catch (Exception e)
+        {
+            errorlog(e);
+
+            return Error.INTERNAL_SERVER_ERROR.toString();
+        }
+    }
+
     public static WebSocket<String> websocket()
     {
         return new WebSocket<String>()
@@ -374,7 +408,7 @@ public class DispatchController extends AppController
                 {
                     public void invoke(String event)
                     {
-                        System.out.println(event);
+                        out.write(wsDispatch(event));
                     }
                 });
 
