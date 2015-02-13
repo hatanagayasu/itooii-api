@@ -88,6 +88,11 @@ public class DispatchController extends AppController
         }
     }
 
+    public static play.mvc.Result index()
+    {
+        return ok();
+    }
+
     public static play.mvc.Result dispatch(String path)
     {
         String method = request().method();
