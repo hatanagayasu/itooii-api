@@ -7,7 +7,6 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -69,11 +68,6 @@ public class Model
     public static void returnJedis(Jedis jedis)
     {
         jedisPool.returnResource(jedis);
-    }
-
-    public static Map<String,Object> context()
-    {
-        return play.mvc.Http.Context.current().args;
     }
 
     public static ObjectNode toJson(Object object)
