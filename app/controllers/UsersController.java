@@ -14,7 +14,15 @@ public class UsersController extends AppController
 {
     public static Result me(JsonNode json)
     {
-        User user = (User)context().get("me");
+        String token = json.get("access_token").textValue();
+        if (token == null || token.length() == 0)
+            return Error(Error.MISSING_ACCESS_TOKEN);
+
+        User user = User.getByToken(token);
+        if (user == null)
+            return Error(Error.INVALID_ACCESS_TOKEN);
+
+        user.setPassword(null);
 
         return Ok(user);
     }

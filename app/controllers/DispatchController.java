@@ -8,7 +8,6 @@ import play.mvc.Http.MultipartFormData.FilePart;
 
 import controllers.annotations.*;
 import controllers.constants.Error;
-import models.User;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -147,20 +146,13 @@ public class DispatchController extends AppController
         {
             Class<?> clazz = Class.forName("controllers." + controller);
             Method method = clazz.getMethod(action, new Class[] {JsonNode.class});
-            User user = null;
 
             if (method.getAnnotation(Anonymous.class) == null)
             {
-                String token = request().getQueryString("access_token");
-                if (token == null || token.length() == 0)
-                    return Error(Error.MISSING_ACCESS_TOKEN);
+                Result result = UsersController.me(params);
 
-                user = User.getByToken(token);
-                if (user == null)
-                    return Error(Error.INVALID_ACCESS_TOKEN);
-
-                user.setPassword(null);
-                context().put("me", user);
+                if (result.getStatus() != 200)
+                    return result;
             }
 
             Validation[] validations = method.getAnnotationsByType(Validation.class);
