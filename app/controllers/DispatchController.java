@@ -1,6 +1,7 @@
 package controllers;
 
 import play.*;
+import play.libs.F.*;
 import play.mvc.*;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
@@ -322,5 +323,32 @@ public class DispatchController extends AppController
         }
 
         return value.matches(regex);
+    }
+
+    public static WebSocket<String> websocket()
+    {
+        return new WebSocket<String>()
+        {
+            public void onReady(WebSocket.In<String> in, WebSocket.Out<String> out)
+            {
+                in.onMessage(new Callback<String>()
+                {
+                    public void invoke(String event)
+                    {
+                        System.out.println(event);
+                    }
+                });
+
+                in.onClose(new Callback0()
+                {
+                    public void invoke()
+                    {
+                        System.out.println("Disconnected");
+                    }
+                });
+
+                out.write("Hello!");
+            }
+        };
     }
 }
