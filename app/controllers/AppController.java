@@ -17,13 +17,6 @@ public class AppController extends Controller
 {
     public static final ObjectMapper mapper = new ObjectMapper();
 
-    public static final String
-        ALPHA_NUMERIC = "ALPHA_NUMERIC",
-        BOOLEAN = "BOOLEAN",
-        EMAIL = "EMAIL",
-        NOT_EMPTY = "NOT_EMPTY",
-        UUID = "UUID";
-
     public static Result Ok()
     {
         return new Result(200);

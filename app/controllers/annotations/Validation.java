@@ -12,5 +12,6 @@ import java.lang.annotation.Target;
 public @interface Validation
 {
     String name() default "";
-    String rule() default "";
+    String rule() default "notEmpty";
+    boolean require() default true;
 }

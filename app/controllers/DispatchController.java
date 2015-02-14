@@ -161,13 +161,16 @@ public class DispatchController extends AppController
             {
                 String name = validation.name();
                 String rule = validation.rule();
+                boolean require = validation.require();
 
-                if (!name.startsWith("@") && !params.has(name))
+                if (require && !params.has(name))
                     return Error(Error.MISSING_PARAM, name);
+
+                if (!params.has(name))
+                    continue;
 
                 if (!rule.isEmpty())
                 {
-                    name = name.replaceAll("/^@/", "");
                     String value = params.get(name).textValue();
 
                     if (!validation(rule, value))
@@ -324,37 +327,64 @@ public class DispatchController extends AppController
 
     private static boolean validation(String rule, String value)
     {
-        String regex;
-        if (rule.equals(ALPHA_NUMERIC))
+        for (String r : rule.split(","))
         {
-            regex = "[A-Za-z0-9]+";
-        }
-        else if (rule.equals(BOOLEAN))
-        {
-            regex = "(0|1|false|true)";
-        }
-        else if (rule.equals(EMAIL))
-        {
-            regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
-        }
-        else if (rule.equals(NOT_EMPTY))
-        {
-            regex = ".+";
-        }
-        else if (rule.equals(UUID))
-        {
-           regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
-        }
-        else if (rule.matches("^/.*/$"))
-        {
-            regex = rule.replaceFirst("^/", "").replaceFirst("/$", "");
-        }
-        else
-        {
-            regex = ".*";
+            String regex;
+            if (r.equals("alphaNumeric"))
+            {
+                regex = "[A-Za-z0-9]+";
+            }
+            else if (r.equals("boolean"))
+            {
+                regex = "(0|1|false|true)";
+            }
+            else if (r.equals("email"))
+            {
+                regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
+            }
+            else if (r.equals("notEmpty"))
+            {
+                regex = ".+";
+            }
+            else if (r.equals("uuid"))
+            {
+                regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+            }
+            else if (r.matches("^/.*/$"))
+            {
+                regex = r.replaceFirst("^/", "").replaceFirst("/$", "");
+            }
+            else if (r.matches("^/.*/$"))
+            {
+                regex = r.replaceFirst("^/", "").replaceFirst("/$", "");
+            }
+            else
+            {
+                if (r.startsWith("minLength="))
+                {
+                    r = r.replace("minLength=", "");
+                    int minLength = Integer.parseInt(r);
+
+                    if (value.length() >= minLength)
+                        continue;
+                }
+                else if (r.startsWith("maxLength="))
+                {
+                    r = r.replace("maxLength=", "");
+                    int maxLength = Integer.parseInt(r);
+
+                    if (value.length() <= maxLength)
+                        continue;
+                }
+
+                return false;
+            }
+
+            if (!value.matches(regex))
+                return false;
         }
 
-        return value.matches(regex);
+        return true;
     }
 
     private static Result wsDispatch(String token, String event)

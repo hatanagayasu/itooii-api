@@ -41,9 +41,9 @@ public class UsersController extends AppController
     }
 
     @Anonymous
-    @Validation(name="email", rule=EMAIL)
-    @Validation(name="password", rule=NOT_EMPTY)
-    @Validation(name="name", rule=NOT_EMPTY)
+    @Validation(name="email", rule="email")
+    @Validation(name="password")
+    @Validation(name="name")
     public static Result add(JsonNode json)
     {
         String email = json.get("email").textValue();
@@ -59,8 +59,8 @@ public class UsersController extends AppController
     }
 
     @Anonymous
-    @Validation(name="email", rule=EMAIL)
-    @Validation(name="password", rule=NOT_EMPTY)
+    @Validation(name="email", rule="email")
+    @Validation(name="password")
     public static Result login(JsonNode json)
     {
         String email = json.get("email").textValue();
