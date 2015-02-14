@@ -14,6 +14,8 @@ public enum Error
     INVALID_ACCESS_TOKEN(40104, "Invalid access_token"),
     USER_ALREADY_EXISTS(40105, "User already exists"),
 
+    FORBIDDEN(40300, "Forbidden"),
+
     NOT_FOUND(40400, "Not Found"),
 
     INTERNAL_SERVER_ERROR(50000, "Internal Server Error");
