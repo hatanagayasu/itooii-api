@@ -432,14 +432,6 @@ public class DispatchController extends AppController
         {
             public void onReady(WebSocket.In<String> in, WebSocket.Out<String> out)
             {
-                if (token == null)
-                {
-                    out.write(Error(Error.MISSING_ACCESS_TOKEN).toString());
-                    out.close();
-
-                    return;
-                }
-
                 Result result = UsersController.me(token);
                 if (result.getStatus() != 200)
                 {
