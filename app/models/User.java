@@ -15,8 +15,8 @@ public class User extends Model
     private String email;
     private String password;
     private String name;
-    private Date createdTime;
-    private Date modifiedTime;
+    private Date created;
+    private Date modified;
 
     public User()
     {
@@ -30,8 +30,8 @@ public class User extends Model
         this.email = email;
         this.password = md5(password);
         this.name = name;
-        createdTime = now;
-        modifiedTime = now;
+        created = now;
+        modified = now;
     }
 
     public static User add(String email, String password, String name)
