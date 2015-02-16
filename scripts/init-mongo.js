@@ -1,6 +1,6 @@
 var indexSpec = {
     "user" : [
-        {index: {emial:1}, option: {name:"email", unique:true}}
+        {index: {email:1}, option: {name:"email", unique:true}}
     ]
 };
 
