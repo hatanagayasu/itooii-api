@@ -1,4 +1,5 @@
 GET     /users                      UsersController/me
 POST    /users                      UsersController/add
+PUT     /users                      UsersController/update
 POST    /access_tokens              UsersController/login
 DELETE  /access_tokens              UsersController/logout
