@@ -13,5 +13,5 @@ public @interface Validation
 {
     String name() default "";
     String rule() default "notEmpty";
-    boolean require() default true;
+    boolean require() default false;
 }
