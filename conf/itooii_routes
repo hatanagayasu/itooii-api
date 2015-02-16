@@ -1,5 +1,5 @@
-GET     /users                      UsersController/me
-POST    /users                      UsersController/add
-PUT     /users                      UsersController/update
+GET     /user                       UsersController/me
+POST    /user                       UsersController/add
+PUT     /user                       UsersController/update
 POST    /access_tokens              UsersController/login
 DELETE  /access_tokens              UsersController/logout
