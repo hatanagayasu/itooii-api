@@ -41,7 +41,7 @@ public class DispatchController extends AppController
             String line;
             while ((line = bufferedReader.readLine()) != null)
             {
-                if (line.startsWith("#"))
+                if (line.startsWith("#") || line.matches("\\s*"))
                     continue;
 
                 // method path controller/action
@@ -55,25 +55,36 @@ public class DispatchController extends AppController
                 if (!segMap.containsKey(segs[0]))
                     segMap.put(segs[0], new HashMap<String,Map<String,Object>>());
 
-                Map<String,Object> m = new HashMap<>();
+                Map<String,Object> route = new HashMap<>();
                 Map<String,Integer> pathParamMap = new HashMap<>();
                 for (int i = 1; i < length; i++)
                 {
                     if (segs[i].startsWith(":"))
                         pathParamMap.put(segs[i].replaceAll("^:", ""), i);
                 }
-                m.put("pathParamMap", pathParamMap);
+                route.put("pathParamMap", pathParamMap);
 
                 String[] pair = parts[2].split("/");
-                m.put("controller", pair[0]);
-                m.put("action", pair[1]);
+                route.put("controller", pair[0]);
+                route.put("action", pair[1]);
+
+                Class<?> clazz = Class.forName("controllers." + pair[0]);
+                Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
+                Map<String,Validation> validations = new HashMap<>();
+                for (Validation validation : method.getAnnotationsByType(Validation.class))
+                    validations.put(validation.name(), validation);
+
+                route.put("method", method);
+                route.put("validations", validations);
+                if (method.getAnnotation(Anonymous.class) != null)
+                    route.put("anonymous", true);
 
                 String regex = "";
                 for (int i = 1; i < length; i++)
                     regex += "/" + (segs[i].startsWith(":") ? "[^/]+" : segs[i]);
 
                 Map<String,Map<String,Object>> regexMap = segMap.get(segs[0]);
-                regexMap.put(regex, m);
+                regexMap.put(regex, route);
             }
 
             bufferedReader.close();
@@ -83,6 +94,10 @@ public class DispatchController extends AppController
             errorlog(e);
         }
         catch (IOException e)
+        {
+            errorlog(e);
+        }
+        catch (ClassNotFoundException|NoSuchMethodException e)
         {
             errorlog(e);
         }
@@ -96,14 +111,12 @@ public class DispatchController extends AppController
     public static play.mvc.Result dispatch(String path)
     {
         String method = request().method();
-        Map<String,Object>m = match(method, path);
-        if (m == null)
+        Map<String,Object>route = match(method, path);
+        if (route == null)
             return notFound();
 
-        String controller = (String)m.get("controller");
-        String action = (String)m.get("action");
-        ObjectNode params = parseParams(path, (Map<String,Integer>)m.get("pathParamMap"));
-        Result result = invoke(controller, action, params);
+        ObjectNode params = parseParams(path, (Map<String,Integer>)route.get("pathParamMap"));
+        Result result = invoke(route, params);
 
         int status = result.getStatus();
         Object content = result.getObject();
@@ -140,15 +153,14 @@ public class DispatchController extends AppController
         return null;
     }
 
-    private static Result invoke(String controller, String action, ObjectNode params)
+    private static Result invoke(Map<String,Object> route, ObjectNode params)
     {
         try
         {
-            Class<?> clazz = Class.forName("controllers." + controller);
-            Method method = clazz.getMethod(action, new Class[] {JsonNode.class});
+            Method method = (Method)route.get("method");
 
             // only websocket request has a param method
-            if (!params.has("method") && method.getAnnotation(Anonymous.class) == null)
+            if (!params.has("method") && !route.containsKey("anonymous"))
             {
                 Result result = UsersController.me(params);
 
@@ -156,18 +168,33 @@ public class DispatchController extends AppController
                     return result;
             }
 
-            Validation[] validations = method.getAnnotationsByType(Validation.class);
-            for (Validation validation : validations)
+            Map<String,Validation> validations = (Map<String,Validation>)route.get("validations");
+            for (Map.Entry<String, Validation> entry : validations.entrySet())
             {
-                String name = validation.name();
-                String rule = validation.rule();
-                boolean require = validation.require();
+                String name = entry.getKey();
+                Validation validation = entry.getValue();
 
-                if (require && !params.has(name))
+                if (validation.require() && !params.has(name))
                     return Error(Error.MISSING_PARAM, name);
+            }
 
-                if (!params.has(name))
+            Iterator<String> fieldNames = params.fieldNames();
+            while (fieldNames.hasNext())
+            {
+                String name = fieldNames.next();
+                if (name.equals("access_token"))
                     continue;
+
+                if (!validations.containsKey(name))
+                {
+                    fieldNames.remove();
+                    params.remove(name);
+
+                    continue;
+                }
+
+                Validation validation = validations.get(name);
+                String rule = validation.rule();
 
                 if (!rule.isEmpty())
                 {
@@ -180,7 +207,7 @@ public class DispatchController extends AppController
 
             return (Result)method.invoke(null, new Object[] {params});
         }
-        catch (ClassNotFoundException|NoSuchMethodException|IllegalAccessException e)
+        catch (IllegalAccessException e)
         {
             errorlog(e);
 
@@ -401,14 +428,12 @@ public class DispatchController extends AppController
             String method = params.get("method").textValue().toUpperCase();
             String path = params.get("path").textValue().replaceFirst("^/", "");
 
-            Map<String,Object>m = match(method, path);
-            if (m == null)
+            Map<String,Object>route = match(method, path);
+            if (route == null)
                 return NotFound();
 
-            String controller = (String)m.get("controller");
-            String action = (String)m.get("action");
             //TODO PATH
-            Result result = invoke(controller, action, params);
+            Result result = invoke(route, params);
 
             return result;
         }
