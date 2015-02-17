@@ -25,11 +25,33 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.POJONode;
 
 public class DispatchController extends AppController
 {
-    private static Map<String,Map<String,Map<String,Map<String,Object>>>> routes = new HashMap<>();
-    // method/first segment/regex_rule
+    private static ObjectNode routes = mapper.createObjectNode();
+    /*
+        {
+            method : {
+                first_segment : {
+                    regex : {
+                        method : Method,
+                        anonymous : Boolean,
+                        validations : {
+                            name : { type : String, rule : String, require : Boolean },
+                            ...
+                        },
+                        pathParamsMap : {
+                            String name : int offset,
+                            ...
+                        }
+                    }
+                },
+                ...
+            },
+            ...
+        }
+    */
 
     static
     {
@@ -46,45 +68,50 @@ public class DispatchController extends AppController
 
                 // method path controller/action
                 String[] parts = line.split("\\s+");
-                if (!routes.containsKey(parts[0]))
-                    routes.put(parts[0], new HashMap<String,Map<String,Map<String,Object>>>());
-
-                Map<String,Map<String,Map<String,Object>>> segMap = routes.get(parts[0]);
-                String[] segs = parts[1].split("/");
-                int length = segs.length;
-                if (!segMap.containsKey(segs[0]))
-                    segMap.put(segs[0], new HashMap<String,Map<String,Object>>());
-
-                Map<String,Object> route = new HashMap<>();
-                Map<String,Integer> pathParamMap = new HashMap<>();
-                for (int i = 1; i < length; i++)
-                {
-                    if (segs[i].startsWith(":"))
-                        pathParamMap.put(segs[i].replaceAll("^:", ""), i);
-                }
-                route.put("pathParamMap", pathParamMap);
-
+                String[] segments = parts[1].split("/");
                 String[] pair = parts[2].split("/");
-                route.put("controller", pair[0]);
-                route.put("action", pair[1]);
+
+                if (!routes.has(parts[0]))
+                    routes.put(parts[0], mapper.createObjectNode());
+
+                ObjectNode segs = (ObjectNode)routes.get(parts[0]);
+                ObjectNode regexes = mapper.createObjectNode();
+                ObjectNode route = mapper.createObjectNode();
+                ObjectNode validations = mapper.createObjectNode();
+                ObjectNode pathParamsMap = mapper.createObjectNode();
 
                 Class<?> clazz = Class.forName("controllers." + pair[0]);
                 Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
-                Map<String,Validation> validations = new HashMap<>();
-                for (Validation validation : method.getAnnotationsByType(Validation.class))
-                    validations.put(validation.name(), validation);
+                route.putPOJO("method", method);
 
-                route.put("method", method);
-                route.put("validations", validations);
                 if (method.getAnnotation(Anonymous.class) != null)
                     route.put("anonymous", true);
 
-                String regex = "";
-                for (int i = 1; i < length; i++)
-                    regex += "/" + (segs[i].startsWith(":") ? "[^/]+" : segs[i]);
+                for (Validation v : method.getAnnotationsByType(Validation.class))
+                {
+                    ObjectNode validation = mapper.createObjectNode();
+                    validation.put("type", v.type());
+                    validation.put("rule", v.rule());
+                    validation.put("require", v.require());
 
-                Map<String,Map<String,Object>> regexMap = segMap.get(segs[0]);
-                regexMap.put(regex, route);
+                    validations.put(v.name(), validation);
+                }
+                route.put("validations", validations);
+
+                for (int i = 1; i < segments.length; i++)
+                {
+                    if (segments[i].startsWith(":"))
+                        pathParamsMap.put(segments[i].replaceAll("^:", ""), i);
+                }
+                if (pathParamsMap.fieldNames().hasNext())
+                    route.put("pathParamsMap", pathParamsMap);
+
+                String regex = "";
+                for (int i = 1; i < segments.length; i++)
+                    regex += "/" + (segments[i].startsWith(":") ? "[^/]+" : segments[i]);
+                regexes.put(regex, route);
+
+                segs.put(segments[1], regexes);
             }
 
             bufferedReader.close();
@@ -111,11 +138,14 @@ public class DispatchController extends AppController
     public static play.mvc.Result dispatch(String path)
     {
         String method = request().method();
-        Map<String,Object>route = match(method, path);
+        JsonNode route = match(method, path);
         if (route == null)
             return notFound();
 
-        ObjectNode params = parseParams(path, (Map<String,Integer>)route.get("pathParamMap"));
+        ObjectNode params = parseParams();
+        if (route.has("pathParamsMap"))
+            parsePathParams(path, route.get("pathParamsMap"), params);
+
         Result result = invoke(route, params);
 
         int status = result.getStatus();
@@ -130,37 +160,37 @@ public class DispatchController extends AppController
         return status(status, content.toString());
     }
 
-    private static Map<String,Object> match(String method, String path)
+    private static JsonNode match(String method, String path)
     {
-        if (!routes.containsKey(method))
+        if (!routes.has(method))
             return null;
 
-        Map<String,Map<String,Map<String,Object>>> segMap = routes.get(method);
+        JsonNode segs = routes.get(method);
         path = "/" + path;
-        String[] segs = path.split("/");
-        int length = segs.length;
-        if (!segMap.containsKey(segs[0]))
+        String[] segments = path.split("/");
+        if (!segs.has(segments[1]))
             return null;
 
-        Map<String,Map<String,Object>> regexMap = segMap.get(segs[0]);
-        for (Entry<String,Map<String,Object>> entry : regexMap.entrySet())
+        JsonNode regexes = segs.get(segments[1]);
+        Iterator<String> fieldNames = regexes.fieldNames();
+        while (fieldNames.hasNext())
         {
-            String regex = entry.getKey();
+            String regex = fieldNames.next();
             if (path.matches(regex))
-                return entry.getValue();
+                return regexes.get(regex);
         }
 
         return null;
     }
 
-    private static Result invoke(Map<String,Object> route, ObjectNode params)
+    private static Result invoke(JsonNode route, ObjectNode params)
     {
         try
         {
-            Method method = (Method)route.get("method");
+            Method method = (Method)((POJONode)route.get("method")).getPojo();
 
             // only websocket request has a param method
-            if (!params.has("method") && !route.containsKey("anonymous"))
+            if (!params.has("method") && !route.has("anonymous"))
             {
                 Result result = UsersController.me(params);
 
@@ -168,24 +198,25 @@ public class DispatchController extends AppController
                     return result;
             }
 
-            Map<String,Validation> validations = (Map<String,Validation>)route.get("validations");
-            for (Map.Entry<String, Validation> entry : validations.entrySet())
+            JsonNode validations = route.get("validations");
+            Iterator<String> fieldNames = validations.fieldNames();
+            while (fieldNames.hasNext())
             {
-                String name = entry.getKey();
-                Validation validation = entry.getValue();
+                String name = fieldNames.next();
+                JsonNode validation = validations.get(name);
 
-                if (validation.require() && !params.has(name))
+                if (validation.get("require").asBoolean() && !params.has(name))
                     return Error(Error.MISSING_PARAM, name);
             }
 
-            Iterator<String> fieldNames = params.fieldNames();
+            fieldNames = params.fieldNames();
             while (fieldNames.hasNext())
             {
                 String name = fieldNames.next();
                 if (name.equals("access_token"))
                     continue;
 
-                if (!validations.containsKey(name))
+                if (!validations.has(name))
                 {
                     fieldNames.remove();
                     params.remove(name);
@@ -193,8 +224,8 @@ public class DispatchController extends AppController
                     continue;
                 }
 
-                Validation validation = validations.get(name);
-                String rule = validation.rule();
+                JsonNode validation = validations.get(name);
+                String rule = validation.get("rule").textValue();
 
                 if (!rule.isEmpty())
                 {
@@ -221,15 +252,24 @@ public class DispatchController extends AppController
         }
     }
 
-    private static ObjectNode parseParams(String path, Map<String,Integer> pathParamMap)
+    private static void parsePathParams(String path, JsonNode pathParamsMap, ObjectNode params)
+    {
+        path = "/" + path;
+        String[] segments = path.split("/");
+
+        Iterator<String> fieldNames = pathParamsMap.fieldNames();
+        while (fieldNames.hasNext())
+        {
+            String name = fieldNames.next();
+            int offset = pathParamsMap.get(name).asInt();
+
+            params.put(name, segments[offset]);
+        }
+    }
+
+    private static ObjectNode parseParams()
     {
         ObjectNode params = mapper.createObjectNode();
-
-        path = "/" + path;
-        String[] segs = path.split("/");
-
-        for (Entry<String, Integer> entry : pathParamMap.entrySet())
-            params.put(entry.getKey(), segs[entry.getValue()]);
 
         for (Entry<String, String[]> entry : request().queryString().entrySet())
         {
@@ -428,11 +468,13 @@ public class DispatchController extends AppController
             String method = params.get("method").textValue().toUpperCase();
             String path = params.get("path").textValue().replaceFirst("^/", "");
 
-            Map<String,Object>route = match(method, path);
+            JsonNode route = match(method, path);
             if (route == null)
                 return NotFound();
 
-            //TODO PATH
+            if (route.has("pathParamsMap"))
+                parsePathParams(path, route.get("pathParamsMap"), params);
+
             Result result = invoke(route, params);
 
             return result;
