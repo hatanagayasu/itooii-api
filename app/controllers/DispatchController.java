@@ -421,10 +421,6 @@ public class DispatchController extends AppController
             {
                 regex = r.replaceFirst("^/", "").replaceFirst("/$", "");
             }
-            else if (r.matches("^/.*/$"))
-            {
-                regex = r.replaceFirst("^/", "").replaceFirst("/$", "");
-            }
             else
             {
                 if (r.startsWith("minLength="))
