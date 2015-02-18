@@ -13,6 +13,6 @@ public @interface Validation
 {
     String name() default "";
     String type() default "string";
-    String rule() default "notEmpty";
+    String rule() default "";
     boolean require() default false;
 }

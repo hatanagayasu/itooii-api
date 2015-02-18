@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.lang.ClassNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,7 +37,16 @@ public class DispatchController extends AppController
                         method : Method,
                         anonymous : Boolean,
                         validations : {
-                            name : { type : String, rule : String, require : Boolean },
+                            name : {
+                                fullName : String,
+                                type : String,
+                                rules : {{}, ...},
+                                require : Boolean
+                            },
+                            // type array
+                            name : { ..., validation : {} },
+                            // type object
+                            name : { ..., validations : {{], ...} },
                             ...
                         },
                         pathParamsMap : {
@@ -54,6 +62,11 @@ public class DispatchController extends AppController
     */
 
     static
+    {
+        init();
+    }
+
+    private static void init()
     {
         try
         {
@@ -77,7 +90,6 @@ public class DispatchController extends AppController
                 ObjectNode segs = (ObjectNode)routes.get(parts[0]);
                 ObjectNode regexes = mapper.createObjectNode();
                 ObjectNode route = mapper.createObjectNode();
-                ObjectNode validations = mapper.createObjectNode();
                 ObjectNode pathParamsMap = mapper.createObjectNode();
 
                 Class<?> clazz = Class.forName("controllers." + pair[0]);
@@ -87,23 +99,16 @@ public class DispatchController extends AppController
                 if (method.getAnnotation(Anonymous.class) != null)
                     route.put("anonymous", true);
 
-                for (Validation v : method.getAnnotationsByType(Validation.class))
-                {
-                    ObjectNode validation = mapper.createObjectNode();
-                    validation.put("type", v.type());
-                    validation.put("rule", v.rule());
-                    validation.put("require", v.require());
-
-                    validations.put(v.name(), validation);
-                }
-                route.put("validations", validations);
+                ObjectNode validations = parseValidations(method);
+                if (validations.size() > 0)
+                    route.put("validations", validations);
 
                 for (int i = 1; i < segments.length; i++)
                 {
                     if (segments[i].startsWith(":"))
                         pathParamsMap.put(segments[i].replaceAll("^:", ""), i);
                 }
-                if (pathParamsMap.fieldNames().hasNext())
+                if (pathParamsMap.size() > 0)
                     route.put("pathParamsMap", pathParamsMap);
 
                 String regex = "";
@@ -128,6 +133,73 @@ public class DispatchController extends AppController
         {
             errorlog(e);
         }
+    }
+
+    private static ObjectNode parseValidations(Method method)
+    {
+        ObjectNode validations = mapper.createObjectNode();
+
+        for (Validation v : method.getAnnotationsByType(Validation.class))
+        {
+            ObjectNode validation = mapper.createObjectNode();
+            String name = v.name();
+            String type = v.type();
+            validation.put("fullName", name);
+            validation.put("type", type);
+            validation.put("require", v.require());
+
+            if (!v.rule().isEmpty() && (type.equals("string") || type.equals("integer")))
+            {
+                ObjectNode rules = mapper.createObjectNode();
+                for (String rule : v.rule().split(","))
+                {
+                    if (rule.contains("=") && !rule.startsWith("/"))
+                    {
+                        //TODO
+                        String[] pair = rule.split("=");
+                        rules.put(pair[0], Integer.parseInt(pair[1]));
+                    }
+                    else
+                    {
+                        rules.put(rule, false);
+                    }
+                }
+                validation.put("rules", rules);
+            }
+
+            if (type.equals("object"))
+                validation.put("validations", mapper.createObjectNode());
+
+            JsonNode parent = validations;
+            String[] segs = name.split("\\.");
+            if (segs.length > 1)
+            {
+                for (int i = 0; i < segs.length - 1; i++)
+                {
+                    if (segs[i].endsWith("[]"))
+                    {
+                        parent = parent.get(segs[i].replace("[]", "")).get("validation");
+                        parent = parent.get("validations");
+                    }
+                    else
+                    {
+                        parent = parent.get(segs[i]).get("validations");
+                    }
+                }
+            }
+
+            if (name.endsWith("[]"))
+            {
+                parent = parent.get(name.replace("[]", ""));
+                ((ObjectNode)parent).put("validation", validation);
+            }
+            else
+            {
+                ((ObjectNode)parent).put(segs[segs.length - 1], validation);
+            }
+        }
+
+        return validations;
     }
 
     public static play.mvc.Result index()
@@ -183,6 +255,22 @@ public class DispatchController extends AppController
         return null;
     }
 
+    private static class MissingParamException extends Exception
+    {
+        MissingParamException(JsonNode validation)
+        {
+            super(validation.get("fullName").textValue());
+        }
+    }
+
+    private static class MalformedParamException extends Exception
+    {
+        MalformedParamException(JsonNode validation)
+        {
+            super(validation.get("fullName").textValue());
+        }
+    }
+
     private static Result invoke(JsonNode route, ObjectNode params)
     {
         try
@@ -198,43 +286,8 @@ public class DispatchController extends AppController
                     return result;
             }
 
-            JsonNode validations = route.get("validations");
-            Iterator<String> fieldNames = validations.fieldNames();
-            while (fieldNames.hasNext())
-            {
-                String name = fieldNames.next();
-                JsonNode validation = validations.get(name);
-
-                if (validation.get("require").asBoolean() && !params.has(name))
-                    return Error(Error.MISSING_PARAM, name);
-            }
-
-            fieldNames = params.fieldNames();
-            while (fieldNames.hasNext())
-            {
-                String name = fieldNames.next();
-                if (name.equals("access_token"))
-                    continue;
-
-                if (!validations.has(name))
-                {
-                    fieldNames.remove();
-                    params.remove(name);
-
-                    continue;
-                }
-
-                JsonNode validation = validations.get(name);
-                String rule = validation.get("rule").textValue();
-
-                if (!rule.isEmpty())
-                {
-                    String value = params.get(name).textValue();
-
-                    if (!validation(rule, value))
-                        return Error(Error.MALFORMED_PARAM, name);
-                }
-            }
+            if (route.has("validations"))
+                validations(route.get("validations"), params);
 
             return (Result)method.invoke(null, new Object[] {params});
         }
@@ -250,6 +303,14 @@ public class DispatchController extends AppController
 
             return Error(Error.INTERNAL_SERVER_ERROR);
         }
+        catch (MissingParamException e)
+        {
+            return Error(Error.MISSING_PARAM, e.getMessage());
+        }
+        catch (MalformedParamException e)
+        {
+            return Error(Error.MALFORMED_PARAM, e.getMessage());
+        }
     }
 
     private static void parsePathParams(String path, JsonNode pathParamsMap, ObjectNode params)
@@ -261,7 +322,7 @@ public class DispatchController extends AppController
         while (fieldNames.hasNext())
         {
             String name = fieldNames.next();
-            int offset = pathParamsMap.get(name).asInt();
+            int offset = pathParamsMap.get(name).intValue();
 
             params.put(name, segments[offset]);
         }
@@ -392,54 +453,170 @@ public class DispatchController extends AppController
         return params;
     }
 
-    private static boolean validation(String rule, String value)
+    private static void validations(JsonNode validations, ObjectNode params)
+        throws MissingParamException, MalformedParamException
     {
-        for (String r : rule.split(","))
+        Iterator<String> fieldNames = validations.fieldNames();
+        while (fieldNames.hasNext())
         {
-            String regex;
-            if (r.equals("alphaNumeric"))
+            String name = fieldNames.next();
+            JsonNode validation = validations.get(name);
+
+            if (validation.get("require").booleanValue() && !params.has(name))
+                throw new MissingParamException(validation);
+        }
+
+        fieldNames = params.fieldNames();
+        while (fieldNames.hasNext())
+        {
+            String name = fieldNames.next();
+
+            if (name.equals("access_token"))
+                continue;
+
+            if (!validations.has(name))
             {
-                regex = "[A-Za-z0-9]+";
+                fieldNames.remove();
+                params.remove(name);
+
+                continue;
             }
-            else if (r.equals("boolean"))
+
+            JsonNode validation = validations.get(name);
+            String type = validation.get("type").textValue();
+            JsonNode param = params.get(name);
+
+            if (type.equals("object"))
             {
-                regex = "(0|1|false|true)";
+                if (!param.isObject())
+                    throw new MalformedParamException(validation);
+
+                validations(validation.get("validations"), (ObjectNode)param);
             }
-            else if (r.equals("email"))
+            else if (type.equals("array"))
             {
-                regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
-            }
-            else if (r.equals("notEmpty"))
-            {
-                regex = ".+";
-            }
-            else if (r.equals("uuid"))
-            {
-                regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
-            }
-            else if (r.matches("^/.*/$"))
-            {
-                regex = r.replaceFirst("^/", "").replaceFirst("/$", "");
+                if (!param.isArray())
+                    throw new MalformedParamException(validation);
+
+                JsonNode v = validation.get("validation");
+
+                Iterator<JsonNode> values = param.iterator();
+                while (values.hasNext())
+                    validation(v, values.next());
             }
             else
             {
-                if (r.startsWith("minLength="))
-                {
-                    r = r.replace("minLength=", "");
-                    int minLength = Integer.parseInt(r);
+                validation(validation, param);
+            }
+        }
+    }
 
-                    if (value.length() >= minLength)
-                        continue;
-                }
-                else if (r.startsWith("maxLength="))
-                {
-                    r = r.replace("maxLength=", "");
-                    int maxLength = Integer.parseInt(r);
+    private static void validation(JsonNode validation, JsonNode param)
+        throws MissingParamException, MalformedParamException
+    {
+        String type = validation.get("type").textValue();
 
-                    if (value.length() <= maxLength)
-                        continue;
-                }
+        if (type.equals("string"))
+        {
+            if (!param.isTextual() || param.textValue().isEmpty())
+                throw new MalformedParamException(validation);
 
+            if (validation.has("rules") && !validation(validation.get("rules"), param.textValue()))
+                throw new MalformedParamException(validation);
+        }
+        else if (type.equals("boolean"))
+        {
+            if (!param.isBoolean())
+                throw new MalformedParamException(validation);
+        }
+        else if (type.equals("integer"))
+        {
+            if (!param.isInt())
+                throw new MalformedParamException(validation);
+
+            if (validation.has("rules") && !validation(validation.get("rules"), param.intValue()))
+                throw new MalformedParamException(validation);
+        }
+        else if (type.equals("object"))
+        {
+            if (!param.isObject())
+                throw new MalformedParamException(validation);
+
+            if (validation.has("validations"))
+                validations(validation.get("validations"), (ObjectNode)param);
+        }
+        else
+        {
+            throw new MalformedParamException(validation);
+        }
+    }
+
+    private static boolean validation(JsonNode rules, int value)
+    {
+        Iterator<String> iterator = rules.fieldNames();
+        while (iterator.hasNext())
+        {
+            String rule = iterator.next();
+
+            if (rule.equals("min"))
+            {
+                if (value < rules.get(rule).intValue())
+                    return false;
+            }
+            else if (rule.equals("max"))
+            {
+                if (value > rules.get(rule).intValue())
+                    return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean validation(JsonNode rules, String value)
+    {
+        Iterator<String> iterator = rules.fieldNames();
+        while (iterator.hasNext())
+        {
+            String rule = iterator.next();
+
+            String regex;
+            if (rule.equals("alphaNumeric"))
+            {
+                regex = "[A-Za-z0-9]+";
+            }
+            else if (rule.equals("email"))
+            {
+                regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
+            }
+            else if (rule.equals("uuid"))
+            {
+                regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+            }
+            else if (rule.matches("^/.*/$"))
+            {
+                regex = rule.replaceFirst("^/", "").replaceFirst("/$", "");
+            }
+            else if (rule.equals("minLength"))
+            {
+                if (value.length() >= rules.get(rule).intValue())
+                    continue;
+                else
+                    return false;
+            }
+            else if (rule.equals("maxLength"))
+            {
+                if (value.length() <= rules.get(rule).intValue())
+                    continue;
+                else
+                    return false;
+            }
+            else
+            {
                 return false;
             }
 
