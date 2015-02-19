@@ -30,12 +30,12 @@ public class UsersController extends AppController
         return Ok(user);
     }
 
-    public static Result me(JsonNode json)
+    public static Result me(JsonNode params)
     {
-        if (!json.has("access_token"))
+        if (!params.has("access_token"))
             return Error(Error.MISSING_ACCESS_TOKEN);
 
-        String token = json.get("access_token").textValue();
+        String token = params.get("access_token").textValue();
 
         return me(token);
     }
@@ -47,14 +47,14 @@ public class UsersController extends AppController
     @Validation(name="native_language[]", type="integer", require=true)
     @Validation(name="practice_language", type="array", rule="minSize=1", require=true)
     @Validation(name="practice_language[]", type="integer", require=true)
-    public static Result add(JsonNode json)
+    public static Result add(JsonNode params)
     {
-        String email = json.get("email").textValue();
+        String email = params.get("email").textValue();
 
         if (User.getByEmail(email) != null)
             return Error(Error.USER_ALREADY_EXISTS);
 
-        User user = User.add(json);
+        User user = User.add(params);
 
         return Ok(user);
     }
@@ -66,9 +66,9 @@ public class UsersController extends AppController
     @Validation(name="native_language[]", type="integer")
     @Validation(name="practice_language", type="array", rule="minSize=1")
     @Validation(name="practice_language[]", type="integer")
-    public static Result update(JsonNode json)
+    public static Result update(JsonNode params)
     {
-        User.update(json);
+        User.update(params);
 
         return Ok();
     }
@@ -76,10 +76,10 @@ public class UsersController extends AppController
     @Anonymous
     @Validation(name="email", rule="email", require=true)
     @Validation(name="password", require=true)
-    public static Result login(JsonNode json)
+    public static Result login(JsonNode params)
     {
-        String email = json.get("email").textValue();
-        String password = json.get("password").textValue();
+        String email = params.get("email").textValue();
+        String password = params.get("password").textValue();
 
         User user = User.getByEmail(email);
 
@@ -95,9 +95,9 @@ public class UsersController extends AppController
         return Ok(result);
     }
 
-    public static Result logout(JsonNode json)
+    public static Result logout(JsonNode params)
     {
-        String token = json.get("access_token").textValue();
+        String token = params.get("access_token").textValue();
         User.deleteToken(token);
 
         return Ok();
