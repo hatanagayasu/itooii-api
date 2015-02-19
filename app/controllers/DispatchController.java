@@ -148,7 +148,7 @@ public class DispatchController extends AppController
             validation.put("type", type);
             validation.put("require", v.require());
 
-            if (!v.rule().isEmpty() && (type.equals("string") || type.equals("integer")))
+            if (!v.rule().isEmpty())
             {
                 ObjectNode rules = mapper.createObjectNode();
                 for (String rule : v.rule().split(","))
@@ -491,11 +491,17 @@ public class DispatchController extends AppController
                 if (!param.isObject())
                     throw new MalformedParamException(validation);
 
+                if (validation.has("rules") && !validationSize(validation.get("rules"), param))
+                    throw new MalformedParamException(validation);
+
                 validations(validation.get("validations"), (ObjectNode)param);
             }
             else if (type.equals("array"))
             {
                 if (!param.isArray())
+                    throw new MalformedParamException(validation);
+
+                if (validation.has("rules") && !validationSize(validation.get("rules"), param))
                     throw new MalformedParamException(validation);
 
                 JsonNode v = validation.get("validation");
@@ -515,13 +521,14 @@ public class DispatchController extends AppController
         throws MissingParamException, MalformedParamException
     {
         String type = validation.get("type").textValue();
+        JsonNode rules = validation.get("rules");
 
         if (type.equals("string"))
         {
             if (!param.isTextual() || param.textValue().isEmpty())
                 throw new MalformedParamException(validation);
 
-            if (validation.has("rules") && !validation(validation.get("rules"), param.textValue()))
+            if (rules != null && !validation(rules, param.textValue()))
                 throw new MalformedParamException(validation);
         }
         else if (type.equals("boolean"))
@@ -534,12 +541,15 @@ public class DispatchController extends AppController
             if (!param.isInt())
                 throw new MalformedParamException(validation);
 
-            if (validation.has("rules") && !validation(validation.get("rules"), param.intValue()))
+            if (rules != null && !validation(rules, param.intValue()))
                 throw new MalformedParamException(validation);
         }
         else if (type.equals("object"))
         {
             if (!param.isObject())
+                throw new MalformedParamException(validation);
+
+            if (rules != null && !validationSize(rules, param))
                 throw new MalformedParamException(validation);
 
             if (validation.has("validations"))
@@ -549,6 +559,32 @@ public class DispatchController extends AppController
         {
             throw new MalformedParamException(validation);
         }
+    }
+
+    private static boolean validationSize(JsonNode rules, JsonNode params)
+    {
+        Iterator<String> iterator = rules.fieldNames();
+        while (iterator.hasNext())
+        {
+            String rule = iterator.next();
+
+            if (rule.equals("minSize"))
+            {
+                if (params.size() < rules.get(rule).intValue())
+                    return false;
+            }
+            else if (rule.equals("maxSize"))
+            {
+                if (params.size() > rules.get(rule).intValue())
+                    return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static boolean validation(JsonNode rules, int value)
