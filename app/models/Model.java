@@ -6,9 +6,12 @@ import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
@@ -82,6 +85,9 @@ public class Model
                 String name = field.getName();
                 Object value = field.get(object);
 
+                if (field.getAnnotation(JsonProperty.class) != null)
+                    name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+
                 if (value == null)
                     continue;
 
@@ -102,6 +108,42 @@ public class Model
                 else if (clazz == String.class)
                 {
                     json.put(name, (String)value);
+                }
+                else if (value instanceof Collection)
+                {
+                    Collection collection = (Collection)value;
+                    ArrayNode node = mapper.createArrayNode();
+
+                    if (!collection.isEmpty())
+                    {
+                        clazz = collection.iterator().next().getClass();
+                        if (clazz == Boolean.class)
+                        {
+                            for (Boolean o : (Collection<Boolean>)value)
+                                node.add(o);
+                        }
+                        else if (clazz == Date.class)
+                        {
+                            for (Date o : (Collection<Date>)value)
+                                node.add(o.getTime() / 1000);
+                        }
+                        else if (clazz == Integer.class)
+                        {
+                            for (Integer o : (Collection<Integer>)value)
+                                node.add(o);
+                        }
+                        else if (clazz == String.class)
+                        {
+                            for (String o : (Collection<String>)value)
+                                node.add(o);
+                        }
+                        else
+                        {
+                            for (Object o : (Collection<?>)value)
+                                node.add(toJson(o));
+                        }
+                    }
+                    json.put(name, node);
                 }
                 else
                 {
