@@ -43,17 +43,18 @@ public class UsersController extends AppController
     @Anonymous
     @Validation(name="email", rule="email", require=true)
     @Validation(name="password", require=true)
-    @Validation(name="name", require=true)
+    @Validation(name="native_language", type="array", rule="minSize=1", require=true)
+    @Validation(name="native_language[]", type="integer", require=true)
+    @Validation(name="practice_language", type="array", rule="minSize=1", require=true)
+    @Validation(name="practice_language[]", type="integer", require=true)
     public static Result add(JsonNode json)
     {
         String email = json.get("email").textValue();
-        String password = json.get("password").textValue();
-        String name = json.get("name").textValue();
 
         if (User.getByEmail(email) != null)
             return Error(Error.USER_ALREADY_EXISTS);
 
-        User user = User.add(email, password, name);
+        User user = User.add(json);
 
         return Ok(user);
     }
