@@ -87,7 +87,7 @@ public class DispatchController extends AppController
                 if (!routes.has(parts[0]))
                     routes.put(parts[0], mapper.createObjectNode());
 
-                ObjectNode segs = (ObjectNode)routes.get(parts[0]);
+                ObjectNode segs = routes.with(parts[0]);
                 ObjectNode regexes = mapper.createObjectNode();
                 ObjectNode route = mapper.createObjectNode();
                 ObjectNode pathParamsMap = mapper.createObjectNode();
@@ -170,7 +170,7 @@ public class DispatchController extends AppController
             if (type.equals("object"))
                 validation.put("validations", mapper.createObjectNode());
 
-            JsonNode parent = validations;
+            ObjectNode parent = validations;
             String[] segs = name.split("\\.");
             if (segs.length > 1)
             {
@@ -178,25 +178,20 @@ public class DispatchController extends AppController
                 {
                     if (segs[i].endsWith("[]"))
                     {
-                        parent = parent.get(segs[i].replace("[]", "")).get("validation");
-                        parent = parent.get("validations");
+                        parent = parent.with(segs[i].replace("[]", "")).with("validation");
+                        parent = parent.with("validations");
                     }
                     else
                     {
-                        parent = parent.get(segs[i]).get("validations");
+                        parent = parent.with(segs[i]).with("validations");
                     }
                 }
             }
 
             if (name.endsWith("[]"))
-            {
-                parent = parent.get(name.replace("[]", ""));
-                ((ObjectNode)parent).put("validation", validation);
-            }
+                parent.with(name.replace("[]", "")).put("validation", validation);
             else
-            {
-                ((ObjectNode)parent).put(segs[segs.length - 1], validation);
-            }
+                parent.put(segs[segs.length - 1], validation);
         }
 
         return validations;
