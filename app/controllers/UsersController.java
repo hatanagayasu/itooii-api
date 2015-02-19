@@ -59,11 +59,17 @@ public class UsersController extends AppController
         return Ok(user);
     }
 
-    @Validation(name="@email", rule="email")
-    @Validation(name="@password")
-    @Validation(name="@name")
+    @Validation(name="email", rule="email")
+    @Validation(name="password")
+    @Validation(name="name")
+    @Validation(name="native_language", type="array", rule="minSize=1")
+    @Validation(name="native_language[]", type="integer")
+    @Validation(name="practice_language", type="array", rule="minSize=1")
+    @Validation(name="practice_language[]", type="integer")
     public static Result update(JsonNode json)
     {
+        User.update(json);
+
         return Ok();
     }
 

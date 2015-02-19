@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
@@ -63,6 +64,25 @@ public class User extends Model
         user.setPassword(null);
 
         return user;
+    }
+
+    public static void update(JsonNode params)
+    {
+        String token = params.get("access_token").textValue();
+        User user = getByToken(token);
+
+        MongoCollection userCol = jongo.getCollection("user");
+
+        ObjectNode objectNode = (ObjectNode)params;
+        objectNode.putPOJO("modified", new Date());
+
+        if (params.has("password"))
+        {
+            String password = params.get("password").textValue();
+            objectNode.put("password", md5(password));
+        }
+
+        userCol.update("{_id:#}", user.id).with("{$set:#}", params);
     }
 
     public static User getByEmail(String email)
