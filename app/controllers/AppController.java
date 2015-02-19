@@ -55,6 +55,11 @@ public class AppController extends Controller
         return new Result(404);
     }
 
+    public static void errorlog(String error)
+    {
+        Logger.error(error);
+    }
+
     public static void errorlog(Throwable cause)
     {
         StringWriter errors = new StringWriter();
