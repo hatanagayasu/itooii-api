@@ -3,14 +3,14 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.DispatchController.index()
+GET     /                           controllers.HttpController.index()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
-GET     /websocket                  controllers.DispatchController.websocket()
+GET     /websocket                  controllers.WebSocketController.websocket()
 
-GET     /*path                      controllers.DispatchController.dispatch(path)
-DELETE  /*path                      controllers.DispatchController.dispatch(path)
-POST    /*path                      controllers.DispatchController.dispatch(path)
-PUT     /*path                      controllers.DispatchController.dispatch(path)
+GET     /*path                      controllers.HttpController.dispatch(path)
+DELETE  /*path                      controllers.HttpController.dispatch(path)
+POST    /*path                      controllers.HttpController.dispatch(path)
+PUT     /*path                      controllers.HttpController.dispatch(path)
