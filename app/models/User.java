@@ -68,18 +68,23 @@ public class User extends Model
 
     public static void update(JsonNode params)
     {
+        update((ObjectNode)params);
+    }
+
+    private static void update(ObjectNode params)
+    {
         String token = params.get("access_token").textValue();
         User user = getByToken(token);
 
         MongoCollection userCol = jongo.getCollection("user");
 
-        ObjectNode objectNode = (ObjectNode)params;
-        objectNode.putPOJO("modified", new Date());
+        params.remove("access_token");
+        params.putPOJO("modified", new Date());
 
         if (params.has("password"))
         {
             String password = params.get("password").textValue();
-            objectNode.put("password", md5(password));
+            params.put("password", md5(password));
         }
 
         userCol.update("{_id:#}", user.id).with("{$set:#}", params);
