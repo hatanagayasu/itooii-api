@@ -10,9 +10,8 @@ public enum Error
     UNAUTHORIZED(40100, "Unauthorized"),
     INCORRECT_USER(40101, "Incorrect User"),
     INCORRECT_PASSWORD(40102, "Incorrect Password"),
-    MISSING_ACCESS_TOKEN(40103, "Missing access_token"),
-    INVALID_ACCESS_TOKEN(40104, "Invalid access_token"),
-    USER_ALREADY_EXISTS(40105, "User already exists"),
+    INVALID_ACCESS_TOKEN(40103, "Invalid access_token"),
+    USER_ALREADY_EXISTS(40104, "User already exists"),
 
     FORBIDDEN(40300, "Forbidden"),
 
