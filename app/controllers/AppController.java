@@ -61,9 +61,9 @@ public class AppController extends Controller
         return new Result(404);
     }
 
-    public static void errorlog(String error)
+    public static void errorlog(Object error)
     {
-        Logger.error(error);
+        Logger.error(error.toString());
     }
 
     public static void errorlog(Throwable cause)
