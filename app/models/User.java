@@ -111,6 +111,15 @@ public class User extends Model
         return this.password.equals(md5(password));
     }
 
+    public static boolean checkToken(String token)
+    {
+        Jedis jedis = getJedis();
+        boolean exists = jedis.exists("token:" + token);
+        returnJedis(jedis);
+
+        return exists;
+    }
+
     public String newToken()
     {
         String token = UUID.randomUUID().toString();

@@ -30,7 +30,6 @@ public class HttpController extends DispatchController
                 first_segment : {
                     regex : {
                         method : Method,
-                        anonymous : Boolean,
                         validations : {
                             name : {
                                 fullName : String,
@@ -91,10 +90,9 @@ public class HttpController extends DispatchController
                 Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
                 route.putPOJO("method", method);
 
-                if (method.getAnnotation(Anonymous.class) != null)
-                    route.put("anonymous", true);
+                boolean anonymous = method.getAnnotation(Anonymous.class) != null;
+                ObjectNode validations = parseValidations(method, anonymous);
 
-                ObjectNode validations = parseValidations(method);
                 if (validations.size() > 0)
                     route.put("validations", validations);
 

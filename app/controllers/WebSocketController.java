@@ -28,7 +28,7 @@ public class WebSocketController extends DispatchController
         {
             controller : {
                 action : {
-                    anonymous : Boolean,
+                    method : Method,
                     validations : {
                         name : {
                             fullName : String,
@@ -81,10 +81,9 @@ public class WebSocketController extends DispatchController
                 Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
                 route.putPOJO("method", method);
 
-                if (method.getAnnotation(Anonymous.class) != null)
-                    route.put("anonymous", true);
+                boolean anonymous = method.getAnnotation(Anonymous.class) != null;
+                ObjectNode validations = parseValidations(method, anonymous);
 
-                ObjectNode validations = parseValidations(method);
                 if (validations.size() > 0)
                     route.put("validations", validations);
             }
@@ -159,15 +158,6 @@ public class WebSocketController extends DispatchController
         {
             public void onReady(WebSocket.In<String> in, WebSocket.Out<String> out)
             {
-                Result result = UsersController.me(token);
-                if (result.getStatus() != 200)
-                {
-                    out.write(result.toString());
-                    out.close();
-
-                    return;
-                }
-
                 in.onMessage(new Callback<String>()
                 {
                     public void invoke(String event)

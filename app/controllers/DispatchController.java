@@ -13,9 +13,19 @@ import com.fasterxml.jackson.databind.node.POJONode;
 
 public class DispatchController extends AppController
 {
-    public static ObjectNode parseValidations(Method method)
+    public static ObjectNode parseValidations(Method method, boolean anonymous)
     {
         ObjectNode validations = mapper.createObjectNode();
+
+        if (!anonymous)
+        {
+            ObjectNode validation = mapper.createObjectNode();
+            validation.put("fullName", "access_token");
+            validation.put("type", "access_token");
+            validation.put("require", true);
+
+            validations.put("access_token", validation);
+        }
 
         for (Validation v : method.getAnnotationsByType(Validation.class))
         {
@@ -91,20 +101,15 @@ public class DispatchController extends AppController
         }
     }
 
+    private static class InvalidAccessTokenException extends Exception
+    {
+    }
+
     public static Result invoke(JsonNode route, ObjectNode params)
     {
         try
         {
             Method method = (Method)((POJONode)route.get("method")).getPojo();
-
-            // only websocket request has a param method
-            if (!params.has("method") && !route.has("anonymous"))
-            {
-                Result result = UsersController.me(params);
-
-                if (result.getStatus() != 200)
-                    return result;
-            }
 
             if (route.has("validations"))
                 validations(route.get("validations"), params);
@@ -131,10 +136,14 @@ public class DispatchController extends AppController
         {
             return Error(Error.MALFORMED_PARAM, e.getMessage());
         }
+        catch (InvalidAccessTokenException e)
+        {
+            return Error(Error.INVALID_ACCESS_TOKEN);
+        }
     }
 
     public static void validations(JsonNode validations, ObjectNode params)
-        throws MissingParamException, MalformedParamException
+        throws MissingParamException, MalformedParamException, InvalidAccessTokenException
     {
         Iterator<String> fieldNames = validations.fieldNames();
         while (fieldNames.hasNext())
@@ -150,9 +159,6 @@ public class DispatchController extends AppController
         while (fieldNames.hasNext())
         {
             String name = fieldNames.next();
-
-            if (name.equals("access_token"))
-                continue;
 
             if (!validations.has(name))
             {
@@ -190,6 +196,16 @@ public class DispatchController extends AppController
                 while (values.hasNext())
                     validation(v, values.next());
             }
+            else if (type.equals("access_token"))
+            {
+                if (!param.isTextual())
+                    throw new InvalidAccessTokenException();
+
+                String token = param.textValue();
+                String regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+                if (!token.matches(regex) || !models.User.checkToken(token))
+                    throw new InvalidAccessTokenException();
+            }
             else
             {
                 validation(validation, param);
@@ -198,7 +214,7 @@ public class DispatchController extends AppController
     }
 
     private static void validation(JsonNode validation, JsonNode param)
-        throws MissingParamException, MalformedParamException
+        throws MissingParamException, MalformedParamException, InvalidAccessTokenException
     {
         String type = validation.get("type").textValue();
         JsonNode rules = validation.get("rules");
