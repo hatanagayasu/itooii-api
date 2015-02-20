@@ -10,6 +10,7 @@ import models.Model;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -25,6 +26,11 @@ public class AppController extends Controller
     public static Result Ok(Model model)
     {
         return new Result(200, Model.toJson(model));
+    }
+
+    public static Result Ok(JsonNode node)
+    {
+        return new Result(200, node);
     }
 
     public static Result Ok(ObjectNode node)
