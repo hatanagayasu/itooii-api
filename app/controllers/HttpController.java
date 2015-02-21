@@ -162,9 +162,7 @@ public class HttpController extends DispatchController
             String method = request().method();
             JsonNode route = match(method, path);
 
-            ObjectNode params = parseParams();
-            if (route.has("pathParamsMap"))
-                parsePathParams(path, route.get("pathParamsMap"), params);
+            ObjectNode params = parseParams(route, path);
 
             Result result = invoke(route, params);
 
@@ -206,24 +204,26 @@ public class HttpController extends DispatchController
         throw new ServiceUnavailableException();
     }
 
-    private static void parsePathParams(String path, JsonNode pathParamsMap, ObjectNode params)
-    {
-        path = "/" + path;
-        String[] segs = path.split("/");
-
-        Iterator<String> fieldNames = pathParamsMap.fieldNames();
-        while (fieldNames.hasNext())
-        {
-            String name = fieldNames.next();
-            int offset = pathParamsMap.get(name).intValue();
-
-            params.put(name, segs[offset]);
-        }
-    }
-
-    private static ObjectNode parseParams()
+    // path parameter < query string < application/x-www-form-urlencoded < body json
+    private static ObjectNode parseParams(JsonNode route, String path)
     {
         ObjectNode params = mapper.createObjectNode();
+
+        if (route.has("pathParamsMap"))
+        {
+            JsonNode pathParamsMap = route.get("pathParamsMap");
+            path = "/" + path;
+            String[] segs = path.split("/");
+
+            Iterator<String> fieldNames = pathParamsMap.fieldNames();
+            while (fieldNames.hasNext())
+            {
+                String name = fieldNames.next();
+                int offset = pathParamsMap.get(name).intValue();
+
+                params.put(name, segs[offset]);
+            }
+        }
 
         for (Entry<String, String[]> entry : request().queryString().entrySet())
         {
