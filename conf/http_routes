@@ -3,6 +3,6 @@ POST    /user                       UsersController/add
 PUT     /user                       UsersController/update
 POST    /user/following/:user_id    UsersController/follow
 DELETE  /user/following/:user_id    UsersController/unfollow
-POST    /access_tokens              UsersController/login
-DELETE  /access_tokens              UsersController/logout
+POST    /access_token               UsersController/login
+DELETE  /access_token               UsersController/logout
 POST    /echo                       TestController/echo
