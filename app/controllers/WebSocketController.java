@@ -121,10 +121,8 @@ public class WebSocketController extends DispatchController
         try
         {
             ObjectNode params = mapper.readValue(event, ObjectNode.class);
-            if (!params.has("controller"))
-                return Error(Error.MISSING_PARAM, "controller");
-            if (!params.has("action"))
-                return Error(Error.MISSING_PARAM, "action");
+            if (!params.has("controller") || !params.has("action"))
+                return Error(Error.SERVICE_UNAVAILABLE);
             params.put("access_token", token);
 
             String controller = params.get("controller").textValue();
@@ -132,7 +130,7 @@ public class WebSocketController extends DispatchController
 
             JsonNode route = match(controller, action);
             if (route == null)
-                return NotFound();
+                return Error(Error.SERVICE_UNAVAILABLE);
 
             Result result = invoke(route, params);
 

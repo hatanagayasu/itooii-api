@@ -5,6 +5,7 @@ import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 
 import controllers.annotations.*;
+import controllers.constants.Error;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,9 +27,9 @@ public class HttpController extends DispatchController
     private static ObjectNode routes = mapper.createObjectNode();
     /*
         {
-            method : {
-                first_segment : {
-                    regex : {
+            first_segment : {
+                regex : {
+                    method : {
                         method : Method,
                         validations : {
                             name : {
@@ -75,14 +76,13 @@ public class HttpController extends DispatchController
 
                 // method path controller/action
                 String[] parts = line.split("\\s+");
-                String[] segments = parts[1].split("/");
+                String[] segs = parts[1].split("/");
                 String[] pair = parts[2].split("/");
 
-                if (!routes.has(parts[0]))
-                    routes.put(parts[0], mapper.createObjectNode());
+                if (!routes.has(segs[1]))
+                    routes.put(segs[1], mapper.createObjectNode());
 
-                ObjectNode segs = routes.with(parts[0]);
-                ObjectNode regexes = mapper.createObjectNode();
+                ObjectNode regexes = routes.with(segs[1]);
                 ObjectNode route = mapper.createObjectNode();
                 ObjectNode pathParamsMap = mapper.createObjectNode();
 
@@ -96,20 +96,22 @@ public class HttpController extends DispatchController
                 if (validations.size() > 0)
                     route.put("validations", validations);
 
-                for (int i = 1; i < segments.length; i++)
+                for (int i = 1; i < segs.length; i++)
                 {
-                    if (segments[i].startsWith(":"))
-                        pathParamsMap.put(segments[i].replaceAll("^:", ""), i);
+                    if (segs[i].startsWith(":"))
+                        pathParamsMap.put(segs[i].replaceAll("^:", ""), i);
                 }
                 if (pathParamsMap.size() > 0)
                     route.put("pathParamsMap", pathParamsMap);
 
                 String regex = "";
-                for (int i = 1; i < segments.length; i++)
-                    regex += "/" + (segments[i].startsWith(":") ? "[^/]+" : segments[i]);
-                regexes.put(regex, route);
+                for (int i = 1; i < segs.length; i++)
+                    regex += "/" + (segs[i].startsWith(":") ? "[^/]+" : segs[i]);
 
-                segs.put(segments[1], regexes);
+                if (!regexes.has(regex))
+                    regexes.put(regex, mapper.createObjectNode());
+
+                regexes.with(regex).put(parts[0], route);
             }
 
             bufferedReader.close();
@@ -133,19 +135,16 @@ public class HttpController extends DispatchController
         return ok();
     }
 
-    public static play.mvc.Result dispatch(String path)
+    private static class ServiceUnavailableException extends Exception
     {
-        String method = request().method();
-        JsonNode route = match(method, path);
-        if (route == null)
-            return notFound();
+    }
 
-        ObjectNode params = parseParams();
-        if (route.has("pathParamsMap"))
-            parsePathParams(path, route.get("pathParamsMap"), params);
+    private static class MethodNotAllowedException extends Exception
+    {
+    }
 
-        Result result = invoke(route, params);
-
+    private static play.mvc.Result convertResult(Result result)
+    {
         int status = result.getStatus();
         Object content = result.getObject();
 
@@ -158,33 +157,61 @@ public class HttpController extends DispatchController
         return status(status, content.toString());
     }
 
-    private static JsonNode match(String method, String path)
+    public static play.mvc.Result dispatch(String path)
     {
-        if (!routes.has(method))
-            return null;
+        try
+        {
+            String method = request().method();
+            JsonNode route = match(method, path);
 
-        JsonNode segs = routes.get(method);
+            ObjectNode params = parseParams();
+            if (route.has("pathParamsMap"))
+                parsePathParams(path, route.get("pathParamsMap"), params);
+
+            Result result = invoke(route, params);
+
+            return convertResult(result);
+        }
+        catch (ServiceUnavailableException e)
+        {
+            return convertResult(Error(Error.SERVICE_UNAVAILABLE));
+        }
+        catch (MethodNotAllowedException e)
+        {
+            return convertResult(Error(Error.METHOD_NOT_ALLOWED));
+        }
+    }
+
+    private static JsonNode match(String method, String path)
+        throws ServiceUnavailableException, MethodNotAllowedException
+    {
         path = "/" + path;
-        String[] segments = path.split("/");
-        if (!segs.has(segments[1]))
-            return null;
+        String[] segs = path.split("/");
 
-        JsonNode regexes = segs.get(segments[1]);
+        if (!routes.has(segs[1]))
+            throw new ServiceUnavailableException();
+
+        JsonNode regexes = routes.get(segs[1]);
         Iterator<String> fieldNames = regexes.fieldNames();
         while (fieldNames.hasNext())
         {
             String regex = fieldNames.next();
             if (path.matches(regex))
-                return regexes.get(regex);
+            {
+                if (!regexes.get(regex).has(method))
+                    throw new MethodNotAllowedException();
+
+                return regexes.get(regex).get(method);
+            }
         }
 
-        return null;
+        throw new ServiceUnavailableException();
     }
 
     private static void parsePathParams(String path, JsonNode pathParamsMap, ObjectNode params)
     {
         path = "/" + path;
-        String[] segments = path.split("/");
+        String[] segs = path.split("/");
 
         Iterator<String> fieldNames = pathParamsMap.fieldNames();
         while (fieldNames.hasNext())
@@ -192,7 +219,7 @@ public class HttpController extends DispatchController
             String name = fieldNames.next();
             int offset = pathParamsMap.get(name).intValue();
 
-            params.put(name, segments[offset]);
+            params.put(name, segs[offset]);
         }
     }
 

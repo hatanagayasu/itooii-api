@@ -17,7 +17,11 @@ public enum Error
 
     NOT_FOUND(40400, "Not Found"),
 
-    INTERNAL_SERVER_ERROR(50000, "Internal Server Error");
+    METHOD_NOT_ALLOWED(40500, "Method Not Allowed"),
+
+    INTERNAL_SERVER_ERROR(50000, "Internal Server Error"),
+
+    SERVICE_UNAVAILABLE(50300, "Service Unavailable");
 
     private final int code;
     private final String description;
