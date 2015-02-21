@@ -16,6 +16,7 @@ public enum Error
     FORBIDDEN(40300, "Forbidden"),
 
     NOT_FOUND(40400, "Not Found"),
+    USER_NOT_FOUND(40401, "User Not Found"),
 
     METHOD_NOT_ALLOWED(40500, "Method Not Allowed"),
 

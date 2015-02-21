@@ -25,6 +25,8 @@ public class User extends Model
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
     private Set<Integer> practiceLanguage;
+    private Set<String> following;
+    private Set<String> followers;
     private Date created;
     private Date modified;
 
@@ -66,16 +68,13 @@ public class User extends Model
         return user;
     }
 
-    public static void update(JsonNode params)
+    public void update(JsonNode params)
     {
         update((ObjectNode)params);
     }
 
-    private static void update(ObjectNode params)
+    private void update(ObjectNode params)
     {
-        String token = params.get("access_token").textValue();
-        User user = getByToken(token);
-
         MongoCollection userCol = jongo.getCollection("user");
 
         params.remove("access_token");
@@ -87,7 +86,32 @@ public class User extends Model
             params.put("password", md5(password));
         }
 
-        userCol.update("{_id:#}", user.id).with("{$set:#}", params);
+        userCol.update("{_id:#}", id).with("{$set:#}", params);
+    }
+
+    public void follow(String userId)
+    {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        userCol.update("{_id:#}", userId).with("{$addToSet:{followers:#}}", id);
+        userCol.update("{_id:#}", id).with("{$addToSet:{following:#}}", userId);
+    }
+
+    public void unfollow(String userId)
+    {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        userCol.update("{_id:#}", id).with("{$pull:{following:#}}", userId);
+        userCol.update("{_id:#}", userId).with("{$pull:{followers:#}}", id);
+    }
+
+    public static User getById(String userId)
+    {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        User user = userCol.findOne("{_id:#}", userId).as(User.class);
+
+        return user;
     }
 
     public static User getByEmail(String email)

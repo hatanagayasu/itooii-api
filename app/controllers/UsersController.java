@@ -12,11 +12,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class UsersController extends AppController
 {
-    public static Result me(JsonNode params)
+    private static User getMe(JsonNode params)
     {
         String token = params.get("access_token").textValue();
 
-        User user = User.getByToken(token);
+        return User.getByToken(token);
+    }
+
+    public static Result me(JsonNode params)
+    {
+        User user = getMe(params);
         if (user == null)
             return Error(Error.INVALID_ACCESS_TOKEN);
 
@@ -53,7 +58,36 @@ public class UsersController extends AppController
     @Validation(name="practice_language[]", type="integer")
     public static Result update(JsonNode params)
     {
-        User.update(params);
+        User me = getMe(params);
+        me.update(params);
+
+        return Ok();
+    }
+
+    @Validation(name="user_id", rule="uuid", require=true)
+    public static Result follow(JsonNode params)
+    {
+        String userId = params.get("user_id").textValue();
+        User user = User.getById(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        User me = getMe(params);
+        if (me.getFollowing() == null || !me.getFollowing().contains(userId))
+            me.follow(userId);
+
+        return Ok();
+    }
+
+    @Validation(name="user_id", rule="uuid", require=true)
+    public static Result unfollow(JsonNode params)
+    {
+        String userId = params.get("user_id").textValue();
+
+        User me = getMe(params);
+        if (me.getFollowing() != null && me.getFollowing().contains(userId))
+            me.unfollow(userId);
 
         return Ok();
     }
@@ -83,6 +117,7 @@ public class UsersController extends AppController
     public static Result logout(JsonNode params)
     {
         String token = params.get("access_token").textValue();
+
         User.deleteToken(token);
 
         return Ok();
