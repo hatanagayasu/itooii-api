@@ -1,8 +1,6 @@
 package controllers;
 
 import play.Play;
-import play.mvc.Http.MultipartFormData;
-import play.mvc.Http.MultipartFormData.FilePart;
 
 import controllers.annotations.*;
 import controllers.constants.Error;
@@ -283,65 +281,6 @@ public class HttpController extends DispatchController
             {
                 String fieldName = fieldNames.next();
                 params.put(fieldName, json.get(fieldName));
-            }
-        }
-
-        MultipartFormData form = request().body().asMultipartFormData();
-        if (form != null)
-        {
-            for (Entry<String, String[]> entry : form.asFormUrlEncoded().entrySet())
-            {
-                String key = entry.getKey();
-                String[] values = entry.getValue();
-
-                if (values.length == 0)
-                {
-                    params.put(key, "");
-                }
-                else if (values.length == 1)
-                {
-                    params.put(key, values[0]);
-                    if(key.equals("json"))
-                    {
-                        try
-                        {
-                            params.putAll(mapper.readValue(values[0], ObjectNode.class));
-                        }
-                        catch (Exception e)
-                        {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-                else
-                {
-                    ArrayNode node = mapper.createArrayNode();
-                    for (String value: values)
-                        node.add(value);
-                    params.put(key, node);
-                }
-            }
-
-            Iterator<FilePart> fileParts = form.getFiles().iterator();
-            while (fileParts.hasNext())
-            {
-                FilePart filePart = fileParts.next();
-                String key = filePart.getKey();
-                if (key.equals("json"))
-                {
-                    try
-                    {
-                        params.putAll(mapper.readValue(filePart.getFile(), ObjectNode.class));
-                    }
-                    catch (Exception e)
-                    {
-                        throw new RuntimeException(e);
-                    }
-                }
-                else
-                {
-                    params.putPOJO(key, filePart);
-                }
             }
         }
 
