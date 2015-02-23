@@ -146,6 +146,8 @@ public class HttpController extends DispatchController
         int status = result.getStatus();
         Object content = result.getObject();
 
+        response().setContentType("application/json");
+
         if (content == null)
             return status(status);
 

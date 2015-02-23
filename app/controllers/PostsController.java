@@ -27,13 +27,13 @@ public class PostsController extends AppController
         return Ok(params);
     }
 
-    @Validation(name="post_id", rule="uuid", require=true)
+    @Validation(name="post_id", type="id", require=true)
     public static Result getComment(JsonNode params)
     {
         return Ok(params);
     }
 
-    @Validation(name="post_id", rule="uuid", require=true)
+    @Validation(name="post_id", type="id", require=true)
     @Validation(name="text", require=true)
     @Validation(name="attachments", type="array")
     @Validation(name="attachments[]", type="object")
@@ -44,25 +44,25 @@ public class PostsController extends AppController
         return Ok(params);
     }
 
-    @Validation(name="post_id", rule="uuid", require=true)
+    @Validation(name="post_id", type="id", require=true)
     public static Result like(JsonNode params)
     {
         return Ok(params);
     }
 
-    @Validation(name="post_id", rule="uuid", require=true)
+    @Validation(name="post_id", type="id", require=true)
     public static Result unlike(JsonNode params)
     {
         return Ok(params);
     }
 
-    @Validation(name="comment_id", rule="uuid", require=true)
+    @Validation(name="comment_id", type="id", require=true)
     public static Result likeComment(JsonNode params)
     {
         return Ok(params);
     }
 
-    @Validation(name="comment_id", rule="uuid", require=true)
+    @Validation(name="comment_id", type="id", require=true)
     public static Result unlikeComment(JsonNode params)
     {
         return Ok(params);

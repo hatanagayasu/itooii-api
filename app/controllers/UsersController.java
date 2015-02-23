@@ -9,6 +9,7 @@ import models.User;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.bson.types.ObjectId;
 
 public class UsersController extends AppController
 {
@@ -56,6 +57,8 @@ public class UsersController extends AppController
     @Validation(name="native_language[]", type="integer")
     @Validation(name="practice_language", type="array", rule="minSize=1")
     @Validation(name="practice_language[]", type="integer")
+    @Validation(name="following", type="array")
+    @Validation(name="following[]", type="id")
     public static Result update(JsonNode params)
     {
         User me = getMe(params);
@@ -64,10 +67,10 @@ public class UsersController extends AppController
         return Ok();
     }
 
-    @Validation(name="user_id", rule="uuid", require=true)
+    @Validation(name="user_id", type="id", require=true)
     public static Result follow(JsonNode params)
     {
-        String userId = params.get("user_id").textValue();
+        ObjectId userId = getObjectId(params, "user_id");
         User user = User.getById(userId);
 
         if (user == null)
@@ -80,10 +83,10 @@ public class UsersController extends AppController
         return Ok();
     }
 
-    @Validation(name="user_id", rule="uuid", require=true)
+    @Validation(name="user_id", type="id", require=true)
     public static Result unfollow(JsonNode params)
     {
-        String userId = params.get("user_id").textValue();
+        ObjectId userId = getObjectId(params, "user_id");
 
         User me = getMe(params);
         if (me.getFollowing() != null && me.getFollowing().contains(userId))

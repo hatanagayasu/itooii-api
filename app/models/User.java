@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
@@ -17,7 +18,7 @@ import redis.clients.jedis.Jedis;
 public class User extends Model
 {
     @Id
-    private String id;
+    private ObjectId id;
     private String email;
     private String password;
     private String name;
@@ -25,8 +26,8 @@ public class User extends Model
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
     private Set<Integer> practiceLanguage;
-    private Set<String> following;
-    private Set<String> followers;
+    private Set<ObjectId> following;
+    private Set<ObjectId> followers;
     private Date created;
     private Date modified;
 
@@ -38,7 +39,7 @@ public class User extends Model
     {
         Date now = new Date();
 
-        id = UUID.randomUUID().toString();
+        id = new ObjectId();
         email = params.get("email").textValue();
         password = md5(params.get("password").textValue());
 
@@ -89,27 +90,27 @@ public class User extends Model
         userCol.update("{_id:#}", id).with("{$set:#}", params);
     }
 
-    public void follow(String userId)
+    public void follow(ObjectId userId)
     {
         MongoCollection userCol = jongo.getCollection("user");
 
-        userCol.update("{_id:#}", userId).with("{$addToSet:{followers:#}}", id);
-        userCol.update("{_id:#}", id).with("{$addToSet:{following:#}}", userId);
+        userCol.update(userId).with("{$addToSet:{followers:#}}", id);
+        userCol.update(id).with("{$addToSet:{following:#}}", userId);
     }
 
-    public void unfollow(String userId)
+    public void unfollow(ObjectId userId)
     {
         MongoCollection userCol = jongo.getCollection("user");
 
-        userCol.update("{_id:#}", id).with("{$pull:{following:#}}", userId);
-        userCol.update("{_id:#}", userId).with("{$pull:{followers:#}}", id);
+        userCol.update(id).with("{$pull:{following:#}}", userId);
+        userCol.update(userId).with("{$pull:{followers:#}}", id);
     }
 
-    public static User getById(String userId)
+    public static User getById(ObjectId userId)
     {
         MongoCollection userCol = jongo.getCollection("user");
 
-        User user = userCol.findOne("{_id:#}", userId).as(User.class);
+        User user = userCol.findOne(userId).as(User.class);
 
         return user;
     }

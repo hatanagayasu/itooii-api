@@ -13,6 +13,8 @@ import java.io.StringWriter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.POJONode;
+import org.bson.types.ObjectId;
 
 public class AppController extends Controller
 {
@@ -71,5 +73,10 @@ public class AppController extends Controller
         StringWriter errors = new StringWriter();
         cause.printStackTrace(new PrintWriter(errors));
         Logger.error(errors.toString());
+    }
+
+    public static ObjectId getObjectId(JsonNode params, String name)
+    {
+        return (ObjectId)((POJONode)params.get(name)).getPojo();
     }
 }

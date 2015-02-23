@@ -8,8 +8,10 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
+import org.bson.types.ObjectId;
 
 public class DispatchController extends AppController
 {
@@ -195,6 +197,15 @@ public class DispatchController extends AppController
                 Iterator<JsonNode> values = param.iterator();
                 while (values.hasNext())
                     validation(v, values.next());
+
+                if (v.get("type").textValue().equals("id"))
+                {
+                    ArrayNode objectIds = mapper.createArrayNode();
+                    values = param.iterator();
+                    while (values.hasNext())
+                        objectIds.addPOJO(new ObjectId(values.next().textValue()));
+                    ((ObjectNode)params).put(name, objectIds);
+                }
             }
             else if (type.equals("access_token"))
             {
@@ -209,6 +220,9 @@ public class DispatchController extends AppController
             else
             {
                 validation(validation, param);
+
+                if (type.equals("id"))
+                    ((ObjectNode)params).putPOJO(name, new ObjectId(param.textValue()));
             }
         }
     }
@@ -219,7 +233,16 @@ public class DispatchController extends AppController
         String type = validation.get("type").textValue();
         JsonNode rules = validation.get("rules");
 
-        if (type.equals("string"))
+        if (type.equals("id"))
+        {
+            if (!param.isTextual() || param.textValue().isEmpty())
+                throw new MalformedParamException(validation);
+
+            String regex = "^[0-9a-f]{24}$";
+            if (!param.textValue().matches(regex))
+                throw new MalformedParamException(validation);
+        }
+        else if (type.equals("string"))
         {
             if (!param.isTextual() || param.textValue().isEmpty())
                 throw new MalformedParamException(validation);
@@ -324,10 +347,6 @@ public class DispatchController extends AppController
             else if (rule.equals("email"))
             {
                 regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
-            }
-            else if (rule.equals("uuid"))
-            {
-                regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
             }
             else if (rule.matches("^/.*/$"))
             {
