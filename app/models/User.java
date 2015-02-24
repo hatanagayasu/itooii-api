@@ -6,11 +6,13 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
@@ -26,10 +28,11 @@ public class User extends Model
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
     private Set<Integer> practiceLanguage;
+    @JsonIgnore
     private Set<ObjectId> following;
+    @JsonIgnore
     private Set<ObjectId> followers;
     private Date created;
-    private Date modified;
 
     public User()
     {
@@ -54,7 +57,6 @@ public class User extends Model
             practiceLanguage.add(values.next().intValue());
 
         created = now;
-        modified = now;
     }
 
     public static User add(JsonNode params)
@@ -79,7 +81,6 @@ public class User extends Model
         MongoCollection userCol = jongo.getCollection("user");
 
         params.remove("access_token");
-        params.putPOJO("modified", new Date());
 
         if (params.has("password"))
         {
@@ -87,23 +88,44 @@ public class User extends Model
             params.put("password", md5(password));
         }
 
-        userCol.update("{_id:#}", id).with("{$set:#}", params);
+        userCol.update(id).with("{$set:#}", params);
     }
 
     public void follow(ObjectId userId)
     {
-        MongoCollection userCol = jongo.getCollection("user");
+        MongoCollection following = jongo.getCollection("following");
+        MongoCollection follower = jongo.getCollection("follower");
 
-        userCol.update(userId).with("{$addToSet:{followers:#}}", id);
-        userCol.update(id).with("{$addToSet:{following:#}}", userId);
+        Date now = new Date();
+        following.insert("{user_id:#,following:#,created:#}", id, userId, now);
+        follower.insert("{user_id:#,follower:#,created:#}", userId, id, now);
     }
 
     public void unfollow(ObjectId userId)
     {
-        MongoCollection userCol = jongo.getCollection("user");
+        MongoCollection following = jongo.getCollection("following");
+        MongoCollection follower = jongo.getCollection("follower");
 
-        userCol.update(id).with("{$pull:{following:#}}", userId);
-        userCol.update(userId).with("{$pull:{followers:#}}", id);
+        following.remove("{user_id:#,following:#}", id, userId);
+        follower.remove("{user_id:#,follower:#}", userId, id);
+    }
+
+    private void filled()
+    {
+        MongoCollection followingCol = jongo.getCollection("following");
+        MongoCollection followerCol = jongo.getCollection("follower");
+
+        this.following = new HashSet();
+        MongoCursor<Following> following = followingCol.find("{user_id:#}", id)
+            .projection("{following:1}").as(Following.class);
+        while(following.hasNext())
+            this.following.add(following.next().getFollowing());
+
+        this.followers = new HashSet();
+        MongoCursor<Follower> followers = followerCol.find("{user_id:#}", id)
+            .projection("{follower:1}").as(Follower.class);
+        while(followers.hasNext())
+            this.followers.add(followers.next().getFollower());
     }
 
     public static User getById(ObjectId userId)
@@ -111,6 +133,8 @@ public class User extends Model
         MongoCollection userCol = jongo.getCollection("user");
 
         User user = userCol.findOne(userId).as(User.class);
+        if (user != null)
+            user.filled();
 
         return user;
     }
@@ -120,6 +144,8 @@ public class User extends Model
         MongoCollection userCol = jongo.getCollection("user");
 
         User user = userCol.findOne("{email:#}", email).as(User.class);
+        if (user != null)
+            user.filled();
 
         return user;
     }

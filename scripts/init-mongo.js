@@ -1,10 +1,17 @@
 var indexSpec = {
-    "user" : [
-        {index: {email:1}, option: {name:"email", unique:true}}
+    "user":[
+        {index:{email:1},option:{name:"email",unique:true,background:true}}
+    ],
+    "following":[
+        {index:{user_id:1,following:1},option:{name:"user_id_following",unique:true,background:true}}
+    ],
+    "follower":[
+        {index:{user_id:1,follower:1},option:{name:"user_id_follower",unique:true,background:true}}
     ]
 };
 
-["user"].forEach(function(colName){
+for (var colName in indexSpec)
+{
     var col = db[colName];
     if(col.stats().ok != 1) {
         print("Create collection - " + colName);
@@ -13,18 +20,23 @@ var indexSpec = {
     }
 
     var indexInfo = db[colName].getIndexSpecs();
-    indexSpec[colName].forEach(function(spec){
+    for (var key in indexSpec[colName])
+    {
+        var spec = indexSpec[colName][key];
         var indexName = spec.option.name;
         var indexExists = false;
-        indexInfo.forEach(function(index){
-            if(index.name == indexName){
+        for (var index in indexInfo)
+        {
+            if (indexInfo[index].name == indexName)
+            {
                 indexExists = true;
-                return;
+                break;
             }
-        });
-        if(!indexExists) {
+        }
+        if (!indexExists)
+        {
             print("Create index:" + indexName + " for collection:" + colName);
             col.ensureIndex(spec.index, spec.option);
         }
-    });
-});
+    }
+}
