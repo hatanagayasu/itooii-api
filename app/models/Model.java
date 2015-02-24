@@ -136,6 +136,12 @@ public class Model
                     collectionToJson((Collection)value, result);
                     result.append("]");
                 }
+                else if (value instanceof Model)
+                {
+                    result.append("\"").append(name).append("\":[");
+                    objectToJson(value, result);
+                    result.append("]");
+                }
                 else
                 {
                     result.append("\"").append(name).append("\":\"")
@@ -201,6 +207,16 @@ public class Model
                 }
             }
             else if (object instanceof Collection)
+            {
+                Iterator<Collection> iterator = collection.iterator();
+                while (iterator.hasNext())
+                {
+                    collectionToJson(iterator.next(), result);
+                    if (iterator.hasNext())
+                        result.append(",");
+                }
+            }
+            else if (object instanceof Model)
             {
                 Iterator<Object> iterator = collection.iterator();
                 while (iterator.hasNext())
