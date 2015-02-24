@@ -88,8 +88,7 @@ public class HttpController extends DispatchController
                 Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
                 route.putPOJO("method", method);
 
-                boolean anonymous = method.getAnnotation(Anonymous.class) != null;
-                ObjectNode validations = parseValidations(method, anonymous);
+                ObjectNode validations = parseValidations(method);
 
                 if (validations.size() > 0)
                     route.put("validations", validations);

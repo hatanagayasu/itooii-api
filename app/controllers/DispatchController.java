@@ -12,14 +12,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import org.bson.types.ObjectId;
+import com.mongodb.MongoException;
 
 public class DispatchController extends AppController
 {
-    public static ObjectNode parseValidations(Method method, boolean anonymous)
+    public static ObjectNode parseValidations(Method method)
     {
         ObjectNode validations = mapper.createObjectNode();
 
-        if (!anonymous)
+        if (method.getAnnotation(Anonymous.class) == null)
         {
             ObjectNode validation = mapper.createObjectNode();
             validation.put("fullName", "access_token");
