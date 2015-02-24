@@ -87,6 +87,10 @@ public class UsersController extends AppController
     public static Result unfollow(JsonNode params)
     {
         ObjectId userId = getObjectId(params, "user_id");
+        User user = User.getById(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
 
         User me = getMe(params);
         if (me.getFollowing() != null && me.getFollowing().contains(userId))
