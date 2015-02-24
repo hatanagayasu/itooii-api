@@ -151,13 +151,13 @@ public class User extends Model
     public static User getByToken(String token)
     {
         Jedis jedis = getJedis();
-        String email = jedis.get("token:" + token);
+        String id = jedis.get("token:" + token);
         returnJedis(jedis);
 
-        if(email == null)
+        if(id == null)
             return null;
 
-        return getByEmail(email);
+        return getById(new ObjectId(id));
     }
 
     public static boolean checkToken(String token)
@@ -173,7 +173,7 @@ public class User extends Model
     {
         String token = UUID.randomUUID().toString();
         Jedis jedis =  getJedis();
-        jedis.setex("token:" + token, 86400, email);
+        jedis.setex("token:" + token, 86400, id.toString());
         returnJedis(jedis);
 
         return token;
