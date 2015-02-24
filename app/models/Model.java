@@ -6,9 +6,11 @@ import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -90,10 +92,18 @@ public class Model
         {
             result.append("{");
 
-            Field[] fields = object.getClass().getDeclaredFields();
-            for (int i = 0; i < fields.length; i++)
+            List<Field>fields = new ArrayList();
+            for (Field field : object.getClass().getDeclaredFields())
             {
-                Field field = fields[i];
+                field.setAccessible(true);
+                if (field.get(object) != null)
+                    fields.add(field);
+            }
+
+            Iterator<Field> iterator = fields.iterator();
+            while(iterator.hasNext())
+            {
+                Field field = iterator.next();
 
                 field.setAccessible(true);
                 String name = field.getName();
@@ -148,7 +158,7 @@ public class Model
                         .append(value).append("\"");
                 }
 
-                if (i + 1 < fields.length)
+                if (iterator.hasNext())
                     result.append(",");
             }
 
