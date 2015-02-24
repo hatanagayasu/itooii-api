@@ -126,6 +126,10 @@ public class DispatchController extends AppController
         }
         catch (InvocationTargetException e)
         {
+            Class clazz = e.getCause().getClass();
+            if (clazz == MongoException.DuplicateKey.class)
+                return Error(Error.MONGO_DUPLICATE_KEY, e.getCause());
+
             errorlog(e);
 
             return Error(Error.INTERNAL_SERVER_ERROR);

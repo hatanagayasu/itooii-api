@@ -21,6 +21,7 @@ public enum Error
     METHOD_NOT_ALLOWED(40500, "Method Not Allowed"),
 
     INTERNAL_SERVER_ERROR(50000, "Internal Server Error"),
+    MONGO_DUPLICATE_KEY(50001, "%s"),
 
     SERVICE_UNAVAILABLE(50300, "Service Unavailable");
 
