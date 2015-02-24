@@ -110,31 +110,27 @@ public class User extends Model
         follower.remove("{user_id:#,follower:#}", userId, id);
     }
 
-    private void filled()
-    {
-        MongoCollection followingCol = jongo.getCollection("following");
-        MongoCollection followerCol = jongo.getCollection("follower");
-
-        this.following = new HashSet();
-        MongoCursor<Following> following = followingCol.find("{user_id:#}", id)
-            .projection("{following:1}").as(Following.class);
-        while(following.hasNext())
-            this.following.add(following.next().getFollowing());
-
-        this.followers = new HashSet();
-        MongoCursor<Follower> followers = followerCol.find("{user_id:#}", id)
-            .projection("{follower:1}").as(Follower.class);
-        while(followers.hasNext())
-            this.followers.add(followers.next().getFollower());
-    }
-
     public static User getById(ObjectId userId)
     {
         MongoCollection userCol = jongo.getCollection("user");
+        MongoCollection followingCol = jongo.getCollection("following");
+        MongoCollection followerCol = jongo.getCollection("follower");
 
         User user = userCol.findOne(userId).as(User.class);
-        if (user != null)
-            user.filled();
+        if (user == null)
+            return null;
+
+        user.following = new HashSet();
+        MongoCursor<Following> following = followingCol.find("{user_id:#}", user.id)
+            .projection("{following:1}").as(Following.class);
+        while(following.hasNext())
+            user.following.add(following.next().getFollowing());
+
+        user.followers = new HashSet();
+        MongoCursor<Follower> followers = followerCol.find("{user_id:#}", user.id)
+            .projection("{follower:1}").as(Follower.class);
+        while(followers.hasNext())
+            user.followers.add(followers.next().getFollower());
 
         return user;
     }
