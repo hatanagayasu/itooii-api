@@ -143,9 +143,7 @@ public class User extends Model
     {
         MongoCollection userCol = jongo.getCollection("user");
 
-        User user = userCol.findOne("{email:#}", email).as(User.class);
-        if (user != null)
-            user.filled();
+        User user = userCol.findOne("{email:#}", email).projection("{password:1}").as(User.class);
 
         return user;
     }
@@ -160,11 +158,6 @@ public class User extends Model
             return null;
 
         return getByEmail(email);
-    }
-
-    public boolean matchPassword(String password)
-    {
-        return this.password.equals(md5(password));
     }
 
     public static boolean checkToken(String token)

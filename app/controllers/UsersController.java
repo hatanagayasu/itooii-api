@@ -112,7 +112,7 @@ public class UsersController extends AppController
         if (user == null)
             return Error(Error.INCORRECT_USER);
 
-        if (!user.matchPassword(password))
+        if (!user.getPassword().equals(models.Model.md5(password)))
             return Error(Error.INCORRECT_PASSWORD);
 
         ObjectNode result = mapper.createObjectNode();
