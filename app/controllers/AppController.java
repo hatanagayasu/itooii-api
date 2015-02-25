@@ -2,13 +2,16 @@ package controllers;
 
 import play.*;
 import play.mvc.*;
+import play.mvc.WebSocket;
 
 import controllers.constants.Error;
 
 import models.Model;
+import models.User;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,5 +81,36 @@ public class AppController extends Controller
     public static ObjectId getObjectId(JsonNode params, String name)
     {
         return (ObjectId)((POJONode)params.get(name)).getPojo();
+    }
+
+    public static void sendEvent(ObjectId userId, JsonNode event)
+    {
+        Map<String,String> hosts = User.getTokenHosts(userId);
+
+        for (String token : hosts.keySet())
+        {
+            String host = hosts.get(token);
+            if (host.equals(WebSocketController.host))
+            {
+                sendEvent(userId, token, event);
+            }
+            else
+            {
+                //TODO
+            }
+        }
+    }
+
+    public static void sendEvent(ObjectId userId, String token, JsonNode event)
+    {
+        if (WebSocketController.webSocketMap.containsKey(token))
+        {
+            WebSocket.Out<String> out = WebSocketController.webSocketMap.get(token);
+            out.write(event.toString());
+        }
+        else
+        {
+            User.offline(userId.toString(), token);
+        }
     }
 }

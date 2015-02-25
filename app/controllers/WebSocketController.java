@@ -7,6 +7,8 @@ import play.mvc.WebSocket;
 import controllers.annotations.*;
 import controllers.constants.Error;
 
+import models.User;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,15 +16,39 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.ClassNotFoundException;
 import java.lang.reflect.Method;
-import java.util.Iterator;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.POJONode;
 
 public class WebSocketController extends DispatchController
 {
+    final public static String host = UUID.randomUUID().toString();
+    final public static ConcurrentMap<String,WebSocket.Out<String>> webSocketMap = new ConcurrentHashMap();
+    /*
+        {
+            token : WebSocket.Out<String>,
+            ...
+        }
+
+        online in redis
+        {
+            "host:user_id" : {
+                token : host,
+                ...
+            },
+            ...
+        }
+
+        video_chat_ready in redis
+        {
+            "video:user_id" : "host/token",
+            ...
+        }
+    */
+
     private static ObjectNode routes = mapper.createObjectNode();
     /*
         {
@@ -137,12 +163,20 @@ public class WebSocketController extends DispatchController
 
     public static WebSocket<String> websocket()
     {
-        String token = request().getQueryString("access_token");
+        final String token = request().getQueryString("access_token");
 
         return new WebSocket<String>()
         {
-            public void onReady(WebSocket.In<String> in, WebSocket.Out<String> out)
+            public void onReady(WebSocket.In<String> in, final WebSocket.Out<String> out)
             {
+                final String userId = models.User.getUserIdByToken(token);
+
+                if (userId != null)
+                {
+                    User.online(userId, token, host);
+                    webSocketMap.put(token, out);
+                }
+
                 in.onMessage(new Callback<String>()
                 {
                     public void invoke(String event)
@@ -155,6 +189,12 @@ public class WebSocketController extends DispatchController
                 {
                     public void invoke()
                     {
+                        if (userId != null)
+                        {
+                            User.offline(userId, token);
+                            webSocketMap.remove(token);
+                        }
+
                         System.out.println("Disconnected");
                     }
                 });

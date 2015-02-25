@@ -3,6 +3,7 @@ package models;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -156,6 +157,15 @@ public class User extends Model
         return getById(new ObjectId(id));
     }
 
+    public static String getUserIdByToken(String token)
+    {
+        Jedis jedis = getJedis();
+        String id = jedis.get("token:" + token);
+        returnJedis(jedis);
+
+        return id;
+    }
+
     public static boolean checkToken(String token)
     {
         Jedis jedis = getJedis();
@@ -180,5 +190,28 @@ public class User extends Model
         Jedis jedis =  getJedis();
         jedis.del("token:" + token);
         returnJedis(jedis);
+    }
+
+    public static void online(String userId, String token, String host)
+    {
+        Jedis jedis =  getJedis();
+        jedis.hsetnx("host:" + userId, token, host);
+        returnJedis(jedis);
+    }
+
+    public static void offline(String userId, String token)
+    {
+        Jedis jedis =  getJedis();
+        jedis.hdel("host:" + userId, token);
+        returnJedis(jedis);
+    }
+
+    public static Map<String,String> getTokenHosts(ObjectId userId)
+    {
+        Jedis jedis =  getJedis();
+        Map result = jedis.hgetAll("host:" + userId.toString());
+        returnJedis(jedis);
+
+        return result;
     }
 }
