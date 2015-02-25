@@ -26,24 +26,21 @@ public class WebSocketController extends DispatchController
     private static ObjectNode routes = mapper.createObjectNode();
     /*
         {
-            controller : {
-                action : {
-                    method : Method,
-                    validations : {
-                        name : {
-                            fullName : String,
-                            type : String,
-                            rules : {{}, ...},
-                            require : Boolean
-                        },
-                        // type array
-                        name : { ..., validation : {} },
-                        // type object
-                        name : { ..., validations : {{}, ...} },
-                        ...
-                    }
-                },
-                ...
+            action : {
+                method : Method,
+                validations : {
+                    name : {
+                        fullName : String,
+                        type : String,
+                        rules : {{}, ...},
+                        require : Boolean
+                    },
+                    // type array
+                    name : { ..., validation : {} },
+                    // type object
+                    name : { ..., validations : {{}, ...} },
+                    ...
+                }
             },
             ...
         }
@@ -68,15 +65,11 @@ public class WebSocketController extends DispatchController
                     continue;
 
                 String[] parts = line.split("\\s+");
-                String[] pair = parts[0].split("/");
-
-                if (!routes.has(pair[0]))
-                    routes.put(pair[0], mapper.createObjectNode());
+                String[] pair = parts[1].split("/");
 
                 ObjectNode route = mapper.createObjectNode();
-                routes.with(pair[0]).put(pair[1], route);
+                routes.put(parts[0], route);
 
-                pair = parts[1].split("/");
                 Class<?> clazz = Class.forName("controllers." + pair[0]);
                 Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
                 route.putPOJO("method", method);
@@ -103,16 +96,12 @@ public class WebSocketController extends DispatchController
         }
     }
 
-    private static JsonNode match(String controller, String action)
+    private static JsonNode match(String action)
     {
-        if (!routes.has(controller))
+        if (!routes.has(action))
             return null;
 
-        JsonNode actions = routes.get(controller);
-        if (!actions.has(action))
-            return null;
-
-        return actions.get(action);
+        return routes.get(action);
     }
 
     private static Result dispatch(String token, String event)
@@ -120,14 +109,13 @@ public class WebSocketController extends DispatchController
         try
         {
             ObjectNode params = mapper.readValue(event, ObjectNode.class);
-            if (!params.has("controller") || !params.has("action"))
+            if (!params.has("action"))
                 return Error(Error.SERVICE_UNAVAILABLE);
             params.put("access_token", token);
 
-            String controller = params.get("controller").textValue();
             String action = params.get("action").textValue();
 
-            JsonNode route = match(controller, action);
+            JsonNode route = match(action);
             if (route == null)
                 return Error(Error.SERVICE_UNAVAILABLE);
 
