@@ -13,13 +13,6 @@ import org.bson.types.ObjectId;
 
 public class UsersController extends AppController
 {
-    private static User getMe(JsonNode params)
-    {
-        String token = params.get("access_token").textValue();
-
-        return User.getByToken(token);
-    }
-
     public static Result me(JsonNode params)
     {
         User user = getMe(params);

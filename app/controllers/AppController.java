@@ -78,6 +78,13 @@ public class AppController extends Controller
         Logger.error(errors.toString());
     }
 
+    public static User getMe(JsonNode params)
+    {
+        String token = params.get("access_token").textValue();
+
+        return User.getByToken(token);
+    }
+
     public static ObjectId getObjectId(JsonNode params, String name)
     {
         return (ObjectId)((POJONode)params.get(name)).getPojo();
