@@ -198,8 +198,6 @@ public class WebSocketController extends DispatchController
                         System.out.println("Disconnected");
                     }
                 });
-
-                out.write("Hello!");
             }
         };
     }
