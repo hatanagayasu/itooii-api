@@ -179,23 +179,20 @@ public class DispatchController extends AppController
             String type = validation.get("type").textValue();
             JsonNode param = params.get(name);
 
-            if (type.equals("object"))
-            {
-                if (!param.isObject())
-                    throw new MalformedParamException(validation);
-
-                if (validation.has("rules") && !validationSize(validation.get("rules"), param))
-                    throw new MalformedParamException(validation);
-
-                validations(validation.get("validations"), (ObjectNode)param);
-            }
-            else if (type.equals("array"))
+            if (type.equals("array"))
             {
                 if (!param.isArray())
                     throw new MalformedParamException(validation);
 
-                if (validation.has("rules") && !validationSize(validation.get("rules"), param))
-                    throw new MalformedParamException(validation);
+                JsonNode rules = validation.get("rules");
+                if (rules != null)
+                {
+                    if (rules.has("minSize") && param.size() < rules.get("minSize").intValue())
+                        throw new MalformedParamException(validation);
+
+                    if (rules.equals("maxSize") && param.size() > rules.get("maxSize").intValue())
+                        throw new MalformedParamException(validation);
+                }
 
                 JsonNode v = validation.get("validation");
 
@@ -273,42 +270,25 @@ public class DispatchController extends AppController
             if (!param.isObject())
                 throw new MalformedParamException(validation);
 
-            if (rules != null && !validationSize(rules, param))
-                throw new MalformedParamException(validation);
+            if (rules != null)
+            {
+                if (rules.has("minSize") && param.size() < rules.get("minSize").intValue())
+                {
+                    errorlog(param.size());
+                    throw new MalformedParamException(validation);
+                }
 
-            if (validation.has("validations"))
+                if (rules.equals("maxSize") && param.size() > rules.get("maxSize").intValue())
+                    throw new MalformedParamException(validation);
+            }
+
+            if (rules == null || !rules.has("passUnder"))
                 validations(validation.get("validations"), (ObjectNode)param);
         }
         else
         {
             throw new MalformedParamException(validation);
         }
-    }
-
-    private static boolean validationSize(JsonNode rules, JsonNode params)
-    {
-        Iterator<String> iterator = rules.fieldNames();
-        while (iterator.hasNext())
-        {
-            String rule = iterator.next();
-
-            if (rule.equals("minSize"))
-            {
-                if (params.size() < rules.get(rule).intValue())
-                    return false;
-            }
-            else if (rule.equals("maxSize"))
-            {
-                if (params.size() > rules.get(rule).intValue())
-                    return false;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private static boolean validation(JsonNode rules, int value)
