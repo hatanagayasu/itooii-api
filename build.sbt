@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   javaEbean,
   cache,
   javaWs,
+  "com.amazonaws" % "aws-java-sdk" % "1.9.21",
   "org.jongo" % "jongo" % "1.1",
   "org.mongodb" % "mongo-java-driver" % "2.13.0",
   "org.projectlombok" % "lombok" % "1.16.2",
