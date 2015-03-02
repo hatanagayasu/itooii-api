@@ -178,7 +178,7 @@ public class User extends Model
     public String newToken()
     {
         String token = UUID.randomUUID().toString();
-        Jedis jedis =  getJedis();
+        Jedis jedis = getJedis();
         jedis.setex("token:" + token, 86400, id.toString());
         returnJedis(jedis);
 
@@ -187,28 +187,28 @@ public class User extends Model
 
     public static void deleteToken(String token)
     {
-        Jedis jedis =  getJedis();
+        Jedis jedis = getJedis();
         jedis.del("token:" + token);
         returnJedis(jedis);
     }
 
     public static void online(String userId, String token, String host)
     {
-        Jedis jedis =  getJedis();
+        Jedis jedis = getJedis();
         jedis.hsetnx("host:" + userId, token, host);
         returnJedis(jedis);
     }
 
     public static void offline(String userId, String token)
     {
-        Jedis jedis =  getJedis();
+        Jedis jedis = getJedis();
         jedis.hdel("host:" + userId, token);
         returnJedis(jedis);
     }
 
     public static Map<String,String> getTokenHosts(ObjectId userId)
     {
-        Jedis jedis =  getJedis();
+        Jedis jedis = getJedis();
         Map result = jedis.hgetAll("host:" + userId.toString());
         returnJedis(jedis);
 
