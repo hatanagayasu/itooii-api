@@ -8,6 +8,7 @@ import controllers.annotations.*;
 import controllers.constants.Error;
 
 import models.User;
+import models.VideoChat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.bson.types.ObjectId;
 
 public class WebSocketController extends DispatchController
 {
@@ -194,6 +196,10 @@ public class WebSocketController extends DispatchController
                         {
                             User.offline(userId, session);
                             webSocketMap.remove(session);
+
+                            VideoChat videoChat = VideoChat.get(new ObjectId(userId));
+                            if (videoChat != null)
+                                videoChat.leave();
                         }
 
                         System.out.println("Disconnected");

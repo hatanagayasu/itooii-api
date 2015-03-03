@@ -14,6 +14,9 @@ public enum Error
     USER_ALREADY_EXISTS(40104, "User already exists"),
 
     FORBIDDEN(40300, "Forbidden"),
+    NOT_FRIEND(40301, "Not Firend"),
+    INVALID_VIDEO_ACCESS_TOKEN(40302, "Invalid Video access_token"),
+    INVALID_VIDEO_CHAT_ID(40303, "Invalid Video Chat Id"),
 
     NOT_FOUND(40400, "Not Found"),
     USER_NOT_FOUND(40401, "User Not Found"),

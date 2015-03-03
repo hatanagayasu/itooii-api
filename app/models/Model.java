@@ -2,6 +2,10 @@ package models;
 
 import play.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
@@ -274,5 +278,36 @@ public class Model
     public static void sendEvent(ObjectId userId, String token, JsonNode event)
     {
         controllers.AppController.sendEvent(userId, token, event);
+    }
+
+    public static byte[] serialize(Object object)
+    {
+        try
+        {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(object);
+
+            return baos.toByteArray();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Object unserialize(byte[] bytes)
+    {
+        try
+        {
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+
+            return ois.readObject();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 }
