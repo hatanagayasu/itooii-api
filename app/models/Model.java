@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -263,5 +264,15 @@ public class Model
         {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void sendEvent(ObjectId userId, JsonNode event)
+    {
+        controllers.AppController.sendEvent(userId, event);
+    }
+
+    public static void sendEvent(ObjectId userId, String token, JsonNode event)
+    {
+        controllers.AppController.sendEvent(userId, token, event);
     }
 }
