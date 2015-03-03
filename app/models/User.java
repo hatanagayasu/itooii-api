@@ -195,6 +195,7 @@ public class User extends Model
     public static void online(String userId, String token, String host)
     {
         Jedis jedis = getJedis();
+        jedis.setex("token:" + token, 86400, userId);
         jedis.hsetnx("host:" + userId, token, host);
         returnJedis(jedis);
     }
@@ -202,6 +203,7 @@ public class User extends Model
     public static void offline(String userId, String token)
     {
         Jedis jedis = getJedis();
+        jedis.del("token:" + token);
         jedis.hdel("host:" + userId, token);
         returnJedis(jedis);
     }

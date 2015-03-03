@@ -163,7 +163,8 @@ public class WebSocketController extends DispatchController
 
     public static WebSocket<String> websocket()
     {
-        final String token = request().getQueryString("access_token");
+        String token = request().getQueryString("access_token");
+        final String session = UUID.randomUUID().toString();
 
         return new WebSocket<String>()
         {
@@ -173,15 +174,15 @@ public class WebSocketController extends DispatchController
 
                 if (userId != null)
                 {
-                    User.online(userId, token, host);
-                    webSocketMap.put(token, out);
+                    User.online(userId, session, host);
+                    webSocketMap.put(session, out);
                 }
 
                 in.onMessage(new Callback<String>()
                 {
                     public void invoke(String event)
                     {
-                        out.write(dispatch(token, event).toString());
+                        out.write(dispatch(session, event).toString());
                     }
                 });
 
@@ -191,8 +192,8 @@ public class WebSocketController extends DispatchController
                     {
                         if (userId != null)
                         {
-                            User.offline(userId, token);
-                            webSocketMap.remove(token);
+                            User.offline(userId, session);
+                            webSocketMap.remove(session);
                         }
 
                         System.out.println("Disconnected");
