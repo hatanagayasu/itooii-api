@@ -3,6 +3,8 @@ video/ready                 VideoChatController/ready
 video/leave                 VideoChatController/leave
 video/request               VideoChatController/request
 video/response              VideoChatController/response
+video/pair_request          VideoChatController/pairRequest
+video/pair_response         VideoChatController/pairResponse
 video/offer                 VideoChatController/offer
 video/answer                VideoChatController/answer
 video/candidate             VideoChatController/candidate

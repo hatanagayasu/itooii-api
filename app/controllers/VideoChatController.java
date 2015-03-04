@@ -112,6 +112,44 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
+    @Validation(name="video_chat_id", type="id", require=true)
+    public static Result pairRequest(JsonNode params)
+    {
+        User me = getMe(params);
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+
+        VideoChat videoChat = VideoChat.get(me.getId());
+        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+            return Error(Error.INVALID_VIDEO_CHAT_ID);
+
+        ObjectNode event = mapper.createObjectNode();
+        event.put("action", "video/pair_request");
+        event.put("video_chat_id", videoChatId.toString());
+
+        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+
+        return Ok();
+    }
+
+    @Validation(name="video_chat_id", type="id", require=true)
+    public static Result pairResponse(JsonNode params)
+    {
+        User me = getMe(params);
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+
+        VideoChat videoChat = VideoChat.get(me.getId());
+        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+            return Error(Error.INVALID_VIDEO_CHAT_ID);
+
+        ObjectNode event = mapper.createObjectNode();
+        event.put("action", "video/pair_response");
+        event.put("video_chat_id", videoChatId.toString());
+
+        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+
+        return Ok();
+    }
+
     @Validation(name="description", type="object", rule="passUnder", require=true)
     @Validation(name="video_chat_id", type="id", require=true)
     public static Result offer(JsonNode params)

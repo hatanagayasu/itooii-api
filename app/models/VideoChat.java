@@ -112,4 +112,12 @@ public class VideoChat extends Model implements Serializable
         this.peerToken = token;
         set();
     }
+
+    public void pair(ObjectId id, ObjectId userId, String token)
+    {
+        this.id = id;
+        this.peerId = userId;
+        this.peerToken = token;
+        set();
+    }
 }
