@@ -2,7 +2,6 @@ package models;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import redis.clients.jedis.Jedis;
 
@@ -91,11 +90,6 @@ public class VideoChat extends Model implements Serializable
         {
             key = new String("video:chat:" + peerId.toString()).getBytes();
             jedis.del(key);
-
-            ObjectNode event = mapper.createObjectNode();
-            event.put("action", "video/leave");
-            event.put("video_chat_id", id.toString());
-            sendEvent(peerId, peerToken, event);
         }
     }
 

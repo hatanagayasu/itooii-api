@@ -12,15 +12,29 @@ import org.bson.types.ObjectId;
 
 public class VideoChatController extends AppController
 {
+    private static void leave(VideoChat videoChat, String token)
+    {
+        ObjectNode event = mapper.createObjectNode();
+        event.put("action", "video/leave");
+
+        if (!token.equals(videoChat.getToken()))
+            sendEvent(videoChat.getUserId(), videoChat.getToken(), event);
+
+        if (videoChat.getPeerId() != null)
+            sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+
+        videoChat.leave();
+    }
+
     public static Result ready(JsonNode params)
     {
         User me = getMe(params);
+        String token = params.get("access_token").textValue();
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat != null)
-            videoChat.leave();
+            leave(videoChat, token);
 
-        String token = params.get("access_token").textValue();
         videoChat = new VideoChat(me.getId(), token);
         videoChat.ready();
 
@@ -31,12 +45,12 @@ public class VideoChatController extends AppController
     {
         User me = getMe(params);
         String token = params.get("access_token").textValue();
-        VideoChat videoChat = VideoChat.get(me.getId());
 
+        VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !token.equals(videoChat.getToken()))
             return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
 
-        videoChat.leave();
+        leave(videoChat, token);
 
         return Ok();
     }
@@ -46,16 +60,16 @@ public class VideoChatController extends AppController
     {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
+        String token = params.get("access_token").textValue();
 
         if (!me.getFollowers().contains(userId) || !me.getFollowing().contains(userId))
             return Error(Error.NOT_FRIEND);
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat != null)
-            videoChat.leave();
+            leave(videoChat, token);
 
         ObjectId videoChatId = new ObjectId();
-        String token = params.get("access_token").textValue();
         videoChat = new VideoChat(videoChatId, me.getId(), token);
         videoChat.set();
 
@@ -77,6 +91,7 @@ public class VideoChatController extends AppController
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        String token = params.get("access_token").textValue();
 
         VideoChat videoChat = VideoChat.get(userId);
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
@@ -84,7 +99,6 @@ public class VideoChatController extends AppController
 
         if (params.get("confirm").booleanValue())
         {
-            String token = params.get("access_token").textValue();
             videoChat.pair(me.getId(), token);
 
             videoChat = new VideoChat(videoChatId, me.getId(), token, userId, videoChat.getToken());
@@ -106,7 +120,7 @@ public class VideoChatController extends AppController
 
             sendEvent(videoChat.getId(), videoChat.getToken(), event);
 
-            videoChat.leave();
+            leave(videoChat, token);
         }
 
         return Ok();
