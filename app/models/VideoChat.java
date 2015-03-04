@@ -69,24 +69,12 @@ public class VideoChat extends Model implements Serializable
         returnJedis(jedis);
     }
 
-    public void ready()
-    {
-        Jedis jedis = getJedis();
-        jedis.sadd("video:ready", userId.toString());
-        set(jedis);
-        returnJedis(jedis);
-    }
-
     private void leave(Jedis jedis)
     {
         byte[] key = new String("video:chat:" + userId.toString()).getBytes();
         jedis.del(key);
 
-        if (id == null)
-        {
-            jedis.srem("video:ready", userId.toString());
-        }
-        else if(peerId != null)
+        if(peerId != null)
         {
             key = new String("video:chat:" + peerId.toString()).getBytes();
             jedis.del(key);

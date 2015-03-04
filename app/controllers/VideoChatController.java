@@ -36,7 +36,7 @@ public class VideoChatController extends AppController
             leave(videoChat, token);
 
         videoChat = new VideoChat(me.getId(), token);
-        videoChat.ready();
+        videoChat.set();
 
         return Ok();
     }
