@@ -12,12 +12,17 @@ import org.bson.types.ObjectId;
 
 public class VideoChatController extends AppController
 {
+    private static void leave(VideoChat videoChat)
+    {
+        leave(videoChat, null);
+    }
+
     private static void leave(VideoChat videoChat, String token)
     {
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/leave");
 
-        if (!token.equals(videoChat.getToken()))
+        if (token != null && !token.equals(videoChat.getToken()))
             sendEvent(videoChat.getUserId(), videoChat.getToken(), event);
 
         if (videoChat.getPeerId() != null)
@@ -50,7 +55,7 @@ public class VideoChatController extends AppController
         if (videoChat == null || !token.equals(videoChat.getToken()))
             return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
 
-        leave(videoChat, token);
+        leave(videoChat);
 
         return Ok();
     }
@@ -118,9 +123,9 @@ public class VideoChatController extends AppController
             event.put("video_chat_id", videoChatId.toString());
             event.put("confirm", false);
 
-            sendEvent(videoChat.getId(), videoChat.getToken(), event);
+            sendEvent(videoChat.getUserId(), videoChat.getToken(), event);
 
-            leave(videoChat, token);
+            leave(videoChat);
         }
 
         return Ok();
