@@ -175,6 +175,7 @@ public class VideoChatController extends AppController
     {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
+
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
@@ -195,6 +196,7 @@ public class VideoChatController extends AppController
     {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
+
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
@@ -215,6 +217,7 @@ public class VideoChatController extends AppController
     {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
+
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
