@@ -80,11 +80,20 @@ public class Model
         jedisPool.returnResource(jedis);
     }
 
-    public static String toJson(Object object)
+    public static String toJson(Model model)
     {
         StringBuilder result = new StringBuilder(512);
 
-        objectToJson(object, result);
+        objectToJson(model, result);
+
+        return result.toString();
+    }
+
+    public static String toJson(List<? extends Model> models)
+    {
+        StringBuilder result = new StringBuilder(512);
+
+        collectionToJson(models, result);
 
         return result.toString();
     }
@@ -145,15 +154,13 @@ public class Model
                 }
                 else if (value instanceof Collection)
                 {
-                    result.append("\"").append(name).append("\":[");
+                    result.append("\"").append(name).append("\":");
                     collectionToJson((Collection)value, result);
-                    result.append("]");
                 }
                 else if (value instanceof Model)
                 {
-                    result.append("\"").append(name).append("\":[");
+                    result.append("\"").append(name).append("\":");
                     objectToJson(value, result);
-                    result.append("]");
                 }
                 else
                 {
@@ -175,6 +182,8 @@ public class Model
 
     private static void collectionToJson(Collection collection, StringBuilder result)
     {
+        result.append("[");
+
         if (!collection.isEmpty())
         {
             Object object = collection.iterator().next();
@@ -250,6 +259,8 @@ public class Model
                 }
             }
         }
+
+        result.append("]");
     }
 
     public static String md5(String input)

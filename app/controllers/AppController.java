@@ -11,6 +11,7 @@ import models.User;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,11 @@ public class AppController extends Controller
     public static Result Ok(Model model)
     {
         return new Result(200, Model.toJson(model));
+    }
+
+    public static Result Ok(List<? extends Model> models)
+    {
+        return new Result(200, Model.toJson(models));
     }
 
     public static Result Ok(JsonNode node)
