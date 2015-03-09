@@ -17,7 +17,7 @@ import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
-@lombok.Getter @lombok.Setter
+@lombok.Getter
 public class User extends Model
 {
     @Id
@@ -63,8 +63,6 @@ public class User extends Model
 
         MongoCollection userCol = jongo.getCollection("user");
         userCol.save(user);
-
-        user.setPassword(null);
 
         return user;
     }
@@ -117,6 +115,11 @@ public class User extends Model
         }
 
         return false;
+    }
+
+    public void removePassword()
+    {
+        password = null;
     }
 
     public static User getById(ObjectId userId)

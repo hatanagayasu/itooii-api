@@ -19,7 +19,7 @@ public class UsersController extends AppController
         if (user == null)
             return Error(Error.INVALID_ACCESS_TOKEN);
 
-        user.setPassword(null);
+        user.removePassword();
 
         return Ok(user);
     }
@@ -39,6 +39,7 @@ public class UsersController extends AppController
             return Error(Error.USER_ALREADY_EXISTS);
 
         User user = User.add(params);
+        user.removePassword();
 
         return Ok(user);
     }
