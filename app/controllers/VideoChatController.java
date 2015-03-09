@@ -2,6 +2,7 @@ package controllers;
 
 import controllers.annotations.*;
 import controllers.constants.Error;
+import controllers.pair.PairedTalkData;
 
 import models.User;
 import models.VideoChat;
@@ -37,7 +38,7 @@ public class VideoChatController extends AppController
 
         videoChat = new VideoChat(me.getId(), token);
         videoChat.set();
-
+                
         return Ok();
     }
 
@@ -222,5 +223,27 @@ public class VideoChatController extends AppController
         sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
 
         return Ok();
+    }
+    
+    public static void pair(PairedTalkData pairedData)
+    {
+        ObjectId id = new ObjectId();
+        VideoChat offer = VideoChat.get(pairedData.getOfferId());
+        VideoChat answer = VideoChat.get(pairedData.getAnswerId());
+
+        if (offer == null || answer == null || offer.getId() != null || answer.getId() != null)
+            return;
+
+        offer.pair(id, answer.getUserId(), answer.getToken());
+        answer.pair(id, offer.getUserId(), offer.getToken());
+
+        ObjectNode event = mapper.createObjectNode();
+        event.put("action", "video/pair");
+        event.put("video_chat_id", id.toString());
+        event.put("lang0", pairedData.getLang0());
+        event.put("lang1", pairedData.getLang1());
+
+        sendEvent(offer.getId(), offer.getToken(), event);
+        errorlog(event);
     }
 }

@@ -2,27 +2,50 @@ package controllers;
 
 import play.*;
 import play.mvc.*;
-import play.mvc.WebSocket;
-
 import controllers.constants.Error;
-
+import controllers.pair.*;
 import models.Model;
 import models.User;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
+
 import org.bson.types.ObjectId;
 
 public class AppController extends Controller
 {
     public static final ObjectMapper mapper = new ObjectMapper();
+	private static ConcurrentHashMap<ObjectId, UserTable> UsrTabMap= new ConcurrentHashMap<ObjectId, UserTable>();
+	private static ArrayBlockingQueue<ObjectId> InPairQueue = new ArrayBlockingQueue<ObjectId>(1000);
+	private static ArrayBlockingQueue<PairedTalkData> OutPairQueue = new ArrayBlockingQueue<PairedTalkData>(1000);
 
+    static
+    {
+    	    new Thread(new CalcMatchScore(UsrTabMap, InPairQueue)).start();
+    	    new Thread(new PairResult(UsrTabMap, OutPairQueue)).start();
+    	    new Thread(new SendPairedUsers(OutPairQueue)).start();
+    }
+    
+    public static void inPairQueue(ObjectId id)
+    {
+    		try
+    		{
+    	        InPairQueue.put(id);
+    		}
+    		catch (Exception e)
+    		{
+   
+    		}
+    }
+    
     public static Result Ok()
     {
         return new Result(200);
@@ -90,6 +113,19 @@ public class AppController extends Controller
         return (ObjectId)((POJONode)params.get(name)).getPojo();
     }
 
+    public static void sendEvent(ObjectId userId, String token, JsonNode event)
+    {
+        if (WebSocketController.webSocketMap.containsKey(token))
+        {
+            WebSocket.Out<String> out = WebSocketController.webSocketMap.get(token);
+            out.write(event.toString());
+        }
+        else
+        {
+            User.offline(userId.toString(), token);
+        }
+    }
+    
     public static void sendEvent(ObjectId userId, JsonNode event)
     {
         Map<String,String> hosts = User.getTokenHosts(userId);
@@ -105,19 +141,6 @@ public class AppController extends Controller
             {
                 //TODO
             }
-        }
-    }
-
-    public static void sendEvent(ObjectId userId, String token, JsonNode event)
-    {
-        if (WebSocketController.webSocketMap.containsKey(token))
-        {
-            WebSocket.Out<String> out = WebSocketController.webSocketMap.get(token);
-            out.write(event.toString());
-        }
-        else
-        {
-            User.offline(userId.toString(), token);
         }
     }
 }
