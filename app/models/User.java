@@ -1,13 +1,16 @@
 package models;
 
+import models.Following;
+import models.PracticeLanguage;
+
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -17,7 +20,7 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
-@lombok.Getter @lombok.Setter
+@lombok.Getter
 public class User extends Model
 {
     @Id
@@ -28,48 +31,28 @@ public class User extends Model
     @JsonProperty("native_language")
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
-    private Set<Integer> practiceLanguage;
-    @JsonIgnore
-    private Set<ObjectId> following;
-    @JsonIgnore
-    private Set<ObjectId> followers;
+    private Set<PracticeLanguage> practiceLanguage;
+    private Set<Following> following;
     private Date created;
 
     public User()
     {
     }
 
-    public User(JsonNode params)
+    public User(String email, String password, Set<Integer> nativeLanguage, Set<PracticeLanguage> practiceLanguage)
     {
-        Date now = new Date();
-
         id = new ObjectId();
-        email = params.get("email").textValue();
-        password = md5(params.get("password").textValue());
-
-        Iterator<JsonNode> values = params.get("native_language").iterator();
-        nativeLanguage = new HashSet();
-        while (values.hasNext())
-            nativeLanguage.add(values.next().intValue());
-
-        values = params.get("practice_language").iterator();
-        practiceLanguage = new HashSet();
-        while (values.hasNext())
-            practiceLanguage.add(values.next().intValue());
-
-        created = now;
+        this.email = email;
+        this.password = md5(password);
+        this.nativeLanguage = nativeLanguage;
+        this.practiceLanguage = practiceLanguage;
+        created = new Date();
     }
 
-    public static User add(JsonNode params)
+    public void save()
     {
-        User user = new User(params);
-
         MongoCollection userCol = jongo.getCollection("user");
-        userCol.save(user);
-
-        user.setPassword(null);
-
-        return user;
+        userCol.save(this);
     }
 
     public void update(JsonNode params)
@@ -94,44 +77,56 @@ public class User extends Model
 
     public void follow(ObjectId userId)
     {
-        MongoCollection following = jongo.getCollection("following");
-        MongoCollection follower = jongo.getCollection("follower");
+        MongoCollection user = jongo.getCollection("user");
 
-        Date now = new Date();
-        following.insert("{user_id:#,following:#,created:#}", id, userId, now);
-        follower.insert("{user_id:#,follower:#,created:#}", userId, id, now);
+        user.update("{_id:#,following.id:{$ne:#}}", id, userId)
+            .with("{$addToSet:{following:#}}", new Following(userId));
     }
 
     public void unfollow(ObjectId userId)
     {
-        MongoCollection following = jongo.getCollection("following");
-        MongoCollection follower = jongo.getCollection("follower");
+        MongoCollection user = jongo.getCollection("user");
 
-        following.remove("{user_id:#,following:#}", id, userId);
-        follower.remove("{user_id:#,follower:#}", userId, id);
+        user.update(id).with("{$pull:{following:{id:#}}}", userId);
+    }
+
+    public boolean containsFollowing(ObjectId userId)
+    {
+        if (this.following != null)
+        {
+            Iterator<Following> following = this.following.iterator();
+            while (following.hasNext())
+            {
+                if (userId.equals(following.next().getId()))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static List<User> search()
+    {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        MongoCursor<User> users = userCol.find().projection("{_id:1}").as(User.class);
+        List<User> result = new ArrayList<User>();
+        while (users.hasNext())
+            result.add(users.next());
+
+        return result;
+    }
+
+    public void removePassword()
+    {
+        password = null;
     }
 
     public static User getById(ObjectId userId)
     {
         MongoCollection userCol = jongo.getCollection("user");
-        MongoCollection followingCol = jongo.getCollection("following");
-        MongoCollection followerCol = jongo.getCollection("follower");
 
         User user = userCol.findOne(userId).as(User.class);
-        if (user == null)
-            return null;
-
-        user.following = new HashSet();
-        MongoCursor<Following> following = followingCol.find("{user_id:#}", user.id)
-            .projection("{following:1}").as(Following.class);
-        while(following.hasNext())
-            user.following.add(following.next().getFollowing());
-
-        user.followers = new HashSet();
-        MongoCursor<Follower> followers = followerCol.find("{user_id:#}", user.id)
-            .projection("{follower:1}").as(Follower.class);
-        while(followers.hasNext())
-            user.followers.add(followers.next().getFollower());
 
         return user;
     }

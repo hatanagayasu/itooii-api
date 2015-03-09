@@ -1,12 +1,7 @@
 var indexSpec = {
     "user":[
-        {index:{email:1},option:{name:"email",unique:true,background:true}}
-    ],
-    "following":[
-        {index:{user_id:1,following:1},option:{name:"user_id_following",unique:true,background:true}}
-    ],
-    "follower":[
-        {index:{user_id:1,follower:1},option:{name:"user_id_follower",unique:true,background:true}}
+        {index:{email:1},option:{name:"email",unique:true,background:true}},
+        {index:{"following.id":1},option:{name:"following",background:true}}
     ]
 };
 

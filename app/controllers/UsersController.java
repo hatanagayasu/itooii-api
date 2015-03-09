@@ -5,7 +5,12 @@ import play.*;
 import controllers.annotations.*;
 import controllers.constants.Error;
 
+import models.PracticeLanguage;
 import models.User;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,7 +24,7 @@ public class UsersController extends AppController
         if (user == null)
             return Error(Error.INVALID_ACCESS_TOKEN);
 
-        user.setPassword(null);
+        user.removePassword();
 
         return Ok(user);
     }
@@ -30,7 +35,9 @@ public class UsersController extends AppController
     @Validation(name="native_language", type="array", rule="minSize=1", require=true)
     @Validation(name="native_language[]", type="integer", require=true)
     @Validation(name="practice_language", type="array", rule="minSize=1", require=true)
-    @Validation(name="practice_language[]", type="integer", require=true)
+    @Validation(name="practice_language[]", type="object")
+    @Validation(name="practice_language[].id", type="integer", require=true)
+    @Validation(name="practice_language[].level", type="integer", require=true)
     public static Result add(JsonNode params)
     {
         String email = params.get("email").textValue();
@@ -38,7 +45,24 @@ public class UsersController extends AppController
         if (User.getByEmail(email) != null)
             return Error(Error.USER_ALREADY_EXISTS);
 
-        User user = User.add(params);
+        String password = params.get("password").textValue();
+
+        Iterator<JsonNode> values = params.get("native_language").iterator();
+        Set<Integer> nativeLanguage = new HashSet<Integer>();
+        while (values.hasNext())
+            nativeLanguage.add(values.next().intValue());
+
+        values = params.get("practice_language").iterator();
+        Set<PracticeLanguage> practiceLanguage = new HashSet<PracticeLanguage>();
+        while (values.hasNext())
+        {
+            JsonNode value = values.next();
+            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value.get("level").intValue()));
+        }
+
+        User user = new User(email, password, nativeLanguage, practiceLanguage);
+        user.save();
+        user.removePassword();
 
         return Ok(user);
     }
@@ -49,9 +73,9 @@ public class UsersController extends AppController
     @Validation(name="native_language", type="array", rule="minSize=1")
     @Validation(name="native_language[]", type="integer")
     @Validation(name="practice_language", type="array", rule="minSize=1")
-    @Validation(name="practice_language[]", type="integer")
-    @Validation(name="following", type="array")
-    @Validation(name="following[]", type="id")
+    @Validation(name="practice_language[]", type="object")
+    @Validation(name="practice_language[].id", type="integer", require=true)
+    @Validation(name="practice_language[].level", type="integer", require=true)
     public static Result update(JsonNode params)
     {
         User me = getMe(params);
@@ -70,7 +94,7 @@ public class UsersController extends AppController
             return Error(Error.USER_NOT_FOUND);
 
         User me = getMe(params);
-        if (me.getFollowing() == null || !me.getFollowing().contains(userId))
+        if (!me.containsFollowing(userId))
             me.follow(userId);
 
         return Ok();
@@ -86,7 +110,7 @@ public class UsersController extends AppController
             return Error(Error.USER_NOT_FOUND);
 
         User me = getMe(params);
-        if (me.getFollowing() != null && me.getFollowing().contains(userId))
+        if (me.containsFollowing(userId))
             me.unfollow(userId);
 
         return Ok();
@@ -121,5 +145,10 @@ public class UsersController extends AppController
         User.deleteToken(token);
 
         return Ok();
+    }
+
+    public static Result search(JsonNode params)
+    {
+        return Ok(User.search());
     }
 }
