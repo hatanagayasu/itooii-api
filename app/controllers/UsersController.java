@@ -5,7 +5,12 @@ import play.*;
 import controllers.annotations.*;
 import controllers.constants.Error;
 
+import models.PracticeLanguage;
 import models.User;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -40,7 +45,23 @@ public class UsersController extends AppController
         if (User.getByEmail(email) != null)
             return Error(Error.USER_ALREADY_EXISTS);
 
-        User user = User.add(params);
+        String password = params.get("password").textValue();
+
+        Iterator<JsonNode> values = params.get("native_language").iterator();
+        Set<Integer> nativeLanguage = new HashSet<Integer>();
+        while (values.hasNext())
+            nativeLanguage.add(values.next().intValue());
+
+        values = params.get("practice_language").iterator();
+        Set<PracticeLanguage> practiceLanguage = new HashSet<PracticeLanguage>();
+        while (values.hasNext())
+        {
+            JsonNode value = values.next();
+            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value.get("level").intValue()));
+        }
+
+        User user = new User(email, password, nativeLanguage, practiceLanguage);
+        user.save();
         user.removePassword();
 
         return Ok(user);

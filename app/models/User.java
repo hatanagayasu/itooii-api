@@ -4,7 +4,6 @@ import models.Following;
 import models.PracticeLanguage;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -37,38 +36,20 @@ public class User extends Model
     {
     }
 
-    public User(JsonNode params)
+    public User(String email, String password, Set<Integer> nativeLanguage, Set<PracticeLanguage> practiceLanguage)
     {
-        Date now = new Date();
-
         id = new ObjectId();
-        email = params.get("email").textValue();
-        password = md5(params.get("password").textValue());
-
-        Iterator<JsonNode> values = params.get("native_language").iterator();
-        nativeLanguage = new HashSet();
-        while (values.hasNext())
-            nativeLanguage.add(values.next().intValue());
-
-        values = params.get("practice_language").iterator();
-        practiceLanguage = new HashSet();
-        while (values.hasNext())
-        {
-            JsonNode value = values.next();
-            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value.get("level").intValue()));
-        }
-
-        created = now;
+        this.email = email;
+        this.password = md5(password);
+        this.nativeLanguage = nativeLanguage;
+        this.practiceLanguage = practiceLanguage;
+        created = new Date();
     }
 
-    public static User add(JsonNode params)
+    public void save()
     {
-        User user = new User(params);
-
         MongoCollection userCol = jongo.getCollection("user");
-        userCol.save(user);
-
-        return user;
+        userCol.save(this);
     }
 
     public void update(JsonNode params)
