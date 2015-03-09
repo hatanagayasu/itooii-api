@@ -65,9 +65,10 @@ public class VideoChatController extends AppController
     {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
+        User user = User.getById(userId);
         String token = params.get("access_token").textValue();
 
-        if (!me.getFollowers().contains(userId) || !me.getFollowing().contains(userId))
+        if (!me.containsFollowing(userId) || !user.containsFollowing(me.getId()))
             return Error(Error.NOT_FRIEND);
 
         VideoChat videoChat = VideoChat.get(me.getId());

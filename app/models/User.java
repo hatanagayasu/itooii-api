@@ -1,5 +1,7 @@
 package models;
 
+import models.Following;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -7,13 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
-import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
@@ -29,10 +29,7 @@ public class User extends Model
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
     private Set<Integer> practiceLanguage;
-    @JsonIgnore
-    private Set<ObjectId> following;
-    @JsonIgnore
-    private Set<ObjectId> followers;
+    private Set<Following> following;
     private Date created;
 
     public User()
@@ -94,44 +91,39 @@ public class User extends Model
 
     public void follow(ObjectId userId)
     {
-        MongoCollection following = jongo.getCollection("following");
-        MongoCollection follower = jongo.getCollection("follower");
+        MongoCollection user = jongo.getCollection("user");
 
-        Date now = new Date();
-        following.insert("{user_id:#,following:#,created:#}", id, userId, now);
-        follower.insert("{user_id:#,follower:#,created:#}", userId, id, now);
+        user.update("{_id:#,following.id:{$ne:#}}", id, userId)
+            .with("{$addToSet:{following:#}}", new Following(userId));
     }
 
     public void unfollow(ObjectId userId)
     {
-        MongoCollection following = jongo.getCollection("following");
-        MongoCollection follower = jongo.getCollection("follower");
+        MongoCollection user = jongo.getCollection("user");
 
-        following.remove("{user_id:#,following:#}", id, userId);
-        follower.remove("{user_id:#,follower:#}", userId, id);
+        user.update(id).with("{$pull:{following:{id:#}}}", userId);
+    }
+
+    public boolean containsFollowing(ObjectId userId)
+    {
+        if (this.following != null)
+        {
+            Iterator<Following> following = this.following.iterator();
+            while (following.hasNext())
+            {
+                if (userId.equals(following.next().getId()))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     public static User getById(ObjectId userId)
     {
         MongoCollection userCol = jongo.getCollection("user");
-        MongoCollection followingCol = jongo.getCollection("following");
-        MongoCollection followerCol = jongo.getCollection("follower");
 
         User user = userCol.findOne(userId).as(User.class);
-        if (user == null)
-            return null;
-
-        user.following = new HashSet();
-        MongoCursor<Following> following = followingCol.find("{user_id:#}", user.id)
-            .projection("{following:1}").as(Following.class);
-        while(following.hasNext())
-            user.following.add(following.next().getFollowing());
-
-        user.followers = new HashSet();
-        MongoCursor<Follower> followers = followerCol.find("{user_id:#}", user.id)
-            .projection("{follower:1}").as(Follower.class);
-        while(followers.hasNext())
-            user.followers.add(followers.next().getFollower());
 
         return user;
     }

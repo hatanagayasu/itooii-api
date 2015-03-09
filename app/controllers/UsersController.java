@@ -70,7 +70,7 @@ public class UsersController extends AppController
             return Error(Error.USER_NOT_FOUND);
 
         User me = getMe(params);
-        if (me.getFollowing() == null || !me.getFollowing().contains(userId))
+        if (!me.containsFollowing(userId))
             me.follow(userId);
 
         return Ok();
@@ -86,7 +86,7 @@ public class UsersController extends AppController
             return Error(Error.USER_NOT_FOUND);
 
         User me = getMe(params);
-        if (me.getFollowing() != null && me.getFollowing().contains(userId))
+        if (me.containsFollowing(userId))
             me.unfollow(userId);
 
         return Ok();
