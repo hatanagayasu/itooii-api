@@ -3,8 +3,10 @@ package models;
 import models.Following;
 import models.PracticeLanguage;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
@@ -100,6 +103,18 @@ public class User extends Model
         }
 
         return false;
+    }
+
+    public static List<User> search()
+    {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        MongoCursor<User> users = userCol.find().projection("{_id:1}").as(User.class);
+        List<User> result = new ArrayList<User>();
+        while (users.hasNext())
+            result.add(users.next());
+
+        return result;
     }
 
     public void removePassword()

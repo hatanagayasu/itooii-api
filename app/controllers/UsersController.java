@@ -146,4 +146,9 @@ public class UsersController extends AppController
 
         return Ok();
     }
+
+    public static Result search(JsonNode params)
+    {
+        return Ok(User.search());
+    }
 }
