@@ -1,6 +1,7 @@
 package models;
 
 import models.Following;
+import models.PracticeLanguage;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -28,7 +29,7 @@ public class User extends Model
     @JsonProperty("native_language")
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
-    private Set<Integer> practiceLanguage;
+    private Set<PracticeLanguage> practiceLanguage;
     private Set<Following> following;
     private Date created;
 
@@ -52,7 +53,10 @@ public class User extends Model
         values = params.get("practice_language").iterator();
         practiceLanguage = new HashSet();
         while (values.hasNext())
-            practiceLanguage.add(values.next().intValue());
+        {
+            JsonNode value = values.next();
+            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value.get("level").intValue()));
+        }
 
         created = now;
     }

@@ -30,7 +30,9 @@ public class UsersController extends AppController
     @Validation(name="native_language", type="array", rule="minSize=1", require=true)
     @Validation(name="native_language[]", type="integer", require=true)
     @Validation(name="practice_language", type="array", rule="minSize=1", require=true)
-    @Validation(name="practice_language[]", type="integer", require=true)
+    @Validation(name="practice_language[]", type="object")
+    @Validation(name="practice_language[].id", type="integer", require=true)
+    @Validation(name="practice_language[].level", type="integer", require=true)
     public static Result add(JsonNode params)
     {
         String email = params.get("email").textValue();
@@ -50,9 +52,9 @@ public class UsersController extends AppController
     @Validation(name="native_language", type="array", rule="minSize=1")
     @Validation(name="native_language[]", type="integer")
     @Validation(name="practice_language", type="array", rule="minSize=1")
-    @Validation(name="practice_language[]", type="integer")
-    @Validation(name="following", type="array")
-    @Validation(name="following[]", type="id")
+    @Validation(name="practice_language[]", type="object")
+    @Validation(name="practice_language[].id", type="integer", require=true)
+    @Validation(name="practice_language[].level", type="integer", require=true)
     public static Result update(JsonNode params)
     {
         User me = getMe(params);
