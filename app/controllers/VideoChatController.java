@@ -43,7 +43,9 @@ public class VideoChatController extends AppController
 
         videoChat = new VideoChat(me.getId(), token);
         videoChat.set();
-                
+
+        inPairQueue(me.getId());
+
         return Ok();
     }
 
@@ -233,7 +235,7 @@ public class VideoChatController extends AppController
 
         return Ok();
     }
-    
+
     public static void pair(PairedTalkData pairedData)
     {
         ObjectId id = new ObjectId();
@@ -253,6 +255,5 @@ public class VideoChatController extends AppController
         event.put("lang1", pairedData.getLang1());
 
         sendEvent(offer.getId(), offer.getToken(), event);
-        errorlog(event);
     }
 }
