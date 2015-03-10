@@ -6,11 +6,13 @@ import models.PracticeLanguage;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,6 +36,10 @@ public class User extends Model
     private Set<PracticeLanguage> practiceLanguage;
     private Set<Following> following;
     private Date created;
+    @JsonIgnore
+    private Set<ObjectId> followings;
+    @JsonIgnore
+    private Set<ObjectId> followers;
 
     public User()
     {
@@ -92,17 +98,7 @@ public class User extends Model
 
     public boolean containsFollowing(ObjectId userId)
     {
-        if (this.following != null)
-        {
-            Iterator<Following> following = this.following.iterator();
-            while (following.hasNext())
-            {
-                if (userId.equals(following.next().getId()))
-                    return true;
-            }
-        }
-
-        return false;
+        return this.followings.contains(userId);
     }
 
     public static List<User> search()
@@ -127,6 +123,19 @@ public class User extends Model
         MongoCollection userCol = jongo.getCollection("user");
 
         User user = userCol.findOne(userId).as(User.class);
+
+        user.followings = new HashSet<ObjectId>();
+        if (user.following != null)
+        {
+            for (Following following : user.following)
+                user.followings.add(following.getId());
+        }
+
+        user.followers = new HashSet<ObjectId>();
+        MongoCursor<User> users = userCol.find("{'following.id':#}", userId)
+            .projection("{_id:1}").as(User.class);
+        while (users.hasNext())
+            user.followers.add(users.next().getId());
 
         return user;
     }
