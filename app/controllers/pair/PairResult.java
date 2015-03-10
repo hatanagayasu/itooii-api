@@ -122,12 +122,8 @@ public class PairResult implements Runnable
 	    		}
 //	    		if (PairingLocalSimEnable)
 //	    		{
-//	    		    System.out.println("****** Pairing Successful");
-//			    System.out.println("PInfo= "+PInfo[0]+" "+PInfo[1]+" "+PInfo[2]+" "+PInfo[3]);
-//			    UserInfo PUInfo0= PairTable.GetUserInfo(PInfo[0]);
-//			    UserInfo PUInfo1= PairTable.GetUserInfo(PInfo[1]);
-//			    System.out.println("PUInfo1 Nat-Pra= "+PUInfo0.NatLangList+" "+PUInfo0.PraLangMap);
-//			    System.out.println("PUInfo1 Nat-Pra= "+PUInfo1.NatLangList+" "+PUInfo1.PraLangMap);
+	    		    System.out.println("****** Pairing Successful");
+			    System.out.println("PInfo= "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
 //	    		}
 	    }
 

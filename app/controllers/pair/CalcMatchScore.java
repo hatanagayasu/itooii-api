@@ -1,6 +1,7 @@
 package controllers.pair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -8,6 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 import models.User;
+import models.PracticeLanguage;
 
 import org.bson.types.ObjectId;
 
@@ -54,7 +56,7 @@ public class CalcMatchScore implements Runnable
 	    int 		MatchCnt[]= new int[3];
 	    double 	MatSco= 0.0;	// match score
 	    int		PraLangSeq[]= new int[2];	// practice language sequence
-//	    int		PracLangLvl[]= new int[2];
+	    int		PracLangLvl[]= new int[2];
 		
 //		System.out.println("UsrTabMap has "+UsrTabMap.size()+" users");
 //		System.out.println("UsrTabMap has "+UsrTabMap.size()+" users= "+UsrTabMap);
@@ -88,24 +90,35 @@ public class CalcMatchScore implements Runnable
 		        		OldUsrTab= UTMEntry.getValue();
 		        		OldUserInfo= OldUsrTab.UInfo;
 		        		
+		        		HashMap<Integer,Integer> OldPraLang = new HashMap<Integer,Integer>();
+		        		for (PracticeLanguage PraLang : OldUserInfo.getPracticeLanguage())
+		        			OldPraLang.put(PraLang.getId(), PraLang.getLevel());
+		        		HashMap<Integer,Integer> NewPraLang = new HashMap<Integer,Integer>();
+		        		for (PracticeLanguage PraLang : NewUserInfo.getPracticeLanguage())
+		        			NewPraLang.put(PraLang.getId(), PraLang.getLevel());
+//		        		Iterator<PracticeLanguage> OldUsrPracLangIter = OldUserInfo.getPracticeLanguage().iterator();
+//		        		while(OldUsrPracLangIter.hasNext())
+//		        		{
+//		        			
+//		        		}
 		        	    // old: practice v.s. native
 		        	    LangList0.clear();
-					LangList0.addAll(OldUserInfo.getPracticeLanguage());
+					LangList0.addAll(OldPraLang.keySet());
 					LangList0.removeAll(OldUserInfo.getNativeLanguage());	// remove native languages from practice languages = true practice languages
 					LangList0.retainAll(NewUserInfo.getNativeLanguage());	// find intersection of old's practice & new's native
 					MatchCnt[0]= LangList0.size();
 	        			// new: practice v.s. native
 	        	    		LangList1.clear();
-					LangList1.addAll(NewUserInfo.getPracticeLanguage());
+					LangList1.addAll(NewPraLang.keySet());
 					LangList1.removeAll(NewUserInfo.getNativeLanguage());	// remove native languages from practice languages = true practice languages
 					LangList1.retainAll(OldUserInfo.getNativeLanguage());	// find intersection of one's native & partner's practice
 					MatchCnt[1]= LangList1.size();
 	        			// common practice languages
     		        	    LangList2.clear();
-					LangList2.addAll(OldUserInfo.getPracticeLanguage());
+					LangList2.addAll(OldPraLang.keySet());
 					LangList2.removeAll(OldUserInfo.getNativeLanguage());	// remove native languages from practice languages = true practice languages
 	        	    		LangList3.clear();
-					LangList3.addAll(NewUserInfo.getPracticeLanguage());
+					LangList3.addAll(NewPraLang.keySet());
 					LangList3.removeAll(NewUserInfo.getNativeLanguage());	// remove native languages from practice languages = true practice languages
 					LangList2.retainAll(LangList3);	// common practice languages
 					MatchCnt[2]= LangList2.size();
@@ -126,9 +139,9 @@ public class CalcMatchScore implements Runnable
 						{
 							PraLangSeq[1]= LangList2.get(0);
 							MatSco+= COMMPRALANGMATCHINC;	// common practice match score
-//							PracLangLvl[0]= OldUserInfo.PraLangMap.get(LangList2.get(0));
-//							PracLangLvl[1]= NewUserInfo.PraLangMap.get(LangList2.get(0));
-//							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
+							PracLangLvl[0]= OldPraLang.get(LangList2.get(0));
+							PracLangLvl[1]= NewPraLang.get(LangList2.get(0));
+							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
 						}
 						else if (MatchCnt[0] >= 2) // common practice non-existent, one-sided match more than 2 lang 
 						{
@@ -146,9 +159,9 @@ public class CalcMatchScore implements Runnable
 						{
 							PraLangSeq[1]= LangList2.get(0);
 							MatSco+= COMMPRALANGMATCHINC;	// common practice match score
-//							PracLangLvl[0]= OldUserInfo.PraLangMap.get(LangList2.get(0));
-//							PracLangLvl[1]= NewUserInfo.PraLangMap.get(LangList2.get(0));
-//							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
+							PracLangLvl[0]= OldPraLang.get(LangList2.get(0));
+							PracLangLvl[1]= NewPraLang.get(LangList2.get(0));
+							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
 						}
 						else if (MatchCnt[1] >= 2) // common practice non-existent, one-sided match more than 2 lang 
 						{
@@ -165,20 +178,20 @@ public class CalcMatchScore implements Runnable
 						{
 							PraLangSeq[0]= LangList2.get(0);
 							PraLangSeq[1]= LangList2.get(1);
-//							PracLangLvl[0]= OldUserInfo.PraLangMap.get(LangList2.get(0));
-//							PracLangLvl[1]= NewUserInfo.PraLangMap.get(LangList2.get(0));
-//							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
-//							PracLangLvl[0]= OldUserInfo.PraLangMap.get(LangList2.get(1));
-//							PracLangLvl[1]= NewUserInfo.PraLangMap.get(LangList2.get(1));
-//							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
+							PracLangLvl[0]= OldPraLang.get(LangList2.get(0));
+							PracLangLvl[1]= NewPraLang.get(LangList2.get(0));
+							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
+							PracLangLvl[0]= OldPraLang.get(LangList2.get(1));
+							PracLangLvl[1]= NewPraLang.get(LangList2.get(1));
+							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
 						}
 						else if (MatchCnt[2] == 1)
 						{
 							PraLangSeq[0]= LangList2.get(0);
 							PraLangSeq[1]= PraLangSeq[0];
-//							PracLangLvl[0]= OldUserInfo.PraLangMap.get(LangList2.get(0));
-//							PracLangLvl[1]= NewUserInfo.PraLangMap.get(LangList2.get(0));
-//							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
+							PracLangLvl[0]= OldPraLang.get(LangList2.get(0));
+							PracLangLvl[1]= NewPraLang.get(LangList2.get(0));
+							MatSco+= Math.abs(PracLangLvl[0]-PracLangLvl[1])*COMMPRALANGLVLMISMATCHDEC;	// level mismatch causes deduction
 						}
 						else		// no match, no common practice
 						{
@@ -200,7 +213,7 @@ public class CalcMatchScore implements Runnable
 	}	// try
 	catch (Exception e)
 	{
-		
+		System.out.println(e);
 	}
 //		System.out.println("--- End emptying JoinTalkQueue");
 //		System.out.println("JoinTalkQueue= "+JoinTalkQueue.UID);
