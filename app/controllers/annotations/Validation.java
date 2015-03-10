@@ -15,4 +15,5 @@ public @interface Validation
     String type() default "string";
     String rule() default "";
     boolean require() default false;
+    String depend() default "";
 }

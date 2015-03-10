@@ -39,6 +39,15 @@ public class DispatchController extends AppController
             validation.put("type", type);
             validation.put("require", v.require());
 
+            if (!v.depend().isEmpty())
+            {
+                ObjectNode depend = mapper.createObjectNode();
+                String[] segs = v.depend().split("=");
+                depend.put("name", segs[0]);
+                depend.put("value", segs[1]);
+                validation.put("depend", depend);
+            }
+
             if (!v.rule().isEmpty())
             {
                 ObjectNode rules = mapper.createObjectNode();
@@ -160,6 +169,22 @@ public class DispatchController extends AppController
 
             if (validation.get("require").booleanValue() && !params.has(name))
                 throw new MissingParamException(validation);
+
+            if (validation.has("depend"))
+            {
+                JsonNode depend = validation.get("depend");
+                String field = depend.get("name").textValue();
+                String value = depend.get("value").textValue();
+                if (params.has(field) && value.equals(params.get(field).textValue()))
+                {
+                    if (!params.has(name))
+                        throw new MissingParamException(validation);
+                }
+                else
+                {
+                    params.remove(name);
+                }
+            }
         }
 
         fieldNames = params.fieldNames();
