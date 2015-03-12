@@ -61,13 +61,22 @@ public class Comment extends Model
     {
         MongoCollection commentCol = jongo.getCollection("comment");
 
-        MongoCursor<Comment> comments = commentCol.find("{post_id:#}", postId)
+        MongoCursor<Comment> cursor = commentCol.find("{post_id:#}", postId)
             .sort("{created:-1}").as(Comment.class);
-        List<Comment> result = new ArrayList<Comment>();
-        while (comments.hasNext())
-            result.add(comments.next());
+        List<Comment> comments = new ArrayList<Comment>();
+        while (cursor.hasNext())
+            comments.add(cursor.next());
 
-        return result;
+        try
+        {
+            cursor.close();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return comments;
     }
 
     public static void like(ObjectId commentId, ObjectId userId)

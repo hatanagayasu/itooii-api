@@ -105,12 +105,21 @@ public class User extends Model
     {
         MongoCollection userCol = jongo.getCollection("user");
 
-        MongoCursor<User> users = userCol.find().projection("{_id:1}").as(User.class);
-        List<User> result = new ArrayList<User>();
-        while (users.hasNext())
-            result.add(users.next());
+        MongoCursor<User> cursor = userCol.find().projection("{_id:1}").as(User.class);
+        List<User> users = new ArrayList<User>();
+        while (cursor.hasNext())
+            users.add(cursor.next());
 
-        return result;
+        try
+        {
+            cursor.close();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return users;
     }
 
     public void removePassword()
@@ -132,10 +141,19 @@ public class User extends Model
         }
 
         user.followers = new HashSet<ObjectId>();
-        MongoCursor<User> users = userCol.find("{'following.id':#}", userId)
+        MongoCursor<User> cursor = userCol.find("{'following.id':#}", userId)
             .projection("{_id:1}").as(User.class);
-        while (users.hasNext())
-            user.followers.add(users.next().getId());
+        while (cursor.hasNext())
+            user.followers.add(cursor.next().getId());
+
+        try
+        {
+            cursor.close();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
 
         return user;
     }

@@ -61,13 +61,22 @@ public class Post extends Model
         ids.addAll(user.getFollowers());
         ids.add(user.getId());
 
-        MongoCursor<Post> posts = postCol.find("{user_id:{$in:#}}", ids)
+        MongoCursor<Post> cursor = postCol.find("{user_id:{$in:#}}", ids)
             .sort("{created:-1}").as(Post.class);
-        List<Post> result = new ArrayList<Post>();
-        while (posts.hasNext())
-            result.add(posts.next());
+        List<Post> posts = new ArrayList<Post>();
+        while (cursor.hasNext())
+            posts.add(cursor.next());
 
-        return result;
+        try
+        {
+            cursor.close();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return posts;
     }
 
     public static void like(ObjectId postId, ObjectId userId)
