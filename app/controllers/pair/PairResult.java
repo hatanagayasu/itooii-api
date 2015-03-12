@@ -11,11 +11,13 @@ public class PairResult implements Runnable
 	private ArrayBlockingQueue<PairedTalkData> OutPairQueue;
 	public static final double	WaitScoFac= 5;	// (1/sec) waiting factor
 	public static final double	MATCHSCORETHD = 80; // match score threshold for qualified
+	static long CntTotalPaired;
 
 	public PairResult (ConcurrentHashMap<ObjectId, UserTable> UsrTabMap,ArrayBlockingQueue<PairedTalkData> OutPairQueue)
 	{
 		this.UsrTabMap = UsrTabMap;
 		this.OutPairQueue = OutPairQueue;
+		CntTotalPaired = 0;
 	}	
 
 	public void run()
@@ -25,7 +27,7 @@ public class PairResult implements Runnable
 			try 
 			{
 				Pair();
-	            Thread.sleep(3000L);
+	            Thread.sleep(5000L);
 			} 	// try
 			catch (InterruptedException iex) 
 			{
@@ -38,8 +40,7 @@ public class PairResult implements Runnable
 
 	public void Pair()
 	{
-		TreeMap<Double, PairedTalkData> FinMSList= new TreeMap<Double, PairedTalkData>();	// final match score list
-	    TreeMap<Double, MSData> UMSList;
+	    ConcurrentHashMap<ObjectId, MSData> UMSList;
 	    UserTable UsrTab;
 	    ObjectId UID;
 	    double WaitScore;
@@ -48,6 +49,7 @@ public class PairResult implements Runnable
 		// store qualified paired users (>= threshold)
 //	    System.out.println("--- Start Pairing");
 	    MSData FinMatRes;
+	    TreeSet<PairedTalkData> FinMSList = new TreeSet<PairedTalkData>();
 	    Iterator<Map.Entry<ObjectId, UserTable>> UTMIter = UsrTabMap.entrySet().iterator();
 	    while (UTMIter.hasNext())
 	    {
@@ -56,34 +58,29 @@ public class PairResult implements Runnable
 	    		UsrTab= UTMEntry.getValue();
 	    		UMSList= UsrTab.MSList;
 	    		WaitScore= WaitScoFac*(CurrTime- UsrTab.JoinTime)/1000.0;
-	    		SortedMap<Double, MSData> UPairList =UMSList.tailMap(MATCHSCORETHD-WaitScore);	// only get those exceeding threshold after adding WaitScore
-	    	    Iterator<Map.Entry<Double, MSData>> UPLIter = UPairList.entrySet().iterator();
-	    	    while (UPLIter.hasNext())
-	    	    {
-	    	    		Map.Entry<Double, MSData> UPLEntry= UPLIter.next();
-	    	    		FinMatRes= UPLEntry.getValue();
-	    	    		FinMSList.put(UPLEntry.getKey()+WaitScore, new PairedTalkData(UID, FinMatRes.MatchId, FinMatRes.lang0, FinMatRes.lang1));
-	    	    }
+	    		for (ObjectId MatchId : UMSList.keySet())
+	    		{
+	    			FinMatRes = UMSList.get(MatchId);
+	    			if (FinMatRes.Score > MATCHSCORETHD-WaitScore)
+	    			{
+	    				FinMSList.add(new PairedTalkData(FinMatRes.Score+WaitScore, UID, MatchId, FinMatRes.lang0, FinMatRes.lang1));
+	    			}
+	    		}
 	    }	// while
 	    
 	    // extract finally qualified according to match scores
 	    // notice: some qualified matches may involve duplicate users (hot users), duplication is resolved below
 	    ArrayList<PairedTalkData> PairedUserData= new ArrayList<PairedTalkData>();
 		ArrayList<ObjectId> PairedUserList= new ArrayList<ObjectId>();
-		PairedTalkData FinPair ;
-		NavigableMap<Double, PairedTalkData> FinMSListDes= FinMSList.descendingMap();
-	    Iterator<Map.Entry<Double, PairedTalkData>> FMSLIter = FinMSListDes.entrySet().iterator();
-	    while (FMSLIter.hasNext())
-	    {
-    			Map.Entry<Double, PairedTalkData> FMSLEntry= FMSLIter.next();
-    			FinPair= FMSLEntry.getValue();
-    			if (!PairedUserList.contains(FinPair.getOfferId()) && !PairedUserList.contains(FinPair.getAnswerId()))
-    			{
-    				PairedUserList.add(FinPair.getOfferId());
-    				PairedUserList.add(FinPair.getAnswerId());
-    				PairedUserData.add(FinPair);  			
-    			}	// if
-	    }	// while
+		for (PairedTalkData FinPair : FinMSList)
+		{
+			if (!PairedUserList.contains(FinPair.getOfferId()) && !PairedUserList.contains(FinPair.getAnswerId()))
+			{
+				PairedUserList.add(FinPair.getOfferId());
+				PairedUserList.add(FinPair.getAnswerId());
+				PairedUserData.add(FinPair);
+			}	// if
+		}
 	    
 	    // remove all paired users
 	    Iterator<ObjectId> PULIter0= PairedUserList.iterator();
@@ -93,16 +90,14 @@ public class PairResult implements Runnable
 	    }
 	    
 	    // remove all match scores of the paired users in the remaining users
-	    Iterator<Map.Entry<ObjectId, UserTable>> UTMIter1 = UsrTabMap.entrySet().iterator();
-	    while (UTMIter1.hasNext())
-	    {
-	    		UsrTab= UTMIter1.next().getValue();
-	    		Iterator<Map.Entry<Double, MSData>> UTMSLIter= UsrTab.MSList.entrySet().iterator();
-	    		while (UTMSLIter.hasNext())
+	    	for (ObjectId UserId : UsrTabMap.keySet())
+	    	{
+	    		UsrTab = UsrTabMap.get(UserId);
+	    		for (ObjectId MatchId : UsrTab.MSList.keySet())
 	    		{
-	    			if (PairedUserList.contains(UTMSLIter.next().getValue()))	// pick the match score related to paired users and remove it
+	    			if (PairedUserList.contains(MatchId))	// pick the match score related to paired users and remove it
 	    			{
-	    				UTMSLIter.remove();
+	    				UsrTab.MSList.remove(MatchId);
 	    			}
 	    		}
 	    }	// while
@@ -123,12 +118,13 @@ public class PairResult implements Runnable
 //	    		if (PairingLocalSimEnable)
 //	    		{
 	    		    System.out.println("****** Pairing Successful");
-			    System.out.println("PInfo= "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
+			    System.out.println("PInfo= "+PInfo.getScore()+" "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
+				CntTotalPaired += 2;
+				System.out.println("CntTotalPaired = "+CntTotalPaired);
 //	    		}
 	    }
+	    System.out.println("UsrTabMap size = "+UsrTabMap.size());
 
-	}	// PairResult
-	
-
+	}	// PairResult	
 	
 }	// LangPair

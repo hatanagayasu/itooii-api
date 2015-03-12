@@ -26,16 +26,6 @@ public class CalcMatchScore implements Runnable
 	public static final double	PFLANGMATCHINC = 120; // perfect language match score increment
 	public static final double	PairWaitTime= 0.1;	// (sec) waiting time between two pairing results
 	
-	// iTooii.com web parameters	
-//	public static final int 		TOTLANGNUM = PairTable.LanguageTable.length;// total language number
-//	public static final int		MOSTCOMMLANGIDX= PairConfig.MostCommonLangIndex;	
-//	public static final double	LANGMATCHINC = 20; // language match score increment
-//	public static final double	COMMPRALANGMATCHINC = 40; // common practice language match score increment (positive)
-//	public static final double	COMMPRALANGLVLMISMATCHDEC = -20; // common practice language level mismatch decrement (negative)
-//	public static final double	PFLANGMATCHINC = 120; // perfect language match score increment
-//	public static final double	MATCHSCORETHD = 80; // match score threshold for qualified
-//	public static final double	WaitScoFac= 5;	// (1/sec) waiting factor
-//	public static final double	PairWaitTime= 0.1;	// (sec) waiting time between two pairing results
 		
 	public CalcMatchScore(ConcurrentHashMap<ObjectId, UserTable> UsrTabMap,ArrayBlockingQueue<ObjectId> InPairQueue)
 	{
@@ -58,21 +48,19 @@ public class CalcMatchScore implements Runnable
 	    int		PraLangSeq[]= new int[2];	// practice language sequence
 	    int		PracLangLvl[]= new int[2];
 		
-//		System.out.println("UsrTabMap has "+UsrTabMap.size()+" users");
-//		System.out.println("UsrTabMap has "+UsrTabMap.size()+" users= "+UsrTabMap);
-//		System.out.println("JoinTalkQueue= "+JoinTalkQueue.UID);
-//		System.out.println("--- Start emptying JoinTalkQueue");
 	try
 	{
 		while (true)
 		{
 			
 			NewUID= InPairQueue.take();
+			if (UsrTabMap.containsKey(NewUID))
+				continue;
 
 			// new user joining talk queue
 			NewUserInfo= User.getById(NewUID);
 			NewUsrTab= new UserTable();
-			NewUsrTab.MSList= new TreeMap<Double, MSData>();
+			NewUsrTab.MSList= new ConcurrentHashMap<ObjectId, MSData>();
 			NewUsrTab.UInfo= NewUserInfo;
 			NewUsrTab.JoinTime= System.currentTimeMillis();
 
@@ -96,11 +84,6 @@ public class CalcMatchScore implements Runnable
 		        		HashMap<Integer,Integer> NewPraLang = new HashMap<Integer,Integer>();
 		        		for (PracticeLanguage PraLang : NewUserInfo.getPracticeLanguage())
 		        			NewPraLang.put(PraLang.getId(), PraLang.getLevel());
-//		        		Iterator<PracticeLanguage> OldUsrPracLangIter = OldUserInfo.getPracticeLanguage().iterator();
-//		        		while(OldUsrPracLangIter.hasNext())
-//		        		{
-//		        			
-//		        		}
 		        	    // old: practice v.s. native
 		        	    LangList0.clear();
 					LangList0.addAll(OldPraLang.keySet());
@@ -200,12 +183,10 @@ public class CalcMatchScore implements Runnable
 						}
 					}	// else
 	        			MatSco+= 0.01*Math.random() ;	// add negligible random value to avoid duplication
-	        			OldUsrTab.MSList.put(MatSco, new MSData(NewUID, PraLangSeq[0], PraLangSeq[1]));
+	        			OldUsrTab.MSList.put(NewUID, new MSData(MatSco, PraLangSeq[0], PraLangSeq[1]));
 	        			MatSco+= 0.01*Math.random() ;	// add negligible random value to avoid duplication
-	        			NewUsrTab.MSList.put(MatSco, new MSData(OldUID, PraLangSeq[0], PraLangSeq[1]));
-//	        			System.out.println("OldUID= "+OldUID+" OldUsrTab.MSList= "+OldUsrTab.MSList);
+	        			NewUsrTab.MSList.put(OldUID, new MSData(MatSco, PraLangSeq[0], PraLangSeq[1]));
 		        }	// while
-//    				System.out.println("NewUID= "+NewUID+" NewUsrTab.MSList= "+NewUsrTab.MSList);
 			}	// if			
 			
 			UsrTabMap.put(NewUID, NewUsrTab);
@@ -215,9 +196,6 @@ public class CalcMatchScore implements Runnable
 	{
 		System.out.println(e);
 	}
-//		System.out.println("--- End emptying JoinTalkQueue");
-//		System.out.println("JoinTalkQueue= "+JoinTalkQueue.UID);
-//		System.out.println("UsrTabMap= "+UsrTabMap);
 
 	}	// CalcMatchScore
 }	
