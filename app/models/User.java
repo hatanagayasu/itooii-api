@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -129,33 +130,38 @@ public class User extends Model
 
     public static User getById(ObjectId userId)
     {
-        MongoCollection userCol = jongo.getCollection("user");
+        String key = "user:" + userId.toString();
 
-        User user = userCol.findOne(userId).as(User.class);
+        return cache(key, new Callable<User>(){
+            public User call() {
+                MongoCollection userCol = jongo.getCollection("user");
+                User user = userCol.findOne(userId).as(User.class);
 
-        user.followings = new HashSet<ObjectId>();
-        if (user.following != null)
-        {
-            for (Following following : user.following)
-                user.followings.add(following.getId());
-        }
+                user.followings = new HashSet<ObjectId>();
+                if (user.following != null)
+                {
+                    for (Following following : user.following)
+                        user.followings.add(following.getId());
+                }
 
-        user.followers = new HashSet<ObjectId>();
-        MongoCursor<User> cursor = userCol.find("{'following.id':#}", userId)
-            .projection("{_id:1}").as(User.class);
-        while (cursor.hasNext())
-            user.followers.add(cursor.next().getId());
+                user.followers = new HashSet<ObjectId>();
+                MongoCursor<User> cursor = userCol.find("{'following.id':#}", userId)
+                    .projection("{_id:1}").as(User.class);
+                while (cursor.hasNext())
+                    user.followers.add(cursor.next().getId());
 
-        try
-        {
-            cursor.close();
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
+                try
+                {
+                    cursor.close();
+                }
+                catch (Exception e)
+                {
+                    throw new RuntimeException(e);
+                }
 
-        return user;
+                return user;
+            }
+        });
     }
 
     public static User getByEmail(String email)
