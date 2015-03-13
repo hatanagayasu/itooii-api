@@ -114,8 +114,11 @@ public class PairResult implements Runnable
 			    System.out.println("*** PInfo= "+PInfo.getScore()+" "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
 				CntTotalPaired += 2;
 	    }
-		System.out.println("CntTotalPaired = "+CntTotalPaired+" PairedUserData size = "+PairedUserData.size());
-	    System.out.println("UsrTabMap size = "+UsrTabMap.size());
+	    if (PairedUserData.size() > 0)
+	    {
+			System.out.println("CntTotalPaired = "+CntTotalPaired+" PairedUserData size = "+PairedUserData.size());
+		    System.out.println("UsrTabMap size = "+UsrTabMap.size());
+	    }
 
 	}	// PairResult	
 	
