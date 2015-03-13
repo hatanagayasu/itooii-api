@@ -16,3 +16,4 @@ POST    /comment/:comment_id/like   PostsController/likeComment
 DELETE  /comment/:comment_id/like   PostsController/unlikeComment
 POST    /media                      MediaController/upload
 POST    /echo                       TestController/echo
+POST    /ready                      TestController/ready

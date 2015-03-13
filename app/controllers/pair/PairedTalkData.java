@@ -21,6 +21,6 @@ public class PairedTalkData implements Comparable<PairedTalkData>
     
     public int compareTo(PairedTalkData S) 
     {
-        return (int) (S.Score - Score);
+        return S.Score > Score ? 1 : -1;
     }
 }

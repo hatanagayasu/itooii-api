@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,9 +64,7 @@ public class CalcMatchScore implements Runnable
 			NewUsrTab.JoinTime= System.currentTimeMillis();
 
 			// following: compare old v.s new users
-// ctest , check if new user is still available?
 			if (NewUserInfo!= null)
-//			if (PairTable.PairWaitTable.containsKey(NewUID) && NewUserInfo!= null)
 			{
 			    Iterator<Map.Entry<ObjectId, UserTable>> UTMIter = UsrTabMap.entrySet().iterator();
 		        while (UTMIter.hasNext())
@@ -182,9 +179,7 @@ public class CalcMatchScore implements Runnable
 							PraLangSeq[1]= MOSTCOMMLANGIDX;
 						}
 					}	// else
-	        			MatSco+= 0.01*Math.random() ;	// add negligible random value to avoid duplication
 	        			OldUsrTab.MSList.put(NewUID, new MSData(MatSco, PraLangSeq[0], PraLangSeq[1]));
-	        			MatSco+= 0.01*Math.random() ;	// add negligible random value to avoid duplication
 	        			NewUsrTab.MSList.put(OldUID, new MSData(MatSco, PraLangSeq[0], PraLangSeq[1]));
 		        }	// while
 			}	// if			

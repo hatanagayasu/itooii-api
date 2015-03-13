@@ -32,7 +32,6 @@ public class PairResult implements Runnable
 			catch (InterruptedException iex) 
 			{
 //		    		logger.error("InterruptedException");
-//		    		Running = !PairingLocalSimEnable;
 			}	// catch
 		}//while
 	}	// run 	
@@ -47,7 +46,6 @@ public class PairResult implements Runnable
 		long CurrTime= System.currentTimeMillis();
 
 		// store qualified paired users (>= threshold)
-//	    System.out.println("--- Start Pairing");
 	    MSData FinMatRes;
 	    TreeSet<PairedTalkData> FinMSList = new TreeSet<PairedTalkData>();
 	    Iterator<Map.Entry<ObjectId, UserTable>> UTMIter = UsrTabMap.entrySet().iterator();
@@ -61,7 +59,7 @@ public class PairResult implements Runnable
 	    		for (ObjectId MatchId : UMSList.keySet())
 	    		{
 	    			FinMatRes = UMSList.get(MatchId);
-	    			if (FinMatRes.Score > MATCHSCORETHD-WaitScore)
+	    			if (FinMatRes.Score > (MATCHSCORETHD-WaitScore))
 	    			{
 	    				FinMSList.add(new PairedTalkData(FinMatRes.Score+WaitScore, UID, MatchId, FinMatRes.lang0, FinMatRes.lang1));
 	    			}
@@ -81,7 +79,6 @@ public class PairResult implements Runnable
 				PairedUserData.add(FinPair);
 			}	// if
 		}
-	    
 	    // remove all paired users
 	    Iterator<ObjectId> PULIter0= PairedUserList.iterator();
 	    while (PULIter0.hasNext())
@@ -102,7 +99,6 @@ public class PairResult implements Runnable
 	    		}
 	    }	// while
 	    
-//	    System.out.println("PairedTalkQueue= "+PairedTalkQueue.UID);
 	    	Iterator<PairedTalkData> PILIter= PairedUserData.iterator();
 	    while (PILIter.hasNext())
 	    {
@@ -115,14 +111,10 @@ public class PairResult implements Runnable
 	    		{
 	    			
 	    		}
-//	    		if (PairingLocalSimEnable)
-//	    		{
-	    		    System.out.println("****** Pairing Successful");
-			    System.out.println("PInfo= "+PInfo.getScore()+" "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
+			    System.out.println("*** PInfo= "+PInfo.getScore()+" "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
 				CntTotalPaired += 2;
-				System.out.println("CntTotalPaired = "+CntTotalPaired);
-//	    		}
 	    }
+		System.out.println("CntTotalPaired = "+CntTotalPaired+" PairedUserData size = "+PairedUserData.size());
 	    System.out.println("UsrTabMap size = "+UsrTabMap.size());
 
 	}	// PairResult	
