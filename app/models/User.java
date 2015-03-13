@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,7 +35,6 @@ public class User extends Model
     private Set<Integer> nativeLanguage;
     @JsonProperty("practice_language")
     private Set<PracticeLanguage> practiceLanguage;
-    private Set<Following> following;
     private Date created;
     @JsonIgnore
     private Set<ObjectId> followings;
@@ -83,34 +83,51 @@ public class User extends Model
 
     public void follow(ObjectId userId)
     {
-        MongoCollection user = jongo.getCollection("user");
+        MongoCollection following = jongo.getCollection("following");
+        MongoCollection follower = jongo.getCollection("follower");
 
-        user.update("{_id:#,following.id:{$ne:#}}", id, userId)
-            .with("{$addToSet:{following:#}}", new Following(userId));
+        following.save(new Following(id, userId));
+        follower.save(new Follower(userId, id));
+
+        Jedis jedis = getJedis();
+        jedis.del(new String("user:" + id.toString()).getBytes());
+        jedis.del(new String("user:" + userId.toString()).getBytes());
+        returnJedis(jedis);
     }
 
     public void unfollow(ObjectId userId)
     {
-        MongoCollection user = jongo.getCollection("user");
+        MongoCollection following = jongo.getCollection("following");
+        MongoCollection follower = jongo.getCollection("follower");
 
-        user.update(id).with("{$pull:{following:{id:#}}}", userId);
-    }
+        following.remove("{user_id:#,following_id:#}", id, userId);
+        follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-    public boolean containsFollowing(ObjectId userId)
-    {
-        return this.followings.contains(userId);
+        Jedis jedis = getJedis();
+        jedis.del(new String("user:" + id.toString()).getBytes());
+        jedis.del(new String("user:" + userId.toString()).getBytes());
+        returnJedis(jedis);
     }
 
     public static List<User> search()
     {
         MongoCollection userCol = jongo.getCollection("user");
 
-        MongoCursor<User> users = userCol.find().projection("{_id:1}").as(User.class);
-        List<User> result = new ArrayList<User>();
-        while (users.hasNext())
-            result.add(users.next());
+        MongoCursor<User> cursor = userCol.find().projection("{_id:1}").as(User.class);
+        List<User> users = new ArrayList<User>();
+        while (cursor.hasNext())
+            users.add(cursor.next());
 
-        return result;
+        try
+        {
+            cursor.close();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return users;
     }
 
     public void removePassword()
@@ -120,24 +137,19 @@ public class User extends Model
 
     public static User getById(ObjectId userId)
     {
-        MongoCollection userCol = jongo.getCollection("user");
+        String key = "user:" + userId.toString();
 
-        User user = userCol.findOne(userId).as(User.class);
+        return cache(key, new Callable<User>(){
+            public User call() {
+                MongoCollection userCol = jongo.getCollection("user");
+                User user = userCol.findOne(userId).as(User.class);
 
-        user.followings = new HashSet<ObjectId>();
-        if (user.following != null)
-        {
-            for (Following following : user.following)
-                user.followings.add(following.getId());
-        }
+                user.followings = Following.getFollowingIds(userId);
+                user.followers = Follower.getFollowerIds(userId);
 
-        user.followers = new HashSet<ObjectId>();
-        MongoCursor<User> users = userCol.find("{'following.id':#}", userId)
-            .projection("{_id:1}").as(User.class);
-        while (users.hasNext())
-            user.followers.add(users.next().getId());
-
-        return user;
+                return user;
+            }
+        });
     }
 
     public static User getByEmail(String email)

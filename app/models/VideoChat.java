@@ -1,12 +1,10 @@
 package models;
 
-import java.io.Serializable;
-
 import org.bson.types.ObjectId;
 import redis.clients.jedis.Jedis;
 
 @lombok.Getter
-public class VideoChat extends Model implements Serializable
+public class VideoChat extends Model
 {
     private ObjectId id;
     private ObjectId userId;

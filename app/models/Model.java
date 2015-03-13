@@ -1,11 +1,13 @@
 package models;
 
 import play.*;
+import play.mvc.Http.Context;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
@@ -15,6 +17,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,7 +32,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
-public class Model
+public class Model implements Serializable
 {
     public static ObjectMapper mapper = new ObjectMapper();
 
@@ -37,6 +41,13 @@ public class Model
 
     private static JedisPool jedisPool;
     private static int redisDB;
+
+    public static Map<String,Object> context()
+    {
+        Context current = Context.current.get();
+
+        return current == null ? null : current.args;
+    }
 
     public static void init()
     {
@@ -306,7 +317,43 @@ public class Model
         }
         catch (Exception e)
         {
-            throw new RuntimeException(e);
+            return null;
         }
+    }
+
+    public static <T extends Model> T cache(String key, Callable<T> callback)
+    {
+        Map<String,Object> context = context();
+
+        if (context != null && context.containsKey(key))
+            return (T)context.get(key);
+
+        T t = null;
+
+        Jedis jedis = getJedis();
+        byte[] bkey = key.getBytes();
+        byte[] bytes = jedis.get(bkey);
+        if (bytes != null)
+            t = (T)unserialize(bytes);
+
+        if (t == null)
+        {
+            try
+            {
+                t = callback.call();
+                if (t != null)
+                    jedis.setex(bkey, 3600, serialize(t));
+            }
+            catch(Exception e)
+            {
+            }
+        }
+
+        if (context != null && t != null)
+            context.put(key, t);
+
+        returnJedis(jedis);
+
+        return t;
     }
 }
