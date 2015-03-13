@@ -8,6 +8,7 @@ DELETE  /access_token               UsersController/logout
 GET     /users                      UsersController/search
 GET     /user/feed                  PostsController/getFeed
 POST    /user/feed                  PostsController/add
+GET     /post/:post_id              PostsController/get
 GET     /post/:post_id/comment      PostsController/getComment
 POST    /post/:post_id/comment      PostsController/addComment
 POST    /post/:post_id/like         PostsController/like
