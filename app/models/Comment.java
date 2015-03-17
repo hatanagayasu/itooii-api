@@ -55,7 +55,7 @@ public class Comment extends Model
         if (post == null)
             return;
 
-        int page = post.getCommentCount() / 2;
+        int page = post.getCommentCount() / 100;
         commentCol.update("{post_id:#,page:#}", postId, page).upsert()
             .with("{$inc:{count:1},$push:{comments:#}}", this);
     }
