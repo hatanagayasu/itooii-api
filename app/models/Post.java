@@ -1,7 +1,5 @@
 package models;
 
-import models.User;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -24,6 +22,11 @@ public class Post extends Model
     private String text;
     private List<Attachment> attachments;
     private Date created;
+    @JsonProperty("comment_count")
+    private int commentCount;
+    @JsonProperty("like_count")
+    private int likeCount;
+    private Set<ObjectId> likes;
 
     public Post()
     {
@@ -36,6 +39,8 @@ public class Post extends Model
         this.text = text;
         this.attachments = attachments;
         this.created = new Date();
+        this.commentCount = 0;
+        this.likeCount = 0;
     }
 
     public void save()
@@ -83,13 +88,15 @@ public class Post extends Model
     {
         MongoCollection postCol = jongo.getCollection("post");
 
-        postCol.update(postId).with("{$addToSet:{likes:#}}", userId);
+        postCol.update("{_id:#,likes:{$ne:#}}", postId, userId)
+            .with("{$addToSet:{likes:#},$inc:{like_count:1}}", userId);
     }
 
     public static void unlike(ObjectId postId, ObjectId userId)
     {
         MongoCollection postCol = jongo.getCollection("post");
 
-        postCol.update(postId).with("{$pull:{likes:#}}", userId);
+        postCol.update("{_id:#,likes:#}", postId, userId)
+            .with("{$pull:{likes:#},$inc:{like_count:-1}}", userId);
     }
 }

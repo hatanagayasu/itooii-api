@@ -75,7 +75,7 @@ public class PostsController extends AppController
     {
         ObjectId postId = getObjectId(params, "post_id");
 
-        List<Comment> comments = Comment.getByPostId(postId);
+        List<Comment> comments = Comment.get(postId);
 
         return Ok(comments);
     }
