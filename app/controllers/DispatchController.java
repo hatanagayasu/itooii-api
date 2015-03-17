@@ -3,6 +3,7 @@ package controllers;
 import controllers.annotations.*;
 import controllers.constants.Error;
 
+import java.lang.NumberFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
@@ -246,6 +247,19 @@ public class DispatchController extends AppController
             }
             else
             {
+                if (type.equals("integer") && param.isTextual())
+                {
+                    try
+                    {
+                        params.put(name, Integer.parseInt(param.textValue()));
+                        param = params.get(name);
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        throw new MalformedParamException(validation);
+                    }
+                }
+
                 validation(validation, param);
 
                 if (type.equals("id"))
