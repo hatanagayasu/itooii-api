@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -35,6 +36,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 public class Model implements Serializable
 {
     public static ObjectMapper mapper = new ObjectMapper();
+    private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
     public static DB mongodb;
     public static Jongo jongo;
@@ -91,22 +93,22 @@ public class Model implements Serializable
         jedisPool.returnResource(jedis);
     }
 
-    public static String toJson(Model model)
+    public static StringBuilder toJson(Model model)
     {
         StringBuilder result = new StringBuilder(512);
 
         objectToJson(model, result);
 
-        return result.toString();
+        return result;
     }
 
-    public static String toJson(List<? extends Model> models)
+    public static StringBuilder toJson(List<? extends Model> models)
     {
         StringBuilder result = new StringBuilder(512);
 
         collectionToJson(models, result);
 
-        return result.toString();
+        return result;
     }
 
     private static void objectToJson(Object object, StringBuilder result)
@@ -131,9 +133,6 @@ public class Model implements Serializable
                 field.setAccessible(true);
                 String name = field.getName();
                 Object value = field.get(object);
-
-                if (name.equals("post_id"))
-                    System.out.println(value.getClass().getName());
 
                 if (field.getAnnotation(JsonProperty.class) != null)
                     name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
@@ -161,7 +160,7 @@ public class Model implements Serializable
                 else if (clazz == String.class)
                 {
                     result.append("\"").append(name).append("\":\"")
-                        .append((String)value).append("\"");
+                        .append(encoder.quoteAsString((String)value)).append("\"");
                 }
                 else if (value instanceof Collection)
                 {
@@ -234,7 +233,7 @@ public class Model implements Serializable
                 Iterator<String> iterator = collection.iterator();
                 while (iterator.hasNext())
                 {
-                    result.append("\"").append(iterator.next()).append("\"");
+                    result.append("\"").append(encoder.quoteAsString(iterator.next())).append("\"");
                     if (iterator.hasNext())
                         result.append(",");
                 }
