@@ -29,7 +29,7 @@ public class PostsController extends AppController
         return Ok(feed);
     }
 
-    @Validation(name="text", require=true)
+    @Validation(name="text", depend="|attachments")
     @Validation(name="attachments", type="array")
     @Validation(name="attachments[]", type="object")
     @Validation(name="attachments[].type", rule="(photo|url)", require=true)
@@ -38,7 +38,7 @@ public class PostsController extends AppController
     public static Result add(JsonNode params)
     {
         User me = getMe(params);
-        String text = params.get("text").textValue();
+        String text = params.has("text") ? params.get("text").textValue() : null;
 
         List<Attachment> attachments = new ArrayList<Attachment>();
         if (params.has("attachments"))
@@ -81,7 +81,7 @@ public class PostsController extends AppController
     }
 
     @Validation(name="post_id", type="id", require=true)
-    @Validation(name="text", require=true)
+    @Validation(name="text", depend="|attachments")
     @Validation(name="attachments", type="array")
     @Validation(name="attachments[]", type="object")
     @Validation(name="attachments[].type", rule="(photo|url)", require=true)
@@ -91,7 +91,7 @@ public class PostsController extends AppController
     {
         User me = getMe(params);
         ObjectId postId = getObjectId(params, "post_id");
-        String text = params.get("text").textValue();
+        String text = params.has("text") ? params.get("text").textValue() : null;
 
         List<Attachment> attachments = new ArrayList<Attachment>();
         if (params.has("attachments"))
