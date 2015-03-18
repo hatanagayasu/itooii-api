@@ -320,6 +320,21 @@ public class Model implements Serializable
         }
     }
 
+    public static void expire(String key)
+    {
+        Jedis jedis = getJedis();
+        jedis.del(key.getBytes());
+        returnJedis(jedis);
+    }
+
+    public static void expire(String[] keys)
+    {
+        Jedis jedis = getJedis();
+        for (String key : keys)
+            jedis.del(key.getBytes());
+        returnJedis(jedis);
+    }
+
     public static <T extends Model> T cache(String key, Callable<T> callback)
     {
         Map<String,Object> context = context();

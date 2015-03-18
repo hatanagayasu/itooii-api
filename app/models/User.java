@@ -74,6 +74,8 @@ public class User extends Model
         }
 
         userCol.update(id).with("{$set:#}", params);
+
+        expire("user:" + id);
     }
 
     public void follow(ObjectId userId)
@@ -84,10 +86,7 @@ public class User extends Model
         following.save(new Following(id, userId));
         follower.save(new Follower(userId, id));
 
-        Jedis jedis = getJedis();
-        jedis.del(new String("user:" + id.toString()).getBytes());
-        jedis.del(new String("user:" + userId.toString()).getBytes());
-        returnJedis(jedis);
+        expire(new String[]{"user:" + id, "user:" + userId});
     }
 
     public void unfollow(ObjectId userId)
@@ -98,10 +97,7 @@ public class User extends Model
         following.remove("{user_id:#,following_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        Jedis jedis = getJedis();
-        jedis.del(new String("user:" + id.toString()).getBytes());
-        jedis.del(new String("user:" + userId.toString()).getBytes());
-        returnJedis(jedis);
+        expire(new String[]{"user:" + id, "user:" + userId});
     }
 
     public static List<User> search()
@@ -132,7 +128,7 @@ public class User extends Model
 
     public static User getById(ObjectId userId)
     {
-        String key = "user:" + userId.toString();
+        String key = "user:" + userId;
 
         return cache(key, new Callable<User>(){
             public User call() {
