@@ -1,7 +1,6 @@
 package models;
 
 import play.*;
-import play.mvc.Http.Context;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,13 +42,6 @@ public class Model implements Serializable
 
     private static JedisPool jedisPool;
     private static int redisDB;
-
-    public static Map<String,Object> context()
-    {
-        Context current = Context.current.get();
-
-        return current == null ? null : current.args;
-    }
 
     public static void init()
     {
@@ -337,11 +329,6 @@ public class Model implements Serializable
 
     public static <T extends Model> T cache(String key, Callable<T> callback)
     {
-        Map<String,Object> context = context();
-
-        if (context != null && context.containsKey(key))
-            return (T)context.get(key);
-
         T t = null;
 
         Jedis jedis = getJedis();
@@ -362,9 +349,6 @@ public class Model implements Serializable
             {
             }
         }
-
-        if (context != null && t != null)
-            context.put(key, t);
 
         returnJedis(jedis);
 
