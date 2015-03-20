@@ -7,6 +7,7 @@ import java.lang.NumberFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
+import java.util.Date;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -284,21 +285,19 @@ public class DispatchController extends AppController
                 if (!token.matches(regex) || !models.User.checkToken(token))
                     throw new InvalidAccessTokenException();
             }
+            else if (type.equals("integer") && param.isTextual())
+            {
+                try
+                {
+                    params.put(name, Integer.parseInt(param.textValue()));
+                }
+                catch (NumberFormatException e)
+                {
+                    throw new MalformedParamException(validation);
+                }
+            }
             else
             {
-                if (type.equals("integer") && param.isTextual())
-                {
-                    try
-                    {
-                        params.put(name, Integer.parseInt(param.textValue()));
-                        param = params.get(name);
-                    }
-                    catch (NumberFormatException e)
-                    {
-                        throw new MalformedParamException(validation);
-                    }
-                }
-
                 validation(validation, param);
 
                 if (type.equals("id"))
