@@ -67,7 +67,7 @@ public class VideoChatController extends AppController
     public static Result request(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId userId = getObjectId(params, "user_id");
+        ObjectId userId = getObject(params, "user_id");
         User user = User.getById(userId);
         String token = params.get("access_token").textValue();
 
@@ -98,8 +98,8 @@ public class VideoChatController extends AppController
     public static Result response(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId userId = getObjectId(params, "user_id");
-        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        ObjectId userId = getObject(params, "user_id");
+        ObjectId videoChatId = getObject(params, "video_chat_id");
         String token = params.get("access_token").textValue();
 
         VideoChat videoChat = VideoChat.get(userId);
@@ -139,7 +139,7 @@ public class VideoChatController extends AppController
     public static Result pairRequest(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
@@ -158,7 +158,7 @@ public class VideoChatController extends AppController
     public static Result pairResponse(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
@@ -178,7 +178,7 @@ public class VideoChatController extends AppController
     public static Result offer(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
@@ -199,7 +199,7 @@ public class VideoChatController extends AppController
     public static Result answer(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
@@ -220,7 +220,7 @@ public class VideoChatController extends AppController
     public static Result candidate(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId videoChatId = getObjectId(params, "video_chat_id");
+        ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))

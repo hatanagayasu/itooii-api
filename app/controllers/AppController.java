@@ -114,9 +114,9 @@ public class AppController extends Controller
         return User.getByToken(token);
     }
 
-    public static ObjectId getObjectId(JsonNode params, String name)
+    public static <T> T getObject(JsonNode params, String name)
     {
-        return (ObjectId)((POJONode)params.get(name)).getPojo();
+        return (T)((POJONode)params.get(name)).getPojo();
     }
 
     public static void sendEvent(ObjectId userId, String token, JsonNode event)
