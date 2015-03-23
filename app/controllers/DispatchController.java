@@ -7,7 +7,6 @@ import java.lang.NumberFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
-import java.util.Date;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -294,6 +293,27 @@ public class DispatchController extends AppController
                 catch (NumberFormatException e)
                 {
                     throw new MalformedParamException(validation);
+                }
+            }
+            else if (type.equals("epoch"))
+            {
+                if (param.isTextual())
+                {
+                    try
+                    {
+                        params.put(name, Long.parseLong(param.textValue()));
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        throw new MalformedParamException(validation);
+                    }
+                }
+                else
+                {
+                    if (param.isLong())
+                        params.put(name, param.longValue());
+                    else
+                        throw new MalformedParamException(validation);
                 }
             }
             else
