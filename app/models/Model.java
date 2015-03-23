@@ -142,7 +142,7 @@ public class Model implements Serializable
                 {
                     Date date = (Date)value;
                     result.append("\"").append(name).append("\":")
-                        .append(date.getTime() / 1000);
+                        .append(date.getTime());
                 }
                 else if (clazz == Integer.class)
                 {
@@ -205,7 +205,7 @@ public class Model implements Serializable
                 Iterator<Date> iterator = collection.iterator();
                 while (iterator.hasNext())
                 {
-                    result.append(iterator.next().getTime() / 1000);
+                    result.append(iterator.next().getTime());
                     if (iterator.hasNext())
                         result.append(",");
                 }
