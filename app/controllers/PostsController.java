@@ -7,29 +7,37 @@ import controllers.constants.Error;
 
 import models.Attachment;
 import models.Comment;
+import models.Feed;
 import models.Post;
 import models.User;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
 public class PostsController extends AppController
 {
+    @Validation(name="skip", type="integer", rule="min=0")
+    @Validation(name="until", type="epoch")
+    @Validation(name="limit", type="integer", rule="min=1,max=25")
     public static Result getFeed(JsonNode params)
     {
         User me = getMe(params);
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        long until = params.has("until") ? params.get("until").longValue() : System.currentTimeMillis();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        List<Post> feed = Post.getFeed(me);
-
-        return Ok(feed);
+        if (params.has("until") && !params.has("skip"))
+            return Ok(Feed.get(me, until, limit));
+        else
+            return Ok(Feed.get(me, skip, until, limit));
     }
 
-    @Validation(name="text", require=true)
+    @Validation(name="text", depend="|attachments")
     @Validation(name="attachments", type="array")
     @Validation(name="attachments[]", type="object")
     @Validation(name="attachments[].type", rule="(photo|url)", require=true)
@@ -38,7 +46,7 @@ public class PostsController extends AppController
     public static Result add(JsonNode params)
     {
         User me = getMe(params);
-        String text = params.get("text").textValue();
+        String text = params.has("text") ? params.get("text").textValue() : null;
 
         List<Attachment> attachments = new ArrayList<Attachment>();
         if (params.has("attachments"))
@@ -49,14 +57,14 @@ public class PostsController extends AppController
                 JsonNode attachment = values.next();
                 String type = attachment.get("type").textValue();
                 if (attachment.has("photo_id"))
-                    attachments.add(new Attachment(type, getObjectId(attachment, "photo_id")));
+                    attachments.add(new Attachment(type, (ObjectId)getObject(attachment, "photo_id")));
                 else if (attachment.has("preview"))
                     attachments.add(new Attachment(type, attachment.get("preview").textValue()));
             }
         }
 
         Post post = new Post(me.getId(), text, attachments);
-        post.save();
+        post.save(me);
 
         return Ok(post);
     }
@@ -64,24 +72,31 @@ public class PostsController extends AppController
     @Validation(name="post_id", type="id", require=true)
     public static Result get(JsonNode params)
     {
-        ObjectId postId = getObjectId(params, "post_id");
+        ObjectId postId = getObject(params, "post_id");
         Post post = Post.get(postId);
+
+        if (post == null)
+            return NotFound();
 
         return Ok(post);
     }
 
     @Validation(name="post_id", type="id", require=true)
+    @Validation(name="until", type="epoch")
+    @Validation(name="limit", type="integer", rule="min=1,max=50")
     public static Result getComment(JsonNode params)
     {
-        ObjectId postId = getObjectId(params, "post_id");
+        User me = getMe(params);
+        long until = params.has("until") ? params.get("until").longValue() : System.currentTimeMillis();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 50;
 
-        List<Comment> comments = Comment.getByPostId(postId);
+        ObjectId postId = getObject(params, "post_id");
 
-        return Ok(comments);
+        return Ok(Comment.get(postId, me.getId(), until, limit));
     }
 
     @Validation(name="post_id", type="id", require=true)
-    @Validation(name="text", require=true)
+    @Validation(name="text", depend="|attachments")
     @Validation(name="attachments", type="array")
     @Validation(name="attachments[]", type="object")
     @Validation(name="attachments[].type", rule="(photo|url)", require=true)
@@ -90,8 +105,8 @@ public class PostsController extends AppController
     public static Result addComment(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId postId = getObjectId(params, "post_id");
-        String text = params.get("text").textValue();
+        ObjectId postId = getObject(params, "post_id");
+        String text = params.has("text") ? params.get("text").textValue() : null;
 
         List<Attachment> attachments = new ArrayList<Attachment>();
         if (params.has("attachments"))
@@ -102,14 +117,14 @@ public class PostsController extends AppController
                 JsonNode attachment = values.next();
                 String type = attachment.get("type").textValue();
                 if (attachment.has("photo_id"))
-                    attachments.add(new Attachment(type, getObjectId(attachment, "photo_id")));
+                    attachments.add(new Attachment(type, (ObjectId)getObject(attachment, "photo_id")));
                 else if (attachment.has("preview"))
                     attachments.add(new Attachment(type, attachment.get("preview").textValue()));
             }
         }
 
-        Comment comment = new Comment(postId, me.getId(), text, attachments);
-        comment.save();
+        Comment comment = new Comment(me.getId(), text, attachments);
+        comment.save(postId);
 
         return Ok(comment);
     }
@@ -118,7 +133,7 @@ public class PostsController extends AppController
     public static Result like(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId postId = getObjectId(params, "post_id");
+        ObjectId postId = getObject(params, "post_id");
 
         Post.like(postId, me.getId());
 
@@ -129,7 +144,7 @@ public class PostsController extends AppController
     public static Result unlike(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId postId = getObjectId(params, "post_id");
+        ObjectId postId = getObject(params, "post_id");
 
         Post.unlike(postId, me.getId());
 
@@ -140,7 +155,7 @@ public class PostsController extends AppController
     public static Result likeComment(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId commentId = getObjectId(params, "comment_id");
+        ObjectId commentId = getObject(params, "comment_id");
 
         Comment.like(commentId, me.getId());
 
@@ -151,7 +166,7 @@ public class PostsController extends AppController
     public static Result unlikeComment(JsonNode params)
     {
         User me = getMe(params);
-        ObjectId commentId = getObjectId(params, "comment_id");
+        ObjectId commentId = getObject(params, "comment_id");
 
         Comment.unlike(commentId, me.getId());
 

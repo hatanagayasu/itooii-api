@@ -1,7 +1,6 @@
 package models;
 
 import play.*;
-import play.mvc.Http.Context;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,14 +18,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.commons.codec.binary.Hex;
+import org.bson.types.ObjectId;
 import org.jongo.Jongo;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -35,19 +40,23 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 public class Model implements Serializable
 {
     public static ObjectMapper mapper = new ObjectMapper();
+    private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
+
+    private static LoadingCache<ObjectId,String> names = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .build(new CacheLoader<ObjectId,String>(){
+            public String load(ObjectId userId)
+            {
+                return User.getById(userId).getName();
+            }
+        });
 
     public static DB mongodb;
     public static Jongo jongo;
 
     private static JedisPool jedisPool;
     private static int redisDB;
-
-    public static Map<String,Object> context()
-    {
-        Context current = Context.current.get();
-
-        return current == null ? null : current.args;
-    }
 
     public static void init()
     {
@@ -91,22 +100,22 @@ public class Model implements Serializable
         jedisPool.returnResource(jedis);
     }
 
-    public static String toJson(Model model)
+    public static StringBuilder toJson(Model model)
     {
         StringBuilder result = new StringBuilder(512);
 
         objectToJson(model, result);
 
-        return result.toString();
+        return result;
     }
 
-    public static String toJson(List<? extends Model> models)
+    public static StringBuilder toJson(List<? extends Model> models)
     {
         StringBuilder result = new StringBuilder(512);
 
         collectionToJson(models, result);
 
-        return result.toString();
+        return result;
     }
 
     private static void objectToJson(Object object, StringBuilder result)
@@ -132,9 +141,6 @@ public class Model implements Serializable
                 String name = field.getName();
                 Object value = field.get(object);
 
-                if (name.equals("post_id"))
-                    System.out.println(value.getClass().getName());
-
                 if (field.getAnnotation(JsonProperty.class) != null)
                     name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
 
@@ -151,7 +157,7 @@ public class Model implements Serializable
                 {
                     Date date = (Date)value;
                     result.append("\"").append(name).append("\":")
-                        .append(date.getTime() / 1000);
+                        .append(date.getTime());
                 }
                 else if (clazz == Integer.class)
                 {
@@ -161,7 +167,7 @@ public class Model implements Serializable
                 else if (clazz == String.class)
                 {
                     result.append("\"").append(name).append("\":\"")
-                        .append((String)value).append("\"");
+                        .append(encoder.quoteAsString((String)value)).append("\"");
                 }
                 else if (value instanceof Collection)
                 {
@@ -214,7 +220,7 @@ public class Model implements Serializable
                 Iterator<Date> iterator = collection.iterator();
                 while (iterator.hasNext())
                 {
-                    result.append(iterator.next().getTime() / 1000);
+                    result.append(iterator.next().getTime());
                     if (iterator.hasNext())
                         result.append(",");
                 }
@@ -234,7 +240,7 @@ public class Model implements Serializable
                 Iterator<String> iterator = collection.iterator();
                 while (iterator.hasNext())
                 {
-                    result.append("\"").append(iterator.next()).append("\"");
+                    result.append("\"").append(encoder.quoteAsString(iterator.next())).append("\"");
                     if (iterator.hasNext())
                         result.append(",");
                 }
@@ -321,13 +327,23 @@ public class Model implements Serializable
         }
     }
 
+    public static void expire(String key)
+    {
+        Jedis jedis = getJedis();
+        jedis.del(key.getBytes());
+        returnJedis(jedis);
+    }
+
+    public static void expire(String[] keys)
+    {
+        Jedis jedis = getJedis();
+        for (String key : keys)
+            jedis.del(key.getBytes());
+        returnJedis(jedis);
+    }
+
     public static <T extends Model> T cache(String key, Callable<T> callback)
     {
-        Map<String,Object> context = context();
-
-        if (context != null && context.containsKey(key))
-            return (T)context.get(key);
-
         T t = null;
 
         Jedis jedis = getJedis();
@@ -349,11 +365,20 @@ public class Model implements Serializable
             }
         }
 
-        if (context != null && t != null)
-            context.put(key, t);
-
         returnJedis(jedis);
 
         return t;
+    }
+
+    public static String name(ObjectId userId)
+    {
+        try
+        {
+            return names.get(userId);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 }

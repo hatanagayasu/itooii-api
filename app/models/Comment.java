@@ -1,13 +1,13 @@
 package models;
 
-import models.User;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -19,53 +19,65 @@ public class Comment extends Model
 {
     @Id
     private ObjectId id;
-    @JsonProperty("post_id")
-    private ObjectId postId;
     @JsonProperty("user_id")
     private ObjectId userId;
+    @JsonIgnore
+    @JsonProperty("user_name")
+    private String userName;
     private String text;
     private List<Attachment> attachments;
     private Date created;
+    @JsonIgnore
+    @JsonProperty("like_count")
+    private int likeCount;
     private Set<ObjectId> likes;
+    @JsonIgnore
+    private boolean liked;
 
     public Comment()
     {
     }
 
-    public Comment(ObjectId postId, ObjectId userId, String text, List<Attachment> attachments)
+    public Comment(ObjectId userId, String text, List<Attachment> attachments)
     {
         this.id = new ObjectId();
-        this.postId = postId;
         this.userId = userId;
         this.text = text;
-        this.attachments = attachments;
+        this.attachments = attachments == null ? null : (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
     }
 
-    public void save()
+    public void save(ObjectId postId)
     {
+        MongoCollection postCol = jongo.getCollection("post");
         MongoCollection commentCol = jongo.getCollection("comment");
-        commentCol.save(this);
+
+        Post post = postCol.findAndModify("{_id:#}", postId)
+            .with("{$inc:{comment_count:1},$push:{comments:{$each:[#],$slice:-4}}}", this)
+            .projection("{comment_count:1}").as(Post.class);
+
+        if (post == null)
+            return;
+
+        int page = post.getCommentCount() / 50;
+        commentCol.update("{post_id:#,page:#}", postId, page).upsert()
+            .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
+
+        expire("post:" + postId);
     }
 
-    public static Comment get(ObjectId commentId)
+    public static Page get(ObjectId postId, ObjectId userId, long until, int limit)
     {
         MongoCollection commentCol = jongo.getCollection("comment");
+        String previous = null;
 
-        Comment comment = commentCol.findOne(commentId).as(Comment.class);
+        MongoCursor<Comments> cursor = commentCol
+            .find("{post_id:#,created:{$lt:#}}", postId, new Date(until)).
+            sort("{created:-1}").limit(2).as(Comments.class);
 
-        return comment;
-    }
-
-    public static List<Comment> getByPostId(ObjectId postId)
-    {
-        MongoCollection commentCol = jongo.getCollection("comment");
-
-        MongoCursor<Comment> cursor = commentCol.find("{post_id:#}", postId)
-            .sort("{created:-1}").as(Comment.class);
-        List<Comment> comments = new ArrayList<Comment>();
+        List<Comments> commentses = new ArrayList<Comments>(2);
         while (cursor.hasNext())
-            comments.add(cursor.next());
+            commentses.add(cursor.next());
 
         try
         {
@@ -76,20 +88,76 @@ public class Comment extends Model
             throw new RuntimeException(e);
         }
 
-        return comments;
+        List<Comment> comments = new ArrayList<Comment>(100);
+        for(int i = commentses.size() - 1; i >= 0; i--)
+        {
+            for (Comment comment : commentses.get(i).getComments())
+            {
+                if (comment.created.getTime() < until)
+                    comments.add(comment);
+            }
+        }
+
+        if (comments.size() > limit)
+            comments.subList(0, comments.size() - limit).clear();
+
+        for (Comment comment : comments)
+        {
+            comment.userName = name(comment.userId);
+
+            if (comment.likes == null)
+            {
+                comment.likeCount = 0;
+                comment.liked = false;
+            }
+            else
+            {
+                comment.likeCount = comment.likes.size();
+                comment.liked = comment.likes.contains(userId);
+                comment.likes = null;
+            }
+        }
+
+        if (comments.size() == limit)
+        {
+            until = comments.get(0).getCreated().getTime();
+            previous = String.format("until=%d&limit=%d", until, limit);
+        }
+
+        return new Page(comments, previous);
     }
 
     public static void like(ObjectId commentId, ObjectId userId)
     {
         MongoCollection commentCol = jongo.getCollection("comment");
+        MongoCollection postCol = jongo.getCollection("post");
 
-        commentCol.update(commentId).with("{$addToSet:{likes:#}}", userId);
+        commentCol.update("{'comments._id':#}", commentId)
+            .with("{$addToSet:{'comments.$.likes':#}}", userId);
+
+        Post post = postCol
+            .findAndModify("{'comments._id':#}", commentId)
+            .with("{$addToSet:{'comments.$.likes':#}}", userId)
+            .projection("{_id:1}").as(Post.class);
+
+        if (post != null)
+            expire("post:" + post.getId());
     }
 
     public static void unlike(ObjectId commentId, ObjectId userId)
     {
+        MongoCollection postCol = jongo.getCollection("post");
         MongoCollection commentCol = jongo.getCollection("comment");
 
-        commentCol.update(commentId).with("{$pull:{likes:#}}", userId);
+        commentCol.update("{'comments._id':#}", commentId)
+            .with("{$pull:{'comments.$.likes':#}}", userId);
+
+        Post post = postCol
+            .findAndModify("{'comments._id':#}", commentId)
+            .with("{$pull:{'comments.$.likes':#}}", userId)
+            .projection("{_id:1}").as(Post.class);
+
+        if (post != null)
+            expire("post:" + post.getId());
     }
 }

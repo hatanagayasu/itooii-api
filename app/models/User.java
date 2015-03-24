@@ -1,12 +1,7 @@
 package models;
 
-import models.Following;
-import models.PracticeLanguage;
-
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,6 +74,8 @@ public class User extends Model
         }
 
         userCol.update(id).with("{$set:#}", params);
+
+        expire("user:" + id);
     }
 
     public void follow(ObjectId userId)
@@ -89,10 +86,7 @@ public class User extends Model
         following.save(new Following(id, userId));
         follower.save(new Follower(userId, id));
 
-        Jedis jedis = getJedis();
-        jedis.del(new String("user:" + id.toString()).getBytes());
-        jedis.del(new String("user:" + userId.toString()).getBytes());
-        returnJedis(jedis);
+        expire(new String[]{"user:" + id, "user:" + userId});
     }
 
     public void unfollow(ObjectId userId)
@@ -103,10 +97,7 @@ public class User extends Model
         following.remove("{user_id:#,following_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        Jedis jedis = getJedis();
-        jedis.del(new String("user:" + id.toString()).getBytes());
-        jedis.del(new String("user:" + userId.toString()).getBytes());
-        returnJedis(jedis);
+        expire(new String[]{"user:" + id, "user:" + userId});
     }
 
     public static List<User> search()
@@ -137,12 +128,16 @@ public class User extends Model
 
     public static User getById(ObjectId userId)
     {
-        String key = "user:" + userId.toString();
+        String key = "user:" + userId;
 
         return cache(key, new Callable<User>(){
-            public User call() {
+            public User call()
+            {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).as(User.class);
+
+                if (user.name == null)
+                    user.name = user.email.replaceFirst("@.*", "");
 
                 user.followings = Following.getFollowingIds(userId);
                 user.followers = Follower.getFollowerIds(userId);
