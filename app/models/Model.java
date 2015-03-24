@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
@@ -26,7 +27,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.commons.codec.binary.Hex;
+import org.bson.types.ObjectId;
 import org.jongo.Jongo;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -36,6 +41,16 @@ public class Model implements Serializable
 {
     public static ObjectMapper mapper = new ObjectMapper();
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
+
+    private static LoadingCache<ObjectId,String> names = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .build(new CacheLoader<ObjectId,String>(){
+            public String load(ObjectId userId)
+            {
+                return User.getById(userId).getName();
+            }
+        });
 
     public static DB mongodb;
     public static Jongo jongo;
@@ -353,5 +368,17 @@ public class Model implements Serializable
         returnJedis(jedis);
 
         return t;
+    }
+
+    public static String name(ObjectId userId)
+    {
+        try
+        {
+            return names.get(userId);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 }
