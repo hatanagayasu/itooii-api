@@ -38,11 +38,12 @@ public class User extends Model {
     public User() {
     }
 
-    public User(String email, String password, Set<Integer> nativeLanguage,
+    public User(String email, String password, String name, Set<Integer> nativeLanguage,
                     Set<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email;
         this.password = md5(password);
+        this.name = name;
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
@@ -95,7 +96,8 @@ public class User extends Model {
     public static List<User> search() {
         MongoCollection userCol = jongo.getCollection("user");
 
-        MongoCursor<User> cursor = userCol.find().projection("{_id:1}").as(User.class);
+        MongoCursor<User> cursor = userCol.find()
+            .projection("{_id:1,name:1}").as(User.class);
         List<User> users = new ArrayList<User>();
         while (cursor.hasNext())
             users.add(cursor.next());
@@ -120,9 +122,6 @@ public class User extends Model {
             public User call() {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).as(User.class);
-
-                if (user.name == null)
-                    user.name = user.email.replaceFirst("@.*", "");
 
                 user.followings = Following.getFollowingIds(userId);
                 user.followers = Follower.getFollowerIds(userId);
