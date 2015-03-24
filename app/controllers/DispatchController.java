@@ -284,24 +284,17 @@ public class DispatchController extends AppController
                 if (!token.matches(regex) || !models.User.checkToken(token))
                     throw new InvalidAccessTokenException();
             }
-            else if (type.equals("integer") && param.isTextual())
-            {
-                try
-                {
-                    params.put(name, Integer.parseInt(param.textValue()));
-                }
-                catch (NumberFormatException e)
-                {
-                    throw new MalformedParamException(validation);
-                }
-            }
             else if (type.equals("epoch"))
             {
                 if (param.isTextual())
                 {
                     try
                     {
-                        params.put(name, Long.parseLong(param.textValue()));
+                        long epoch = Long.parseLong(param.textValue());
+                        if (epoch < 0)
+                            throw new MalformedParamException(validation);
+
+                        params.put(name, epoch);
                     }
                     catch (NumberFormatException e)
                     {
@@ -310,7 +303,7 @@ public class DispatchController extends AppController
                 }
                 else
                 {
-                    if (param.isLong())
+                    if (param.isLong() && param.longValue() >= 0)
                         params.put(name, param.longValue());
                     else
                         throw new MalformedParamException(validation);
@@ -318,6 +311,19 @@ public class DispatchController extends AppController
             }
             else
             {
+                if (type.equals("integer") && param.isTextual())
+                {
+                    try
+                    {
+                        params.put(name, Integer.parseInt(param.textValue()));
+                        param = params.get(name);
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        throw new MalformedParamException(validation);
+                    }
+                }
+
                 validation(validation, param);
 
                 if (type.equals("id"))
