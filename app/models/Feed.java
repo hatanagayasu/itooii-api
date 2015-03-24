@@ -80,7 +80,11 @@ public class Feed extends Model
 
         List<Post> posts = new ArrayList<Post>(limit);
         while (cursor.hasNext())
-            posts.add(cursor.next());
+        {
+            Post post = cursor.next();
+            post.setUserName();
+            posts.add(post);
+        }
 
         if (posts.size() == limit)
         {

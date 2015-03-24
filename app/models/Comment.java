@@ -21,6 +21,9 @@ public class Comment extends Model
     private ObjectId id;
     @JsonProperty("user_id")
     private ObjectId userId;
+    @JsonIgnore
+    @JsonProperty("user_name")
+    private String userName;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -100,6 +103,8 @@ public class Comment extends Model
 
         for (Comment comment : comments)
         {
+            comment.userName = name(comment.userId);
+
             if (comment.likes == null)
             {
                 comment.likeCount = 0;

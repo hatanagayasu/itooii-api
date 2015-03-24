@@ -131,9 +131,13 @@ public class User extends Model
         String key = "user:" + userId;
 
         return cache(key, new Callable<User>(){
-            public User call() {
+            public User call()
+            {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).as(User.class);
+
+                if (user.name == null)
+                    user.name = user.email.replaceFirst("@.*", "");
 
                 user.followings = Following.getFollowingIds(userId);
                 user.followers = Follower.getFollowerIds(userId);
