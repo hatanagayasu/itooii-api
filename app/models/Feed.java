@@ -13,20 +13,17 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
-public class Feed extends Model
-{
+public class Feed extends Model {
     @Id
     private ObjectId id;
     private Date modified;
     @JsonProperty("post_ids")
     private List<ObjectId> postIds;
 
-    public Feed()
-    {
+    public Feed() {
     }
 
-    private Feed(User user)
-    {
+    private Feed(User user) {
         MongoCollection postCol = jongo.getCollection("post");
 
         id = user.getId();
@@ -37,36 +34,31 @@ public class Feed extends Model
         ids.addAll(user.getFollowings());
         ids.add(user.getId());
 
-        MongoCursor<Post> cursor = postCol.find("{user_id:{$in:#}}", ids)
-            .sort("{created:-1}").limit(100).projection("{_id:1}").as(Post.class);
+        MongoCursor<Post> cursor = postCol.find("{user_id:{$in:#}}", ids).sort("{created:-1}")
+                        .limit(100).projection("{_id:1}").as(Post.class);
 
         while (cursor.hasNext())
             postIds.add(cursor.next().getId());
 
-        try
-        {
+        try {
             cursor.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void update(User user, ObjectId postId)
-    {
+    public static void update(User user, ObjectId postId) {
         MongoCollection feedCol = jongo.getCollection("feed");
 
         Set<ObjectId> ids = new HashSet<ObjectId>();
         ids.addAll(user.getFollowers());
         ids.add(user.getId());
 
-        feedCol.update("{_id:{$in:#}}", ids)
-            .with("{$push:{post_ids:{$each:[#],$position:0,$slice:100}}}", postId);
+        feedCol.update("{_id:{$in:#}}", ids).with(
+                        "{$push:{post_ids:{$each:[#],$position:0,$slice:100}}}", postId);
     }
 
-    public static Page get(User user, long until, int limit)
-    {
+    public static Page get(User user, long until, int limit) {
         MongoCollection postCol = jongo.getCollection("post");
         String previous = null;
 
@@ -75,19 +67,17 @@ public class Feed extends Model
         ids.add(user.getId());
 
         MongoCursor<Post> cursor = postCol
-            .find("{user_id:{$in:#},created:{$lt:#}}", ids, new Date(until))
-            .sort("{created:-1}").limit(limit).as(Post.class);
+                        .find("{user_id:{$in:#},created:{$lt:#}}", ids, new Date(until))
+                        .sort("{created:-1}").limit(limit).as(Post.class);
 
         List<Post> posts = new ArrayList<Post>(limit);
-        while (cursor.hasNext())
-        {
+        while (cursor.hasNext()) {
             Post post = cursor.next();
             post.setUserName();
             posts.add(post);
         }
 
-        if (posts.size() == limit)
-        {
+        if (posts.size() == limit) {
             until = posts.get(posts.size() - 1).getCreated().getTime();
             previous = String.format("until=%d&limit=%d", until, limit);
         }
@@ -95,15 +85,13 @@ public class Feed extends Model
         return new Page(posts, previous);
     }
 
-    public static Page get(User user, int skip, long until, int limit)
-    {
+    public static Page get(User user, int skip, long until, int limit) {
         MongoCollection feedCol = jongo.getCollection("feed");
         String previous = null;
 
         Feed feed = feedCol.findOne(user.getId())
-            .projection("{post_ids:{$slice:[#,#]}}", skip, limit).as(Feed.class);
-        if (feed == null)
-        {
+                        .projection("{post_ids:{$slice:[#,#]}}", skip, limit).as(Feed.class);
+        if (feed == null) {
             feed = new Feed(user);
             feedCol.save(feed);
 
@@ -115,15 +103,13 @@ public class Feed extends Model
         }
 
         List<Post> posts = new ArrayList<Post>(feed.postIds.size());
-        for (ObjectId postId : feed.postIds)
-        {
+        for (ObjectId postId : feed.postIds) {
             Post post = Post.get(postId);
             if (post.getCreated().getTime() < until)
                 posts.add(post);
         }
 
-        if (posts.size() > 0)
-        {
+        if (posts.size() > 0) {
             until = posts.get(posts.size() - 1).getCreated().getTime();
 
             if (feed.postIds.size() < limit || skip + limit >= 100)

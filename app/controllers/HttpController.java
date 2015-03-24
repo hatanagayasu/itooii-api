@@ -20,55 +20,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class HttpController extends DispatchController
-{
+public class HttpController extends DispatchController {
     private static ObjectNode routes = mapper.createObjectNode();
     /*
-        {
-            first_segment : {
-                regex : {
-                    method : {
-                        method : Method,
-                        validations : {
-                            name : {
-                                fullName : String,
-                                type : String,
-                                rules : {{}, ...},
-                                require : Boolean
-                            },
-                            // type array
-                            name : { ..., validation : {} },
-                            // type object
-                            name : { ..., validations : {{}, ...} },
-                            ...
-                        },
-                        pathParamsMap : {
-                            String name : int offset,
-                            ...
-                        }
-                    }
-                },
-                ...
-            },
-            ...
-        }
-    */
+     * { first_segment : { regex : { method : { method : Method, validations : { name : { fullName :
+     * String, type : String, rules : {{}, ...}, require : Boolean }, // type array name : { ...,
+     * validation : {} }, // type object name : { ..., validations : {{}, ...} }, ... },
+     * pathParamsMap : { String name : int offset, ... } } }, ... }, ... }
+     */
 
-    static
-    {
+    static {
         init();
     }
 
-    private static void init()
-    {
-        try
-        {
+    private static void init() {
+        try {
             File file = new File(Play.application().path(), "conf/http_routes");
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
             String line;
-            while ((line = bufferedReader.readLine()) != null)
-            {
+            while ((line = bufferedReader.readLine()) != null) {
                 if (line.startsWith("#") || line.matches("\\s*"))
                     continue;
 
@@ -85,7 +56,7 @@ public class HttpController extends DispatchController
                 ObjectNode pathParamsMap = mapper.createObjectNode();
 
                 Class<?> clazz = Class.forName("controllers." + pair[0]);
-                Method method = clazz.getMethod(pair[1], new Class[] {JsonNode.class});
+                Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
                 route.putPOJO("method", method);
 
                 ObjectNode validations = parseValidations(method);
@@ -93,8 +64,7 @@ public class HttpController extends DispatchController
                 if (validations.size() > 0)
                     route.put("validations", validations);
 
-                for (int i = 1; i < segs.length; i++)
-                {
+                for (int i = 1; i < segs.length; i++) {
                     if (segs[i].startsWith(":"))
                         pathParamsMap.put(segs[i].replaceAll("^:", ""), i);
                 }
@@ -112,36 +82,26 @@ public class HttpController extends DispatchController
             }
 
             bufferedReader.close();
-        }
-        catch (FileNotFoundException e)
-        {
+        } catch (FileNotFoundException e) {
             errorlog(e);
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             errorlog(e);
-        }
-        catch (ClassNotFoundException|NoSuchMethodException e)
-        {
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
             errorlog(e);
         }
     }
 
-    public static play.mvc.Result index()
-    {
+    public static play.mvc.Result index() {
         return ok();
     }
 
-    private static class ServiceUnavailableException extends Exception
-    {
+    private static class ServiceUnavailableException extends Exception {
     }
 
-    private static class MethodNotAllowedException extends Exception
-    {
+    private static class MethodNotAllowedException extends Exception {
     }
 
-    private static play.mvc.Result convertResult(Result result)
-    {
+    private static play.mvc.Result convertResult(Result result) {
         int status = result.getStatus();
         Object content = result.getObject();
 
@@ -151,15 +111,13 @@ public class HttpController extends DispatchController
             return status(status);
 
         if (content instanceof ObjectNode)
-            return status(status, (ObjectNode)content);
+            return status(status, (ObjectNode) content);
 
         return status(status, content.toString());
     }
 
-    public static play.mvc.Result dispatch(String path)
-    {
-        try
-        {
+    public static play.mvc.Result dispatch(String path) {
+        try {
             String method = request().method();
             JsonNode route = match(method, path);
 
@@ -168,20 +126,15 @@ public class HttpController extends DispatchController
             Result result = invoke(route, params);
 
             return convertResult(result);
-        }
-        catch (ServiceUnavailableException e)
-        {
+        } catch (ServiceUnavailableException e) {
             return convertResult(Error(Error.SERVICE_UNAVAILABLE));
-        }
-        catch (MethodNotAllowedException e)
-        {
+        } catch (MethodNotAllowedException e) {
             return convertResult(Error(Error.METHOD_NOT_ALLOWED));
         }
     }
 
-    private static JsonNode match(String method, String path)
-        throws ServiceUnavailableException, MethodNotAllowedException
-    {
+    private static JsonNode match(String method, String path) throws ServiceUnavailableException,
+                    MethodNotAllowedException {
         path = "/" + path;
         String[] segs = path.split("/");
 
@@ -190,11 +143,9 @@ public class HttpController extends DispatchController
 
         JsonNode regexes = routes.get(segs[1]);
         Iterator<String> fieldNames = regexes.fieldNames();
-        while (fieldNames.hasNext())
-        {
+        while (fieldNames.hasNext()) {
             String regex = fieldNames.next();
-            if (path.matches(regex))
-            {
+            if (path.matches(regex)) {
                 if (!regexes.get(regex).has(method))
                     throw new MethodNotAllowedException();
 
@@ -206,19 +157,16 @@ public class HttpController extends DispatchController
     }
 
     // path parameter < query string < application/x-www-form-urlencoded < body json
-    private static ObjectNode parseParams(JsonNode route, String path)
-    {
+    private static ObjectNode parseParams(JsonNode route, String path) {
         ObjectNode params = mapper.createObjectNode();
 
-        if (route.has("pathParamsMap"))
-        {
+        if (route.has("pathParamsMap")) {
             JsonNode pathParamsMap = route.get("pathParamsMap");
             path = "/" + path;
             String[] segs = path.split("/");
 
             Iterator<String> fieldNames = pathParamsMap.fieldNames();
-            while (fieldNames.hasNext())
-            {
+            while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
                 int offset = pathParamsMap.get(name).intValue();
 
@@ -226,48 +174,35 @@ public class HttpController extends DispatchController
             }
         }
 
-        for (Entry<String, String[]> entry : request().queryString().entrySet())
-        {
+        for (Entry<String, String[]> entry : request().queryString().entrySet()) {
             String key = entry.getKey();
             String[] values = entry.getValue();
 
-            if (values.length == 0)
-            {
+            if (values.length == 0) {
                 params.put(key, "");
-            }
-            else if (values.length == 1)
-            {
+            } else if (values.length == 1) {
                 params.put(key, values[0]);
-            }
-            else
-            {
+            } else {
                 ArrayNode node = mapper.createArrayNode();
-                for (String value: values)
+                for (String value : values)
                     node.add(value);
                 params.put(key, node);
             }
         }
 
-        Map<String,String[]> formUrlEncoded = request().body().asFormUrlEncoded();
-        if (formUrlEncoded != null)
-        {
-            for (Entry<String, String[]> entry : formUrlEncoded.entrySet())
-            {
+        Map<String, String[]> formUrlEncoded = request().body().asFormUrlEncoded();
+        if (formUrlEncoded != null) {
+            for (Entry<String, String[]> entry : formUrlEncoded.entrySet()) {
                 String key = entry.getKey();
                 String[] values = entry.getValue();
 
-                if (values.length == 0)
-                {
+                if (values.length == 0) {
                     params.put(key, "");
-                }
-                else if (values.length == 1)
-                {
+                } else if (values.length == 1) {
                     params.put(key, values[0]);
-                }
-                else
-                {
+                } else {
                     ArrayNode node = mapper.createArrayNode();
-                    for (String value: values)
+                    for (String value : values)
                         node.add(value);
                     params.put(key, node);
                 }
@@ -275,11 +210,9 @@ public class HttpController extends DispatchController
         }
 
         JsonNode json = request().body().asJson();
-        if (json != null)
-        {
+        if (json != null) {
             Iterator<String> fieldNames = json.fieldNames();
-            while (fieldNames.hasNext())
-            {
+            while (fieldNames.hasNext()) {
                 String fieldName = fieldNames.next();
                 params.put(fieldName, json.get(fieldName));
             }

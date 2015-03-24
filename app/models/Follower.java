@@ -11,8 +11,7 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
-public class Follower extends Model
-{
+public class Follower extends Model {
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
@@ -21,38 +20,31 @@ public class Follower extends Model
     private ObjectId followerId;
     private Date created;
 
-    public Follower()
-    {
+    public Follower() {
     }
 
-    public Follower(ObjectId userId, ObjectId followerId)
-    {
+    public Follower(ObjectId userId, ObjectId followerId) {
         id = new ObjectId();
         this.userId = userId;
         this.followerId = followerId;
         created = new Date();
     }
 
-    public static Set<ObjectId> getFollowerIds(ObjectId userId)
-    {
+    public static Set<ObjectId> getFollowerIds(ObjectId userId) {
         MongoCollection followerCol = jongo.getCollection("follower");
         MongoCursor<Follower> cursor = followerCol.find("{user_id:#}", userId)
-            .projection("{follower_id:1}").as(Follower.class);
+                        .projection("{follower_id:1}").as(Follower.class);
 
         Set<ObjectId> followers = new HashSet<ObjectId>();
-        while(cursor.hasNext())
+        while (cursor.hasNext())
             followers.add(cursor.next().getFollowerId());
 
-        try
-        {
+        try {
             cursor.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         return followers;
     }
 }
-

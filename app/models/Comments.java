@@ -7,8 +7,7 @@ import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
-public class Comments extends Model
-{
+public class Comments extends Model {
     @Id
     private ObjectId id;
     @JsonProperty("post_id")
@@ -17,7 +16,6 @@ public class Comments extends Model
     private int count;
     private List<Comment> comments;
 
-    public Comments()
-    {
+    public Comments() {
     }
 }

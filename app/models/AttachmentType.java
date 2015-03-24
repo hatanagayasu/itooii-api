@@ -1,6 +1,5 @@
 package models;
 
-public enum AttachmentType
-{
+public enum AttachmentType {
     photo, url;
 }

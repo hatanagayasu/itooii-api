@@ -16,10 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
-public class UsersController extends AppController
-{
-    public static Result me(JsonNode params)
-    {
+public class UsersController extends AppController {
+    public static Result me(JsonNode params) {
         User user = getMe(params);
         if (user == null)
             return Error(Error.INVALID_ACCESS_TOKEN);
@@ -30,16 +28,15 @@ public class UsersController extends AppController
     }
 
     @Anonymous
-    @Validation(name="email", rule="email", require=true)
-    @Validation(name="password", require=true)
-    @Validation(name="native_language", type="array", rule="minSize=1", require=true)
-    @Validation(name="native_language[]", type="integer", require=true)
-    @Validation(name="practice_language", type="array", rule="minSize=1", require=true)
-    @Validation(name="practice_language[]", type="object")
-    @Validation(name="practice_language[].id", type="integer", require=true)
-    @Validation(name="practice_language[].level", type="integer", require=true)
-    public static Result add(JsonNode params)
-    {
+    @Validation(name = "email", rule = "email", require = true)
+    @Validation(name = "password", require = true)
+    @Validation(name = "native_language", type = "array", rule = "minSize=1", require = true)
+    @Validation(name = "native_language[]", type = "integer", require = true)
+    @Validation(name = "practice_language", type = "array", rule = "minSize=1", require = true)
+    @Validation(name = "practice_language[]", type = "object")
+    @Validation(name = "practice_language[].id", type = "integer", require = true)
+    @Validation(name = "practice_language[].level", type = "integer", require = true)
+    public static Result add(JsonNode params) {
         String email = params.get("email").textValue();
 
         if (User.getByEmail(email) != null)
@@ -54,10 +51,10 @@ public class UsersController extends AppController
 
         values = params.get("practice_language").iterator();
         Set<PracticeLanguage> practiceLanguage = new HashSet<PracticeLanguage>();
-        while (values.hasNext())
-        {
+        while (values.hasNext()) {
             JsonNode value = values.next();
-            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value.get("level").intValue()));
+            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value
+                            .get("level").intValue()));
         }
 
         User user = new User(email, password, nativeLanguage, practiceLanguage);
@@ -67,26 +64,24 @@ public class UsersController extends AppController
         return Ok(user);
     }
 
-    @Validation(name="email", rule="email")
-    @Validation(name="password")
-    @Validation(name="name")
-    @Validation(name="native_language", type="array", rule="minSize=1")
-    @Validation(name="native_language[]", type="integer")
-    @Validation(name="practice_language", type="array", rule="minSize=1")
-    @Validation(name="practice_language[]", type="object")
-    @Validation(name="practice_language[].id", type="integer", require=true)
-    @Validation(name="practice_language[].level", type="integer", require=true)
-    public static Result update(JsonNode params)
-    {
+    @Validation(name = "email", rule = "email")
+    @Validation(name = "password")
+    @Validation(name = "name")
+    @Validation(name = "native_language", type = "array", rule = "minSize=1")
+    @Validation(name = "native_language[]", type = "integer")
+    @Validation(name = "practice_language", type = "array", rule = "minSize=1")
+    @Validation(name = "practice_language[]", type = "object")
+    @Validation(name = "practice_language[].id", type = "integer", require = true)
+    @Validation(name = "practice_language[].level", type = "integer", require = true)
+    public static Result update(JsonNode params) {
         User me = getMe(params);
         me.update(params);
 
         return Ok();
     }
 
-    @Validation(name="user_id", type="id", require=true)
-    public static Result follow(JsonNode params)
-    {
+    @Validation(name = "user_id", type = "id", require = true)
+    public static Result follow(JsonNode params) {
         ObjectId userId = getObject(params, "user_id");
         User user = User.getById(userId);
 
@@ -100,9 +95,8 @@ public class UsersController extends AppController
         return Ok();
     }
 
-    @Validation(name="user_id", type="id", require=true)
-    public static Result unfollow(JsonNode params)
-    {
+    @Validation(name = "user_id", type = "id", require = true)
+    public static Result unfollow(JsonNode params) {
         ObjectId userId = getObject(params, "user_id");
         User user = User.getById(userId);
 
@@ -117,10 +111,9 @@ public class UsersController extends AppController
     }
 
     @Anonymous
-    @Validation(name="email", rule="email", require=true)
-    @Validation(name="password", require=true)
-    public static Result login(JsonNode params)
-    {
+    @Validation(name = "email", rule = "email", require = true)
+    @Validation(name = "password", require = true)
+    public static Result login(JsonNode params) {
         String email = params.get("email").textValue();
         String password = params.get("password").textValue();
 
@@ -138,8 +131,7 @@ public class UsersController extends AppController
         return Ok(result);
     }
 
-    public static Result logout(JsonNode params)
-    {
+    public static Result logout(JsonNode params) {
         String token = params.get("access_token").textValue();
 
         User.deleteToken(token);
@@ -147,8 +139,7 @@ public class UsersController extends AppController
         return Ok();
     }
 
-    public static Result search(JsonNode params)
-    {
+    public static Result search(JsonNode params) {
         return Ok(User.search());
     }
 }

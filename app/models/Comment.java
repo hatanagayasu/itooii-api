@@ -15,8 +15,7 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
-public class Comment extends Model
-{
+public class Comment extends Model {
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
@@ -34,65 +33,58 @@ public class Comment extends Model
     @JsonIgnore
     private boolean liked;
 
-    public Comment()
-    {
+    public Comment() {
     }
 
-    public Comment(ObjectId userId, String text, List<Attachment> attachments)
-    {
+    public Comment(ObjectId userId, String text, List<Attachment> attachments) {
         this.id = new ObjectId();
         this.userId = userId;
         this.text = text;
-        this.attachments = attachments == null ? null : (attachments.isEmpty() ? null : attachments);
+        this.attachments = attachments == null ? null
+                        : (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
     }
 
-    public void save(ObjectId postId)
-    {
+    public void save(ObjectId postId) {
         MongoCollection postCol = jongo.getCollection("post");
         MongoCollection commentCol = jongo.getCollection("comment");
 
-        Post post = postCol.findAndModify("{_id:#}", postId)
-            .with("{$inc:{comment_count:1},$push:{comments:{$each:[#],$slice:-4}}}", this)
-            .projection("{comment_count:1}").as(Post.class);
+        Post post = postCol
+                        .findAndModify("{_id:#}", postId)
+                        .with("{$inc:{comment_count:1},$push:{comments:{$each:[#],$slice:-4}}}",
+                                        this).projection("{comment_count:1}").as(Post.class);
 
         if (post == null)
             return;
 
         int page = post.getCommentCount() / 50;
         commentCol.update("{post_id:#,page:#}", postId, page).upsert()
-            .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
+                        .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
 
         expire("post:" + postId);
     }
 
-    public static Page get(ObjectId postId, ObjectId userId, long until, int limit)
-    {
+    public static Page get(ObjectId postId, ObjectId userId, long until, int limit) {
         MongoCollection commentCol = jongo.getCollection("comment");
         String previous = null;
 
         MongoCursor<Comments> cursor = commentCol
-            .find("{post_id:#,created:{$lt:#}}", postId, new Date(until)).
-            sort("{created:-1}").limit(2).as(Comments.class);
+                        .find("{post_id:#,created:{$lt:#}}", postId, new Date(until))
+                        .sort("{created:-1}").limit(2).as(Comments.class);
 
         List<Comments> commentses = new ArrayList<Comments>(2);
         while (cursor.hasNext())
             commentses.add(cursor.next());
 
-        try
-        {
+        try {
             cursor.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         List<Comment> comments = new ArrayList<Comment>(100);
-        for(int i = commentses.size() - 1; i >= 0; i--)
-        {
-            for (Comment comment : commentses.get(i).getComments())
-            {
+        for (int i = commentses.size() - 1; i >= 0; i--) {
+            for (Comment comment : commentses.get(i).getComments()) {
                 if (comment.created.getTime() < until)
                     comments.add(comment);
             }
@@ -101,25 +93,20 @@ public class Comment extends Model
         if (comments.size() > limit)
             comments.subList(0, comments.size() - limit).clear();
 
-        for (Comment comment : comments)
-        {
+        for (Comment comment : comments) {
             comment.userName = name(comment.userId);
 
-            if (comment.likes == null)
-            {
+            if (comment.likes == null) {
                 comment.likeCount = 0;
                 comment.liked = false;
-            }
-            else
-            {
+            } else {
                 comment.likeCount = comment.likes.size();
                 comment.liked = comment.likes.contains(userId);
                 comment.likes = null;
             }
         }
 
-        if (comments.size() == limit)
-        {
+        if (comments.size() == limit) {
             until = comments.get(0).getCreated().getTime();
             previous = String.format("until=%d&limit=%d", until, limit);
         }
@@ -127,35 +114,31 @@ public class Comment extends Model
         return new Page(comments, previous);
     }
 
-    public static void like(ObjectId commentId, ObjectId userId)
-    {
+    public static void like(ObjectId commentId, ObjectId userId) {
         MongoCollection commentCol = jongo.getCollection("comment");
         MongoCollection postCol = jongo.getCollection("post");
 
-        commentCol.update("{'comments._id':#}", commentId)
-            .with("{$addToSet:{'comments.$.likes':#}}", userId);
+        commentCol.update("{'comments._id':#}", commentId).with(
+                        "{$addToSet:{'comments.$.likes':#}}", userId);
 
-        Post post = postCol
-            .findAndModify("{'comments._id':#}", commentId)
-            .with("{$addToSet:{'comments.$.likes':#}}", userId)
-            .projection("{_id:1}").as(Post.class);
+        Post post = postCol.findAndModify("{'comments._id':#}", commentId)
+                        .with("{$addToSet:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+                        .as(Post.class);
 
         if (post != null)
             expire("post:" + post.getId());
     }
 
-    public static void unlike(ObjectId commentId, ObjectId userId)
-    {
+    public static void unlike(ObjectId commentId, ObjectId userId) {
         MongoCollection postCol = jongo.getCollection("post");
         MongoCollection commentCol = jongo.getCollection("comment");
 
-        commentCol.update("{'comments._id':#}", commentId)
-            .with("{$pull:{'comments.$.likes':#}}", userId);
+        commentCol.update("{'comments._id':#}", commentId).with("{$pull:{'comments.$.likes':#}}",
+                        userId);
 
-        Post post = postCol
-            .findAndModify("{'comments._id':#}", commentId)
-            .with("{$pull:{'comments.$.likes':#}}", userId)
-            .projection("{_id:1}").as(Post.class);
+        Post post = postCol.findAndModify("{'comments._id':#}", commentId)
+                        .with("{$pull:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+                        .as(Post.class);
 
         if (post != null)
             expire("post:" + post.getId());

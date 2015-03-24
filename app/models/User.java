@@ -19,8 +19,7 @@ import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
 @lombok.Getter
-public class User extends Model
-{
+public class User extends Model {
     @Id
     private ObjectId id;
     private String email;
@@ -36,12 +35,11 @@ public class User extends Model
     @JsonIgnore
     private Set<ObjectId> followers;
 
-    public User()
-    {
+    public User() {
     }
 
-    public User(String email, String password, Set<Integer> nativeLanguage, Set<PracticeLanguage> practiceLanguage)
-    {
+    public User(String email, String password, Set<Integer> nativeLanguage,
+                    Set<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email;
         this.password = md5(password);
@@ -50,25 +48,21 @@ public class User extends Model
         created = new Date();
     }
 
-    public void save()
-    {
+    public void save() {
         MongoCollection userCol = jongo.getCollection("user");
         userCol.save(this);
     }
 
-    public void update(JsonNode params)
-    {
-        update((ObjectNode)params);
+    public void update(JsonNode params) {
+        update((ObjectNode) params);
     }
 
-    private void update(ObjectNode params)
-    {
+    private void update(ObjectNode params) {
         MongoCollection userCol = jongo.getCollection("user");
 
         params.remove("access_token");
 
-        if (params.has("password"))
-        {
+        if (params.has("password")) {
             String password = params.get("password").textValue();
             params.put("password", md5(password));
         }
@@ -78,30 +72,27 @@ public class User extends Model
         expire("user:" + id);
     }
 
-    public void follow(ObjectId userId)
-    {
+    public void follow(ObjectId userId) {
         MongoCollection following = jongo.getCollection("following");
         MongoCollection follower = jongo.getCollection("follower");
 
         following.save(new Following(id, userId));
         follower.save(new Follower(userId, id));
 
-        expire(new String[]{"user:" + id, "user:" + userId});
+        expire(new String[] { "user:" + id, "user:" + userId });
     }
 
-    public void unfollow(ObjectId userId)
-    {
+    public void unfollow(ObjectId userId) {
         MongoCollection following = jongo.getCollection("following");
         MongoCollection follower = jongo.getCollection("follower");
 
         following.remove("{user_id:#,following_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        expire(new String[]{"user:" + id, "user:" + userId});
+        expire(new String[] { "user:" + id, "user:" + userId });
     }
 
-    public static List<User> search()
-    {
+    public static List<User> search() {
         MongoCollection userCol = jongo.getCollection("user");
 
         MongoCursor<User> cursor = userCol.find().projection("{_id:1}").as(User.class);
@@ -109,30 +100,24 @@ public class User extends Model
         while (cursor.hasNext())
             users.add(cursor.next());
 
-        try
-        {
+        try {
             cursor.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         return users;
     }
 
-    public void removePassword()
-    {
+    public void removePassword() {
         password = null;
     }
 
-    public static User getById(ObjectId userId)
-    {
+    public static User getById(ObjectId userId) {
         String key = "user:" + userId;
 
-        return cache(key, new Callable<User>(){
-            public User call()
-            {
+        return cache(key, new Callable<User>() {
+            public User call() {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).as(User.class);
 
@@ -147,8 +132,7 @@ public class User extends Model
         });
     }
 
-    public static User getByEmail(String email)
-    {
+    public static User getByEmail(String email) {
         MongoCollection userCol = jongo.getCollection("user");
 
         User user = userCol.findOne("{email:#}", email).projection("{password:1}").as(User.class);
@@ -156,20 +140,18 @@ public class User extends Model
         return user;
     }
 
-    public static User getByToken(String token)
-    {
+    public static User getByToken(String token) {
         Jedis jedis = getJedis();
         String id = jedis.get("token:" + token);
         returnJedis(jedis);
 
-        if(id == null)
+        if (id == null)
             return null;
 
         return getById(new ObjectId(id));
     }
 
-    public static String getUserIdByToken(String token)
-    {
+    public static String getUserIdByToken(String token) {
         Jedis jedis = getJedis();
         String id = jedis.get("token:" + token);
         returnJedis(jedis);
@@ -177,8 +159,7 @@ public class User extends Model
         return id;
     }
 
-    public static boolean checkToken(String token)
-    {
+    public static boolean checkToken(String token) {
         Jedis jedis = getJedis();
         boolean exists = jedis.exists("token:" + token);
         returnJedis(jedis);
@@ -186,8 +167,7 @@ public class User extends Model
         return exists;
     }
 
-    public String newToken()
-    {
+    public String newToken() {
         String token = UUID.randomUUID().toString();
         Jedis jedis = getJedis();
         jedis.setex("token:" + token, 86400, id.toString());
@@ -196,31 +176,27 @@ public class User extends Model
         return token;
     }
 
-    public static void deleteToken(String token)
-    {
+    public static void deleteToken(String token) {
         Jedis jedis = getJedis();
         jedis.del("token:" + token);
         returnJedis(jedis);
     }
 
-    public static void online(String userId, String token, String host)
-    {
+    public static void online(String userId, String token, String host) {
         Jedis jedis = getJedis();
         jedis.setex("token:" + token, 86400, userId);
         jedis.hsetnx("host:" + userId, token, host);
         returnJedis(jedis);
     }
 
-    public static void offline(String userId, String token)
-    {
+    public static void offline(String userId, String token) {
         Jedis jedis = getJedis();
         jedis.del("token:" + token);
         jedis.hdel("host:" + userId, token);
         returnJedis(jedis);
     }
 
-    public static Map<String,String> getTokenHosts(ObjectId userId)
-    {
+    public static Map<String, String> getTokenHosts(ObjectId userId) {
         Jedis jedis = getJedis();
         Map result = jedis.hgetAll("host:" + userId.toString());
         returnJedis(jedis);

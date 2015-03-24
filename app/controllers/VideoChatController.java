@@ -11,15 +11,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
-public class VideoChatController extends AppController
-{
-    private static void leave(VideoChat videoChat)
-    {
+public class VideoChatController extends AppController {
+    private static void leave(VideoChat videoChat) {
         leave(videoChat, null);
     }
 
-    private static void leave(VideoChat videoChat, String token)
-    {
+    private static void leave(VideoChat videoChat, String token) {
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/leave");
 
@@ -32,8 +29,7 @@ public class VideoChatController extends AppController
         videoChat.leave();
     }
 
-    public static Result ready(JsonNode params)
-    {
+    public static Result ready(JsonNode params) {
         User me = getMe(params);
         String token = params.get("access_token").textValue();
 
@@ -49,8 +45,7 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    public static Result leave(JsonNode params)
-    {
+    public static Result leave(JsonNode params) {
         User me = getMe(params);
         String token = params.get("access_token").textValue();
 
@@ -63,9 +58,8 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="user_id", type="id", require=true)
-    public static Result request(JsonNode params)
-    {
+    @Validation(name = "user_id", type = "id", require = true)
+    public static Result request(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObject(params, "user_id");
         User user = User.getById(userId);
@@ -92,11 +86,10 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="user_id", type="id", require=true)
-    @Validation(name="video_chat_id", type="id", require=true)
-    @Validation(name="confirm", type="boolean", require=true)
-    public static Result response(JsonNode params)
-    {
+    @Validation(name = "user_id", type = "id", require = true)
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    @Validation(name = "confirm", type = "boolean", require = true)
+    public static Result response(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObject(params, "user_id");
         ObjectId videoChatId = getObject(params, "video_chat_id");
@@ -106,8 +99,7 @@ public class VideoChatController extends AppController
         if (videoChat == null || !videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
-        if (params.get("confirm").booleanValue())
-        {
+        if (params.get("confirm").booleanValue()) {
             videoChat.pair(me.getId(), token);
 
             videoChat = new VideoChat(videoChatId, me.getId(), token, userId, videoChat.getToken());
@@ -119,9 +111,7 @@ public class VideoChatController extends AppController
             event.put("confirm", true);
 
             sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
-        }
-        else
-        {
+        } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
             event.put("video_chat_id", videoChatId.toString());
@@ -135,9 +125,8 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="video_chat_id", type="id", require=true)
-    public static Result pairRequest(JsonNode params)
-    {
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    public static Result pairRequest(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
@@ -154,9 +143,8 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="video_chat_id", type="id", require=true)
-    public static Result pairResponse(JsonNode params)
-    {
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    public static Result pairResponse(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
@@ -173,10 +161,9 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="description", type="object", rule="passUnder", require=true)
-    @Validation(name="video_chat_id", type="id", require=true)
-    public static Result offer(JsonNode params)
-    {
+    @Validation(name = "description", type = "object", rule = "passUnder", require = true)
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    public static Result offer(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
@@ -194,10 +181,9 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="description", type="object", rule="passUnder", require=true)
-    @Validation(name="video_chat_id", type="id", require=true)
-    public static Result answer(JsonNode params)
-    {
+    @Validation(name = "description", type = "object", rule = "passUnder", require = true)
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    public static Result answer(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
@@ -215,10 +201,9 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    @Validation(name="candidate", type="object", rule="passUnder", require=true)
-    @Validation(name="video_chat_id", type="id", require=true)
-    public static Result candidate(JsonNode params)
-    {
+    @Validation(name = "candidate", type = "object", rule = "passUnder", require = true)
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    public static Result candidate(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
@@ -236,8 +221,7 @@ public class VideoChatController extends AppController
         return Ok();
     }
 
-    public static void pair(PairedTalkData pairedData)
-    {
+    public static void pair(PairedTalkData pairedData) {
         ObjectId id = new ObjectId();
         VideoChat offer = VideoChat.get(pairedData.getOfferId());
         VideoChat answer = VideoChat.get(pairedData.getAnswerId());
