@@ -7,6 +7,18 @@ var indexSpec = {
     ],
     "follower":[
         {index:{user_id:1,follower_id:1},option:{name:"user_id_follower_id",unique:true,background:true}}
+    ],
+    "post":[
+        {index:{user_id:1},option:{name:"user_id",background:true}},
+        {index:{"comments._id":1},option:{name:"comment_id",sparse:true,unique:true,background:true}}
+    ],
+    "comment":[
+        {index:{post_id:1,page:1},option:{name:"post_id_page",unique:true,background:true}},
+        {index:{post_id:1,created:1},option:{name:"post_id_created",background:true}},
+        {index:{"comments._id":1},option:{name:"comment_id",unique:true,background:true}}
+    ],
+    "feed":[
+        {index:{modified:1},option:{name:"modified",expireAfterSeconds:86400,background:true}}
     ]
 };
 
