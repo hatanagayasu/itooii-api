@@ -1,4 +1,5 @@
 package controllers.pair;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,7 +10,7 @@ public class PairResult implements Runnable
 {
 	private ConcurrentHashMap<ObjectId, UserTable> UsrTabMap;
 	private ArrayBlockingQueue<PairedTalkData> OutPairQueue;
-	public static final double	WaitScoFac= 5;	// (1/sec) waiting factor
+	public static final double	WaitScoFac= 2;	// (1/sec) waiting factor
 	public static final double	MATCHSCORETHD = 80; // match score threshold for qualified
 	static long CntTotalPaired;
 
@@ -111,14 +112,16 @@ public class PairResult implements Runnable
 	    		{
 	    			
 	    		}
-			    System.out.println("*** PInfo= "+PInfo.getScore()+" "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
-				CntTotalPaired += 2;
+			System.out.format("*** PInfo= %.2f", PInfo.getScore());
+			System.out.println(" "+PInfo.getOfferId()+" "+PInfo.getAnswerId()+" "+PInfo.getLang0()+" "+PInfo.getLang1());
+			CntTotalPaired += 2;
 	    }
 	    if (PairedUserData.size() > 0)
 	    {
-			System.out.println("CntTotalPaired = "+CntTotalPaired+" PairedUserData size = "+PairedUserData.size());
+			System.out.println("CntTotalPaired = "+CntTotalPaired+", Paired users count this time = "+2*PairedUserData.size());
 		    System.out.println("UsrTabMap size = "+UsrTabMap.size());
-	    }
+		    System.out.println("Current Date: " + new SimpleDateFormat ("E yyyy.MM.dd 'at' hh:mm:ss a zzz").format(new Date( )));	    
+		}
 
 	}	// PairResult	
 	
