@@ -2,8 +2,6 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -16,6 +14,8 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Comment extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
@@ -40,8 +40,8 @@ public class Comment extends Model {
         this.id = new ObjectId();
         this.userId = userId;
         this.text = text;
-        this.attachments = attachments == null ? null
-                        : (attachments.isEmpty() ? null : attachments);
+        this.attachments = attachments == null ? null :
+            (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
     }
 
@@ -50,16 +50,17 @@ public class Comment extends Model {
         MongoCollection commentCol = jongo.getCollection("comment");
 
         Post post = postCol
-                        .findAndModify("{_id:#}", postId)
-                        .with("{$inc:{comment_count:1},$push:{comments:{$each:[#],$slice:-4}}}",
-                                        this).projection("{comment_count:1}").as(Post.class);
+            .findAndModify("{_id:#}", postId)
+            .with("{$inc:{comment_count:1},$push:{comments:{$each:[#],$slice:-4}}}", this)
+            .projection("{comment_count:1}")
+            .as(Post.class);
 
         if (post == null)
             return;
 
         int page = post.getCommentCount() / 50;
         commentCol.update("{post_id:#,page:#}", postId, page).upsert()
-                        .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
+            .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
 
         expire("post:" + postId);
     }
@@ -69,8 +70,10 @@ public class Comment extends Model {
         String previous = null;
 
         MongoCursor<Comments> cursor = commentCol
-                        .find("{post_id:#,created:{$lt:#}}", postId, new Date(until))
-                        .sort("{created:-1}").limit(2).as(Comments.class);
+            .find("{post_id:#,created:{$lt:#}}", postId, new Date(until))
+            .sort("{created:-1}")
+            .limit(2)
+            .as(Comments.class);
 
         List<Comments> commentses = new ArrayList<Comments>(2);
         while (cursor.hasNext())
@@ -118,12 +121,12 @@ public class Comment extends Model {
         MongoCollection commentCol = jongo.getCollection("comment");
         MongoCollection postCol = jongo.getCollection("post");
 
-        commentCol.update("{'comments._id':#}", commentId).with(
-                        "{$addToSet:{'comments.$.likes':#}}", userId);
+        commentCol.update("{'comments._id':#}", commentId)
+            .with("{$addToSet:{'comments.$.likes':#}}", userId);
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
-                        .with("{$addToSet:{'comments.$.likes':#}}", userId).projection("{_id:1}")
-                        .as(Post.class);
+            .with("{$addToSet:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+            .as(Post.class);
 
         if (post != null)
             expire("post:" + post.getId());
@@ -133,12 +136,12 @@ public class Comment extends Model {
         MongoCollection postCol = jongo.getCollection("post");
         MongoCollection commentCol = jongo.getCollection("comment");
 
-        commentCol.update("{'comments._id':#}", commentId).with("{$pull:{'comments.$.likes':#}}",
-                        userId);
+        commentCol.update("{'comments._id':#}", commentId)
+            .with("{$pull:{'comments.$.likes':#}}", userId);
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
-                        .with("{$pull:{'comments.$.likes':#}}", userId).projection("{_id:1}")
-                        .as(Post.class);
+            .with("{$pull:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+            .as(Post.class);
 
         if (post != null)
             expire("post:" + post.getId());

@@ -20,6 +20,8 @@ import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class User extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     private String email;
@@ -39,7 +41,7 @@ public class User extends Model {
     }
 
     public User(String email, String password, String name, Set<Integer> nativeLanguage,
-                    Set<PracticeLanguage> practiceLanguage) {
+        Set<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email;
         this.password = md5(password);
@@ -197,7 +199,7 @@ public class User extends Model {
 
     public static Map<String, String> getTokenHosts(ObjectId userId) {
         Jedis jedis = getJedis();
-        Map result = jedis.hgetAll("host:" + userId.toString());
+        Map<String, String> result = jedis.hgetAll("host:" + userId.toString());
         returnJedis(jedis);
 
         return result;

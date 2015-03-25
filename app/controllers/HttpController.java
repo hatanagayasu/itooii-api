@@ -2,7 +2,6 @@ package controllers;
 
 import play.Play;
 
-import controllers.annotations.*;
 import controllers.constants.Error;
 
 import java.io.BufferedReader;
@@ -23,11 +22,35 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class HttpController extends DispatchController {
     private static ObjectNode routes = mapper.createObjectNode();
     /*
-     * { first_segment : { regex : { method : { method : Method, validations : { name : { fullName :
-     * String, type : String, rules : {{}, ...}, require : Boolean }, // type array name : { ...,
-     * validation : {} }, // type object name : { ..., validations : {{}, ...} }, ... },
-     * pathParamsMap : { String name : int offset, ... } } }, ... }, ... }
-     */
+        {
+            first_segment : {
+                regex : {
+                    method : {
+                        method : Method,
+                        validations : {
+                            name : {
+                                fullName : String,
+                                type : String,
+                                rules : {{}, ...},
+                                require : Boolean
+                            },
+                            // type array
+                            name : { ..., validation : {} },
+                            // type object
+                            name : { ..., validations : {{}, ...} },
+                            ...
+                        },
+                        pathParamsMap : {
+                            String name : int offset,
+                            ...
+                        }
+                    }
+                },
+                ...
+            },
+            ...
+        }
+    */
 
     static {
         init();
@@ -49,7 +72,7 @@ public class HttpController extends DispatchController {
                 String[] pair = parts[2].split("/");
 
                 if (!routes.has(segs[1]))
-                    routes.put(segs[1], mapper.createObjectNode());
+                    routes.putObject(segs[1]);
 
                 ObjectNode regexes = routes.with(segs[1]);
                 ObjectNode route = mapper.createObjectNode();
@@ -62,23 +85,23 @@ public class HttpController extends DispatchController {
                 ObjectNode validations = parseValidations(method);
 
                 if (validations.size() > 0)
-                    route.put("validations", validations);
+                    route.set("validations", validations);
 
                 for (int i = 1; i < segs.length; i++) {
                     if (segs[i].startsWith(":"))
                         pathParamsMap.put(segs[i].replaceAll("^:", ""), i);
                 }
                 if (pathParamsMap.size() > 0)
-                    route.put("pathParamsMap", pathParamsMap);
+                    route.set("pathParamsMap", pathParamsMap);
 
                 String regex = "";
                 for (int i = 1; i < segs.length; i++)
                     regex += "/" + (segs[i].startsWith(":") ? "[^/]+" : segs[i]);
 
                 if (!regexes.has(regex))
-                    regexes.put(regex, mapper.createObjectNode());
+                    regexes.putObject(regex);
 
-                regexes.with(regex).put(parts[0], route);
+                regexes.with(regex).set(parts[0], route);
             }
 
             bufferedReader.close();
@@ -96,9 +119,11 @@ public class HttpController extends DispatchController {
     }
 
     private static class ServiceUnavailableException extends Exception {
+        private static final long serialVersionUID = -1;
     }
 
     private static class MethodNotAllowedException extends Exception {
+        private static final long serialVersionUID = -1;
     }
 
     private static play.mvc.Result convertResult(Result result) {
@@ -133,8 +158,8 @@ public class HttpController extends DispatchController {
         }
     }
 
-    private static JsonNode match(String method, String path) throws ServiceUnavailableException,
-                    MethodNotAllowedException {
+    private static JsonNode match(String method, String path)
+        throws ServiceUnavailableException, MethodNotAllowedException {
         path = "/" + path;
         String[] segs = path.split("/");
 
@@ -183,10 +208,9 @@ public class HttpController extends DispatchController {
             } else if (values.length == 1) {
                 params.put(key, values[0]);
             } else {
-                ArrayNode node = mapper.createArrayNode();
+                ArrayNode node = params.putArray(key);
                 for (String value : values)
                     node.add(value);
-                params.put(key, node);
             }
         }
 
@@ -201,10 +225,9 @@ public class HttpController extends DispatchController {
                 } else if (values.length == 1) {
                     params.put(key, values[0]);
                 } else {
-                    ArrayNode node = mapper.createArrayNode();
+                    ArrayNode node = params.putArray(key);
                     for (String value : values)
                         node.add(value);
-                    params.put(key, node);
                 }
             }
         }
@@ -214,7 +237,7 @@ public class HttpController extends DispatchController {
             Iterator<String> fieldNames = json.fieldNames();
             while (fieldNames.hasNext()) {
                 String fieldName = fieldNames.next();
-                params.put(fieldName, json.get(fieldName));
+                params.set(fieldName, json.get(fieldName));
             }
         }
 

@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,38 +17,38 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+
 import org.apache.commons.codec.binary.Hex;
 import org.bson.types.ObjectId;
 import org.jongo.Jongo;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class Model implements Serializable {
+    private static final long serialVersionUID = -1;
     public static ObjectMapper mapper = new ObjectMapper();
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
     private static LoadingCache<ObjectId, String> names = CacheBuilder.newBuilder()
-                    .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
-                    .build(new CacheLoader<ObjectId, String>() {
-                        public String load(ObjectId userId) {
-                            return User.getById(userId).getName();
-                        }
-                    });
+        .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
+        .build(new CacheLoader<ObjectId, String>() {
+            public String load(ObjectId userId) {
+                return User.getById(userId).getName();
+            }
+        });
 
     public static DB mongodb;
     public static Jongo jongo;
@@ -109,10 +110,10 @@ public class Model implements Serializable {
         try {
             result.append("{");
 
-            List<Field> fields = new ArrayList();
+            List<Field> fields = new ArrayList<Field>();
             for (Field field : object.getClass().getDeclaredFields()) {
                 field.setAccessible(true);
-                if (field.get(object) != null)
+                if (field.get(object) != null && !Modifier.isStatic(field.getModifiers()))
                     fields.add(field);
             }
 
@@ -140,10 +141,10 @@ public class Model implements Serializable {
                     result.append("\"").append(name).append("\":").append((Integer) value);
                 } else if (clazz == String.class) {
                     result.append("\"").append(name).append("\":\"")
-                                    .append(encoder.quoteAsString((String) value)).append("\"");
+                        .append(encoder.quoteAsString((String) value)).append("\"");
                 } else if (value instanceof Collection) {
                     result.append("\"").append(name).append("\":");
-                    collectionToJson((Collection) value, result);
+                    collectionToJson((Collection<?>) value, result);
                 } else if (value instanceof Model) {
                     result.append("\"").append(name).append("\":");
                     objectToJson(value, result);
@@ -161,56 +162,57 @@ public class Model implements Serializable {
         }
     }
 
-    private static void collectionToJson(Collection collection, StringBuilder result) {
+    @SuppressWarnings(value = "unchecked")
+    private static void collectionToJson(Collection<?> collection, StringBuilder result) {
         result.append("[");
 
         if (!collection.isEmpty()) {
             Object object = collection.iterator().next();
-            Class clazz = object.getClass();
+            Class<? extends Object> clazz = object.getClass();
             if (clazz == Boolean.class) {
-                Iterator<Boolean> iterator = collection.iterator();
+                Iterator<Boolean> iterator = (Iterator<Boolean>) collection.iterator();
                 while (iterator.hasNext()) {
                     result.append(iterator.next());
                     if (iterator.hasNext())
                         result.append(",");
                 }
             } else if (clazz == Date.class) {
-                Iterator<Date> iterator = collection.iterator();
+                Iterator<Date> iterator = (Iterator<Date>) collection.iterator();
                 while (iterator.hasNext()) {
                     result.append(iterator.next().getTime());
                     if (iterator.hasNext())
                         result.append(",");
                 }
             } else if (clazz == Integer.class) {
-                Iterator<Integer> iterator = collection.iterator();
+                Iterator<Integer> iterator = (Iterator<Integer>) collection.iterator();
                 while (iterator.hasNext()) {
                     result.append(iterator.next());
                     if (iterator.hasNext())
                         result.append(",");
                 }
             } else if (clazz == String.class) {
-                Iterator<String> iterator = collection.iterator();
+                Iterator<String> iterator = (Iterator<String>) collection.iterator();
                 while (iterator.hasNext()) {
                     result.append("\"").append(encoder.quoteAsString(iterator.next())).append("\"");
                     if (iterator.hasNext())
                         result.append(",");
                 }
             } else if (object instanceof Collection) {
-                Iterator<Collection> iterator = collection.iterator();
+                Iterator<Collection<?>> iterator = (Iterator<Collection<?>>) collection.iterator();
                 while (iterator.hasNext()) {
                     collectionToJson(iterator.next(), result);
                     if (iterator.hasNext())
                         result.append(",");
                 }
             } else if (object instanceof Model) {
-                Iterator<Object> iterator = collection.iterator();
+                Iterator<Object> iterator = (Iterator<Object>) collection.iterator();
                 while (iterator.hasNext()) {
                     objectToJson(iterator.next(), result);
                     if (iterator.hasNext())
                         result.append(",");
                 }
             } else {
-                Iterator<Object> iterator = collection.iterator();
+                Iterator<Object> iterator = (Iterator<Object>) collection.iterator();
                 while (iterator.hasNext()) {
                     result.append("\"").append(iterator.next()).append("\"");
                     if (iterator.hasNext())
@@ -270,6 +272,7 @@ public class Model implements Serializable {
         returnJedis(jedis);
     }
 
+    @SuppressWarnings(value = "unchecked")
     public static <T extends Model> T cache(String key, Callable<T> callback) {
         T t = null;
 

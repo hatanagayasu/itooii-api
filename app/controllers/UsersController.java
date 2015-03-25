@@ -1,7 +1,5 @@
 package controllers;
 
-import play.*;
-
 import controllers.annotations.*;
 import controllers.constants.Error;
 
@@ -30,7 +28,7 @@ public class UsersController extends AppController {
     @Anonymous
     @Validation(name = "email", rule = "email", require = true)
     @Validation(name = "password", require = true)
-    @Validation(name = "name", require=true)
+    @Validation(name = "name", require = true)
     @Validation(name = "native_language", type = "array", rule = "minSize=1", require = true)
     @Validation(name = "native_language[]", type = "integer", require = true)
     @Validation(name = "practice_language", type = "array", rule = "minSize=1", require = true)
@@ -55,8 +53,9 @@ public class UsersController extends AppController {
         Set<PracticeLanguage> practiceLanguage = new HashSet<PracticeLanguage>();
         while (values.hasNext()) {
             JsonNode value = values.next();
-            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value
-                            .get("level").intValue()));
+            int id = value.get("id").intValue();
+            int level = value.get("level").intValue();
+            practiceLanguage.add(new PracticeLanguage(id, level));
         }
 
         User user = new User(email, password, name, nativeLanguage, practiceLanguage);

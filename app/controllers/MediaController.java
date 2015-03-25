@@ -2,18 +2,14 @@ package controllers;
 
 import play.*;
 import play.mvc.*;
-import play.mvc.Http.MultipartFormData.FilePart;
 import controllers.annotations.*;
-import controllers.constants.Error;
 
 import java.io.File;
-import java.util.*;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -45,7 +41,7 @@ public class MediaController extends AppController {
          */
 
         ObjectNode res = mapper.createObjectNode();
-        ArrayNode files = mapper.createArrayNode();
+        ArrayNode files = res.putArray("files");
 
         Logger.info("enter!");
         Http.MultipartFormData body = request().body().asMultipartFormData();
@@ -59,16 +55,14 @@ public class MediaController extends AppController {
             Logger.debug(String.valueOf(part.getFile().getTotalSpace()));
             move2s3(part.getFile().getAbsolutePath(), part.getFilename());
 
-            ObjectNode file = mapper.createObjectNode();
+            ObjectNode file = files.addObject();
             file.put("name", part.getFile().getName());
             file.put("size", part.getFile().getTotalSpace());
             file.put("url", "upload?getfile=" + part.getFile().getName());
             file.put("thumbnail_url", "upload?getthumb=" + part.getFile().getName());
             file.put("delete_url", "upload?delfile=" + part.getFile().getName());
             file.put("delete_type", "GET");
-            files.add(file);
         }
-        res.put("files", files);
 
         errorlog(res);
 
@@ -86,7 +80,6 @@ public class MediaController extends AppController {
             //File file = new File(uploadFileName);
 
             //String fileName = folderName + SUFFIX + "testvideo.mp4";
-            String fileName = "target.jpg";
             String path = System.getProperty("user.dir");
             Logger.debug("user.dir:" + path);
 
@@ -97,8 +90,8 @@ public class MediaController extends AppController {
 
         } catch (AmazonServiceException ase) {
             Logger.debug("Caught an AmazonServiceException, which " + "means your request made it "
-                            + "to Amazon S3, but was rejected with an error response"
-                            + " for some reason.");
+                + "to Amazon S3, but was rejected with an error response"
+                + " for some reason.");
             Logger.debug("Error Message:    " + ase.getMessage());
             Logger.debug("HTTP Status Code: " + ase.getStatusCode());
             Logger.debug("AWS Error Code:   " + ase.getErrorCode());
@@ -106,9 +99,9 @@ public class MediaController extends AppController {
             Logger.debug("Request ID:       " + ase.getRequestId());
         } catch (AmazonClientException ace) {
             Logger.debug("Caught an AmazonClientException, which "
-                            + "means the client encountered "
-                            + "an internal error while trying to " + "communicate with S3, "
-                            + "such as not being able to access the network.");
+                + "means the client encountered "
+                + "an internal error while trying to " + "communicate with S3, "
+                + "such as not being able to access the network.");
             Logger.debug("Error Message: " + ace.getMessage());
         }
 

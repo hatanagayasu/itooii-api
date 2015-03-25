@@ -1,9 +1,6 @@
 package controllers;
 
-import play.*;
-
 import controllers.annotations.*;
-import controllers.constants.Error;
 
 import models.Attachment;
 import models.Comment;
@@ -12,7 +9,6 @@ import models.Post;
 import models.User;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,8 +22,7 @@ public class PostsController extends AppController {
     public static Result getFeed(JsonNode params) {
         User me = getMe(params);
         int skip = params.has("skip") ? params.get("skip").intValue() : 0;
-        long until = params.has("until") ? params.get("until").longValue() : System
-                        .currentTimeMillis();
+        long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
         if (params.has("until") && !params.has("skip"))
@@ -53,10 +48,15 @@ public class PostsController extends AppController {
                 JsonNode attachment = values.next();
                 String type = attachment.get("type").textValue();
                 if (attachment.has("photo_id"))
-                    attachments.add(new Attachment(type, (ObjectId) getObject(attachment,
-                                    "photo_id")));
+                {
+                    ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
+                    attachments.add(new Attachment(type, photoId));
+                }
                 else if (attachment.has("preview"))
-                    attachments.add(new Attachment(type, attachment.get("preview").textValue()));
+                {
+                    String preview = attachment.get("preview").textValue();
+                    attachments.add(new Attachment(type, preview));
+                }
             }
         }
 
@@ -82,8 +82,7 @@ public class PostsController extends AppController {
     @Validation(name = "limit", type = "integer", rule = "min=1,max=50")
     public static Result getComment(JsonNode params) {
         User me = getMe(params);
-        long until = params.has("until") ? params.get("until").longValue() : System
-                        .currentTimeMillis();
+        long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 50;
 
         ObjectId postId = getObject(params, "post_id");
@@ -110,10 +109,15 @@ public class PostsController extends AppController {
                 JsonNode attachment = values.next();
                 String type = attachment.get("type").textValue();
                 if (attachment.has("photo_id"))
-                    attachments.add(new Attachment(type, (ObjectId) getObject(attachment,
-                                    "photo_id")));
+                {
+                    ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
+                    attachments.add(new Attachment(type, photoId));
+                }
                 else if (attachment.has("preview"))
-                    attachments.add(new Attachment(type, attachment.get("preview").textValue()));
+                {
+                    String preview = attachment.get("preview").textValue();
+                    attachments.add(new Attachment(type, preview));
+                }
             }
         }
 

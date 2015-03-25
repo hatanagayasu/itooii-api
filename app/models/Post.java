@@ -9,11 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
-import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Post extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
@@ -38,8 +39,8 @@ public class Post extends Model {
         this.id = new ObjectId();
         this.userId = userId;
         this.text = text;
-        this.attachments = attachments == null ? null
-                        : (attachments.isEmpty() ? null : attachments);
+        this.attachments = attachments == null ? null :
+            (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
         this.commentCount = 0;
         this.likeCount = 0;
@@ -80,8 +81,9 @@ public class Post extends Model {
         MongoCollection postCol = jongo.getCollection("post");
 
         Post post = postCol.findAndModify("{_id:#,likes:{$ne:#}}", postId, userId)
-                        .with("{$addToSet:{likes:#},$inc:{like_count:1}}", userId)
-                        .projection("{_id:1}").as(Post.class);
+            .with("{$addToSet:{likes:#},$inc:{like_count:1}}", userId)
+            .projection("{_id:1}")
+            .as(Post.class);
 
         if (post != null)
             expire("post:" + postId);
@@ -91,8 +93,9 @@ public class Post extends Model {
         MongoCollection postCol = jongo.getCollection("post");
 
         Post post = postCol.findAndModify("{_id:#,likes:#}", postId, userId)
-                        .with("{$pull:{likes:#},$inc:{like_count:-1}}", userId)
-                        .projection("{_id:1}").as(Post.class);
+            .with("{$pull:{likes:#},$inc:{like_count:-1}}", userId)
+            .projection("{_id:1}")
+            .as(Post.class);
 
         if (post != null)
             expire("post:" + postId);

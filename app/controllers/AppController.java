@@ -23,10 +23,12 @@ import org.bson.types.ObjectId;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
-    private static ConcurrentHashMap<ObjectId, UserTable> UsrTabMap = new ConcurrentHashMap<ObjectId, UserTable>();
-    private static ArrayBlockingQueue<ObjectId> InPairQueue = new ArrayBlockingQueue<ObjectId>(1000);
-    private static ArrayBlockingQueue<PairedTalkData> OutPairQueue = new ArrayBlockingQueue<PairedTalkData>(
-                    1000);
+    private static ConcurrentHashMap<ObjectId, UserTable> UsrTabMap =
+        new ConcurrentHashMap<ObjectId, UserTable>();
+    private static ArrayBlockingQueue<ObjectId> InPairQueue =
+        new ArrayBlockingQueue<ObjectId>(1000);
+    private static ArrayBlockingQueue<PairedTalkData> OutPairQueue =
+        new ArrayBlockingQueue<PairedTalkData>(1000);
 
     static {
         new Thread(new CalcMatchScore(UsrTabMap, InPairQueue)).start();
@@ -98,6 +100,7 @@ public class AppController extends Controller {
         return User.getByToken(token);
     }
 
+    @SuppressWarnings(value = "unchecked")
     public static <T> T getObject(JsonNode params, String name) {
         return (T) ((POJONode) params.get(name)).getPojo();
     }
@@ -122,5 +125,9 @@ public class AppController extends Controller {
                 //TODO
             }
         }
+    }
+
+    public static long now() {
+        return System.currentTimeMillis();
     }
 }

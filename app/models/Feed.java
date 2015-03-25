@@ -14,6 +14,8 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Feed extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     private Date modified;
@@ -34,8 +36,11 @@ public class Feed extends Model {
         ids.addAll(user.getFollowings());
         ids.add(user.getId());
 
-        MongoCursor<Post> cursor = postCol.find("{user_id:{$in:#}}", ids).sort("{created:-1}")
-                        .limit(100).projection("{_id:1}").as(Post.class);
+        MongoCursor<Post> cursor = postCol.find("{user_id:{$in:#}}", ids)
+            .sort("{created:-1}")
+            .limit(100)
+            .projection("{_id:1}")
+            .as(Post.class);
 
         while (cursor.hasNext())
             postIds.add(cursor.next().getId());
@@ -54,8 +59,8 @@ public class Feed extends Model {
         ids.addAll(user.getFollowers());
         ids.add(user.getId());
 
-        feedCol.update("{_id:{$in:#}}", ids).with(
-                        "{$push:{post_ids:{$each:[#],$position:0,$slice:100}}}", postId);
+        feedCol.update("{_id:{$in:#}}", ids)
+            .with("{$push:{post_ids:{$each:[#],$position:0,$slice:100}}}", postId);
     }
 
     public static Page get(User user, long until, int limit) {
@@ -67,8 +72,10 @@ public class Feed extends Model {
         ids.add(user.getId());
 
         MongoCursor<Post> cursor = postCol
-                        .find("{user_id:{$in:#},created:{$lt:#}}", ids, new Date(until))
-                        .sort("{created:-1}").limit(limit).as(Post.class);
+            .find("{user_id:{$in:#},created:{$lt:#}}", ids, new Date(until))
+            .sort("{created:-1}")
+            .limit(limit)
+            .as(Post.class);
 
         List<Post> posts = new ArrayList<Post>(limit);
         while (cursor.hasNext()) {
@@ -90,7 +97,9 @@ public class Feed extends Model {
         String previous = null;
 
         Feed feed = feedCol.findOne(user.getId())
-                        .projection("{post_ids:{$slice:[#,#]}}", skip, limit).as(Feed.class);
+            .projection("{post_ids:{$slice:[#,#]}}", skip, limit)
+            .as(Feed.class);
+
         if (feed == null) {
             feed = new Feed(user);
             feedCol.save(feed);

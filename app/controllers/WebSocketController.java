@@ -4,7 +4,6 @@ import play.Play;
 import play.libs.F.*;
 import play.mvc.WebSocket;
 
-import controllers.annotations.*;
 import controllers.constants.Error;
 
 import models.User;
@@ -27,21 +26,46 @@ import org.bson.types.ObjectId;
 
 public class WebSocketController extends DispatchController {
     final public static String host = UUID.randomUUID().toString();
-    final public static ConcurrentMap<String, WebSocket.Out<String>> webSocketMap = new ConcurrentHashMap();
-    /*
-     * { token : WebSocket.Out<String>, ... }
-     * 
-     * online in redis { "host:user_id" : { token : host, ... }, ... }
-     * 
-     * video_chat_ready in redis { "video:user_id" : "host/token", ... }
-     */
+    final public static ConcurrentMap<String, WebSocket.Out<String>> webSocketMap =
+        new ConcurrentHashMap<String, WebSocket.Out<String>>();
+     /*
+        {
+            token : WebSocket.Out<String>,
+            ...
+        }
+
+        online in redis
+        {
+            "host:user_id" : {
+                token : host,
+                ...
+            },
+            ...
+        }
+    */
 
     private static ObjectNode routes = mapper.createObjectNode();
     /*
-     * { action : { method : Method, validations : { name : { fullName : String, type : String,
-     * rules : {{}, ...}, require : Boolean }, // type array name : { ..., validation : {} }, //
-     * type object name : { ..., validations : {{}, ...} }, ... } }, ... }
-     */
+        {
+            action : {
+                method : Method,
+                validations : {
+                    name : {
+                        fullName : String,
+                        type : String,
+                        rules : {{}, ...},
+                        require : Boolean
+                    },
+                    // type array
+                    name : { ..., validation : {} },
+                    // type object
+                    name : { ..., validations : {{}, ...} },
+                    ...
+                }
+            },
+            ...
+        }
+    */
 
     static {
         init();
@@ -60,8 +84,7 @@ public class WebSocketController extends DispatchController {
                 String[] parts = line.split("\\s+");
                 String[] pair = parts[1].split("/");
 
-                ObjectNode route = mapper.createObjectNode();
-                routes.put(parts[0], route);
+                ObjectNode route = routes.putObject(parts[0]);
 
                 Class<?> clazz = Class.forName("controllers." + pair[0]);
                 Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
@@ -70,7 +93,7 @@ public class WebSocketController extends DispatchController {
                 ObjectNode validations = parseValidations(method);
 
                 if (validations.size() > 0)
-                    route.put("validations", validations);
+                    route.set("validations", validations);
             }
 
             bufferedReader.close();

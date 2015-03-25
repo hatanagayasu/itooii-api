@@ -13,19 +13,17 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import org.bson.types.ObjectId;
-import com.mongodb.MongoException;
+import com.mongodb.DuplicateKeyException;
 
 public class DispatchController extends AppController {
     public static ObjectNode parseValidations(Method method) {
         ObjectNode validations = mapper.createObjectNode();
 
         if (method.getAnnotation(Anonymous.class) == null) {
-            ObjectNode validation = mapper.createObjectNode();
-            validation.put("fullName", "access_token");
-            validation.put("type", "access_token");
-            validation.put("require", true);
-
-            validations.put("access_token", validation);
+            validations.putObject("access_token")
+                .put("fullName", "access_token")
+                .put("type", "access_token")
+                .put("require", true);
         }
 
         for (Validation v : method.getAnnotationsByType(Validation.class)) {
@@ -37,16 +35,15 @@ public class DispatchController extends AppController {
             validation.put("require", v.require());
 
             if (!v.depend().isEmpty()) {
-                ObjectNode depend = mapper.createObjectNode();
+                ObjectNode depend = validation.putObject("depend");
                 String[] segs = v.depend().split("=");
                 depend.put("name", segs[0]);
                 if (segs.length == 2)
                     depend.put("value", segs[1]);
-                validation.put("depend", depend);
             }
 
             if (!v.rule().isEmpty()) {
-                ObjectNode rules = mapper.createObjectNode();
+                ObjectNode rules = validation.putObject("rules");
                 for (String rule : v.rule().split(",")) {
                     if (rule.contains("=") && !rule.startsWith("/")) {
                         //TODO
@@ -56,11 +53,10 @@ public class DispatchController extends AppController {
                         rules.put(rule, false);
                     }
                 }
-                validation.put("rules", rules);
             }
 
             if (type.equals("object"))
-                validation.put("validations", mapper.createObjectNode());
+                validation.putObject("validations");
 
             ObjectNode parent = validations;
             String[] segs = name.split("\\.");
@@ -76,27 +72,32 @@ public class DispatchController extends AppController {
             }
 
             if (name.endsWith("[]"))
-                parent.with(name.replace("[]", "")).put("validation", validation);
+                parent.with(name.replace("[]", "")).set("validation", validation);
             else
-                parent.put(segs[segs.length - 1], validation);
+                parent.set(segs[segs.length - 1], validation);
         }
 
         return validations;
     }
 
     private static class MissingParamException extends Exception {
+        private static final long serialVersionUID = -1;
+
         MissingParamException(JsonNode validation) {
             super(validation.get("fullName").textValue());
         }
     }
 
     private static class MalformedParamException extends Exception {
+        private static final long serialVersionUID = -1;
+
         MalformedParamException(JsonNode validation) {
             super(validation.get("fullName").textValue());
         }
     }
 
     private static class InvalidAccessTokenException extends Exception {
+        public static final long serialVersionUID = -1;
     }
 
     public static Result invoke(JsonNode route, ObjectNode params) {
@@ -112,8 +113,8 @@ public class DispatchController extends AppController {
 
             return Error(Error.NOT_FOUND);
         } catch (InvocationTargetException e) {
-            Class clazz = e.getCause().getClass();
-            if (clazz == MongoException.DuplicateKey.class)
+            Class<? extends Throwable> clazz = e.getCause().getClass();
+            if (clazz == DuplicateKeyException.class)
                 return Error(Error.MONGO_DUPLICATE_KEY, e.getCause());
 
             errorlog(e);
@@ -129,8 +130,7 @@ public class DispatchController extends AppController {
     }
 
     public static void validations(JsonNode validations, ObjectNode params)
-                    throws MissingParamException, MalformedParamException,
-                    InvalidAccessTokenException {
+        throws MissingParamException, MalformedParamException, InvalidAccessTokenException {
         Iterator<String> fieldNames = validations.fieldNames();
         while (fieldNames.hasNext()) {
             String name = fieldNames.next();
@@ -211,11 +211,10 @@ public class DispatchController extends AppController {
                     validation(v, values.next());
 
                 if (v.get("type").textValue().equals("id")) {
-                    ArrayNode objectIds = mapper.createArrayNode();
+                    ArrayNode objectIds = ((ObjectNode) params).putArray(name);
                     values = param.iterator();
                     while (values.hasNext())
                         objectIds.addPOJO(new ObjectId(values.next().textValue()));
-                    ((ObjectNode) params).put(name, objectIds);
                 }
             } else if (type.equals("access_token")) {
                 if (!param.isTextual())
@@ -261,8 +260,7 @@ public class DispatchController extends AppController {
     }
 
     private static void validation(JsonNode validation, JsonNode param)
-                    throws MissingParamException, MalformedParamException,
-                    InvalidAccessTokenException {
+        throws MissingParamException, MalformedParamException, InvalidAccessTokenException {
         String type = validation.get("type").textValue();
         JsonNode rules = validation.get("rules");
 

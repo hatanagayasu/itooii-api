@@ -5,6 +5,8 @@ import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class VideoChat extends Model {
+    private static final long serialVersionUID = -1;
+
     private ObjectId id;
     private ObjectId userId;
     private String token;
