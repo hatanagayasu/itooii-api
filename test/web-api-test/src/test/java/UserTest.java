@@ -2,60 +2,65 @@ import java.net.URI;
 import java.util.Iterator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-public class UserTest
+public class UserTest extends CommonTest
 {
-    public static final ObjectMapper mapper = new ObjectMapper();
     public String accessToken;
 
     @BeforeClass
     public void post_access_token() throws Exception
     {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost("http://localhost:9000/access_token");
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost("http://localhost:9000/access_token");
 
         ObjectNode params = mapper.createObjectNode();
-
-        params.put("email", "hata@isee.com.tw");
+        params.put("email", "hata@itooii.com");
         params.put("password", "P@ssw0rd");
 
-        StringEntity stringEntity = new StringEntity(params.toString(), ContentType.create("application/json", "UTF-8"));
-        httppost.setEntity(stringEntity);
-        CloseableHttpResponse response = httpclient.execute(httppost);
-        HttpEntity entity = response.getEntity();
+        httpPost.setEntity(JsonEntity(params));
+        CloseableHttpResponse response = httpClient.execute(httpPost);
+        String content = getContent(response);
 
-        ObjectNode result = mapper.readValue(entity.getContent(), ObjectNode.class);
+        JsonNode result = mapper.readValue(content, JsonNode.class);
         accessToken = result.get("access_token").textValue();
     }
 
-    //@Test
+    @AfterClass
+    public void delete_access_token() throws Exception
+    {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        URI uri = new URIBuilder("http://localhost:9000/access_token")
+            .addParameter("access_token", accessToken)
+            .build();
+        HttpDelete httpDelete = new HttpDelete(uri);
+        CloseableHttpResponse response = httpClient.execute(httpDelete);
+    }
+
+    @Test
     public void post_user() throws Exception
     {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost("http://localhost:9000/user");
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost("http://localhost:9000/user");
 
         ObjectNode params = mapper.createObjectNode();
 
         params.put("email", "hata@itooii.com");
         params.put("password", "P@ssw0rd");
+        params.put("name", "hata");
 
         ArrayNode natives = mapper.createArrayNode();
         natives.add(1);
@@ -71,39 +76,29 @@ public class UserTest
 
         params.put("practice_language", practices);
 
-        StringEntity stringEntity = new StringEntity(params.toString(), ContentType.create("application/json", "UTF-8"));
-        httppost.setEntity(stringEntity);
-        CloseableHttpResponse response = httpclient.execute(httppost);
-        HttpEntity entity = response.getEntity();
-
-        System.out.println(EntityUtils.toString(entity));
+        httpPost.setEntity(JsonEntity(params));
+        CloseableHttpResponse response = httpClient.execute(httpPost);
     }
 
     @Test
     public void get_users() throws Exception
     {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        URI uri = new URIBuilder("http://localhost:9000/users")
-            .addParameter("access_token", accessToken)
-            .build();
-        HttpGet httpget = new HttpGet(uri);
-        CloseableHttpResponse response = httpclient.execute(httpget);
-        HttpEntity entity = response.getEntity();
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet("http://localhost:9000/users");
 
-        HttpPost httppost = new HttpPost("http://localhost:9000/ready");
+        CloseableHttpResponse response = httpClient.execute(httpGet);
+        String content = getContent(response);
+
         ObjectNode params = mapper.createObjectNode();
+        ArrayNode ids = params.putArray("user_id");
 
-        Iterator<JsonNode> result = mapper.readValue(entity.getContent(), ArrayNode.class).iterator();
-        while (result.hasNext())
-        {
-            params.put("user_id", result.next().get("id").textValue());
+        JsonNode result = mapper.readValue(content, JsonNode.class);
+        Iterator<JsonNode> iterator = result.get("data").iterator();
+        while (iterator.hasNext())
+            ids.add(iterator.next().get("id").textValue());
 
-            StringEntity stringEntity = new StringEntity(params.toString(), ContentType.create("application/json", "UTF-8"));
-            httppost.setEntity(stringEntity);
-            response = httpclient.execute(httppost);
-            entity = response.getEntity();
-
-            System.out.println(EntityUtils.toString(entity));
-        }
+        HttpPost httpPost = new HttpPost("http://localhost:9000/ready");
+        httpPost.setEntity(JsonEntity(params));
+        response = httpClient.execute(httpPost);
     }
 }
