@@ -140,6 +140,7 @@ public class UsersController extends AppController {
         return Ok();
     }
 
+    @Anonymous
     public static Result search(JsonNode params) {
         return Ok(User.search());
     }

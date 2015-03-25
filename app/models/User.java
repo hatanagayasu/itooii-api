@@ -95,7 +95,7 @@ public class User extends Model {
         expire(new String[] { "user:" + id, "user:" + userId });
     }
 
-    public static List<User> search() {
+    public static Page search() {
         MongoCollection userCol = jongo.getCollection("user");
 
         MongoCursor<User> cursor = userCol.find()
@@ -110,7 +110,7 @@ public class User extends Model {
             throw new RuntimeException(e);
         }
 
-        return users;
+        return new Page(users);
     }
 
     public void removePassword() {
