@@ -1,7 +1,5 @@
 package controllers;
 
-import play.*;
-
 import controllers.annotations.*;
 import controllers.constants.Error;
 
@@ -30,6 +28,7 @@ public class UsersController extends AppController {
     @Anonymous
     @Validation(name = "email", rule = "email", require = true)
     @Validation(name = "password", require = true)
+    @Validation(name = "name", require = true)
     @Validation(name = "native_language", type = "array", rule = "minSize=1", require = true)
     @Validation(name = "native_language[]", type = "integer", require = true)
     @Validation(name = "practice_language", type = "array", rule = "minSize=1", require = true)
@@ -43,6 +42,7 @@ public class UsersController extends AppController {
             return Error(Error.USER_ALREADY_EXISTS);
 
         String password = params.get("password").textValue();
+        String name = params.get("name").textValue();
 
         Iterator<JsonNode> values = params.get("native_language").iterator();
         Set<Integer> nativeLanguage = new HashSet<Integer>();
@@ -53,11 +53,12 @@ public class UsersController extends AppController {
         Set<PracticeLanguage> practiceLanguage = new HashSet<PracticeLanguage>();
         while (values.hasNext()) {
             JsonNode value = values.next();
-            practiceLanguage.add(new PracticeLanguage(value.get("id").intValue(), value
-                            .get("level").intValue()));
+            int id = value.get("id").intValue();
+            int level = value.get("level").intValue();
+            practiceLanguage.add(new PracticeLanguage(id, level));
         }
 
-        User user = new User(email, password, nativeLanguage, practiceLanguage);
+        User user = new User(email, password, name, nativeLanguage, practiceLanguage);
         user.save();
         user.removePassword();
 
@@ -139,6 +140,7 @@ public class UsersController extends AppController {
         return Ok();
     }
 
+    @Anonymous
     public static Result search(JsonNode params) {
         return Ok(User.search());
     }

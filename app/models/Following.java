@@ -12,6 +12,8 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Following extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
@@ -33,7 +35,8 @@ public class Following extends Model {
     public static Set<ObjectId> getFollowingIds(ObjectId userId) {
         MongoCollection followingCol = jongo.getCollection("following");
         MongoCursor<Following> cursor = followingCol.find("{user_id:#}", userId)
-                        .projection("{following_id:1}").as(Following.class);
+            .projection("{following_id:1}")
+            .as(Following.class);
 
         Set<ObjectId> followings = new HashSet<ObjectId>();
         while (cursor.hasNext())

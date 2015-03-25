@@ -16,6 +16,6 @@ public class Result {
 
     public String toString() {
         return "{\"status\":\"" + status + "\""
-                        + (object == null ? "" : ",\"body\":" + object.toString()) + "}";
+            + (object == null ? "" : ",\"body\":" + object.toString()) + "}";
     }
 }

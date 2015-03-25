@@ -20,6 +20,8 @@ import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class User extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     private String email;
@@ -38,11 +40,12 @@ public class User extends Model {
     public User() {
     }
 
-    public User(String email, String password, Set<Integer> nativeLanguage,
-                    Set<PracticeLanguage> practiceLanguage) {
+    public User(String email, String password, String name, Set<Integer> nativeLanguage,
+        Set<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email;
         this.password = md5(password);
+        this.name = name;
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
@@ -92,10 +95,11 @@ public class User extends Model {
         expire(new String[] { "user:" + id, "user:" + userId });
     }
 
-    public static List<User> search() {
+    public static Page search() {
         MongoCollection userCol = jongo.getCollection("user");
 
-        MongoCursor<User> cursor = userCol.find().projection("{_id:1}").as(User.class);
+        MongoCursor<User> cursor = userCol.find()
+            .projection("{_id:1,name:1}").as(User.class);
         List<User> users = new ArrayList<User>();
         while (cursor.hasNext())
             users.add(cursor.next());
@@ -106,7 +110,7 @@ public class User extends Model {
             throw new RuntimeException(e);
         }
 
-        return users;
+        return new Page(users);
     }
 
     public void removePassword() {
@@ -120,9 +124,6 @@ public class User extends Model {
             public User call() {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).as(User.class);
-
-                if (user.name == null)
-                    user.name = user.email.replaceFirst("@.*", "");
 
                 user.followings = Following.getFollowingIds(userId);
                 user.followers = Follower.getFollowerIds(userId);
@@ -198,7 +199,7 @@ public class User extends Model {
 
     public static Map<String, String> getTokenHosts(ObjectId userId) {
         Jedis jedis = getJedis();
-        Map result = jedis.hgetAll("host:" + userId.toString());
+        Map<String, String> result = jedis.hgetAll("host:" + userId.toString());
         returnJedis(jedis);
 
         return result;

@@ -25,7 +25,7 @@ public class CalcMatchScore implements Runnable {
     public static final double PairWaitTime = 0.1; // (sec) waiting time between two pairing results
 
     public CalcMatchScore(ConcurrentHashMap<ObjectId, UserTable> UsrTabMap,
-                    ArrayBlockingQueue<ObjectId> InPairQueue) {
+        ArrayBlockingQueue<ObjectId> InPairQueue) {
         this.UsrTabMap = UsrTabMap;
         this.InPairQueue = InPairQueue;
     }
@@ -61,7 +61,7 @@ public class CalcMatchScore implements Runnable {
                 // following: compare old v.s new users
                 if (NewUserInfo != null) {
                     Iterator<Map.Entry<ObjectId, UserTable>> UTMIter = UsrTabMap.entrySet()
-                                    .iterator();
+                        .iterator();
                     while (UTMIter.hasNext()) {
                         // existing old user in the queue
                         Map.Entry<ObjectId, UserTable> UTMEntry = UTMIter.next();
@@ -115,7 +115,7 @@ public class CalcMatchScore implements Runnable {
                                 PracLangLvl[0] = OldPraLang.get(LangList2.get(0));
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(0));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
-                                                * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
+                                    * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
                             } else if (MatchCnt[0] >= 2) // common practice non-existent, one-sided match more than 2 lang 
                             {
                                 PraLangSeq[1] = LangList0.get(1);
@@ -135,7 +135,7 @@ public class CalcMatchScore implements Runnable {
                                 PracLangLvl[0] = OldPraLang.get(LangList2.get(0));
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(0));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
-                                                * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
+                                    * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
                             } else if (MatchCnt[1] >= 2) // common practice non-existent, one-sided match more than 2 lang 
                             {
                                 PraLangSeq[1] = LangList1.get(1);
@@ -153,18 +153,18 @@ public class CalcMatchScore implements Runnable {
                                 PracLangLvl[0] = OldPraLang.get(LangList2.get(0));
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(0));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
-                                                * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
+                                    * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
                                 PracLangLvl[0] = OldPraLang.get(LangList2.get(1));
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(1));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
-                                                * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
+                                    * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
                             } else if (MatchCnt[2] == 1) {
                                 PraLangSeq[0] = LangList2.get(0);
                                 PraLangSeq[1] = PraLangSeq[0];
                                 PracLangLvl[0] = OldPraLang.get(LangList2.get(0));
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(0));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
-                                                * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
+                                    * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
                             } else // no match, no common practice
                             {
                                 PraLangSeq[0] = MOSTCOMMLANGIDX;
@@ -172,9 +172,9 @@ public class CalcMatchScore implements Runnable {
                             }
                         } // else
                         OldUsrTab.MSList.put(NewUID, new MSData(MatSco, PraLangSeq[0],
-                                        PraLangSeq[1]));
+                            PraLangSeq[1]));
                         NewUsrTab.MSList.put(OldUID, new MSData(MatSco, PraLangSeq[0],
-                                        PraLangSeq[1]));
+                            PraLangSeq[1]));
                     } // while
                 } // if			
 

@@ -9,7 +9,7 @@ var indexSpec = {
         {index:{user_id:1,follower_id:1},option:{name:"user_id_follower_id",unique:true,background:true}}
     ],
     "post":[
-        {index:{user_id:1},option:{name:"user_id",background:true}},
+        {index:{user_id:1,created:1},option:{name:"user_id",background:true}},
         {index:{"comments._id":1},option:{name:"comment_id",sparse:true,unique:true,background:true}}
     ],
     "comment":[

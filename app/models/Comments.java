@@ -8,6 +8,8 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Comments extends Model {
+    private static final long serialVersionUID = -1;
+
     @Id
     private ObjectId id;
     @JsonProperty("post_id")

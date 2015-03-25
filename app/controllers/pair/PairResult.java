@@ -15,7 +15,7 @@ public class PairResult implements Runnable {
     static long CntTotalPaired;
 
     public PairResult(ConcurrentHashMap<ObjectId, UserTable> UsrTabMap,
-                    ArrayBlockingQueue<PairedTalkData> OutPairQueue) {
+        ArrayBlockingQueue<PairedTalkData> OutPairQueue) {
         this.UsrTabMap = UsrTabMap;
         this.OutPairQueue = OutPairQueue;
         CntTotalPaired = 0;
@@ -54,7 +54,7 @@ public class PairResult implements Runnable {
                 FinMatRes = UMSList.get(MatchId);
                 if (FinMatRes.Score > (MATCHSCORETHD - WaitScore)) {
                     FinMSList.add(new PairedTalkData(FinMatRes.Score + WaitScore, UID, MatchId,
-                                    FinMatRes.lang0, FinMatRes.lang1));
+                        FinMatRes.lang0, FinMatRes.lang1));
                 }
             }
         } // while
@@ -65,7 +65,7 @@ public class PairResult implements Runnable {
         ArrayList<ObjectId> PairedUserList = new ArrayList<ObjectId>();
         for (PairedTalkData FinPair : FinMSList) {
             if (!PairedUserList.contains(FinPair.getOfferId())
-                            && !PairedUserList.contains(FinPair.getAnswerId())) {
+                && !PairedUserList.contains(FinPair.getAnswerId())) {
                 PairedUserList.add(FinPair.getOfferId());
                 PairedUserList.add(FinPair.getAnswerId());
                 PairedUserData.add(FinPair);
@@ -98,16 +98,16 @@ public class PairResult implements Runnable {
             }
             System.out.format("*** PInfo= %.2f", PInfo.getScore());
             System.out.println(" " + PInfo.getOfferId() + " " + PInfo.getAnswerId() + " "
-                            + PInfo.getLang0() + " " + PInfo.getLang1());
+                + PInfo.getLang0() + " " + PInfo.getLang1());
             CntTotalPaired += 2;
         }
         if (PairedUserData.size() > 0) {
             System.out.println("CntTotalPaired = " + CntTotalPaired
-                            + ", Paired users count this time = " + 2 * PairedUserData.size());
+                + ", Paired users count this time = " + 2 * PairedUserData.size());
             System.out.println("UsrTabMap size = " + UsrTabMap.size());
             System.out.println("Current Date: "
-                            + new SimpleDateFormat("E yyyy.MM.dd 'at' hh:mm:ss a zzz")
-                                            .format(new Date()));
+                + new SimpleDateFormat("E yyyy.MM.dd 'at' hh:mm:ss a zzz")
+                    .format(new Date()));
         }
 
     } // PairResult	
