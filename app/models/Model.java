@@ -125,8 +125,9 @@ public class Model implements Serializable {
                 String name = field.getName();
                 Object value = field.get(object);
 
-                if (field.getAnnotation(JsonProperty.class) != null)
-                    name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+                JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+                if (jsonProperty != null)
+                    name = jsonProperty.value();
 
                 if (value == null)
                     continue;
