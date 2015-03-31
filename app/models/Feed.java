@@ -80,7 +80,7 @@ public class Feed extends Model {
         List<Post> posts = new ArrayList<Post>(limit);
         while (cursor.hasNext()) {
             Post post = cursor.next();
-            post.setUserName();
+            post.postproduction(user.getId());
             posts.add(post);
         }
 
@@ -114,8 +114,10 @@ public class Feed extends Model {
         List<Post> posts = new ArrayList<Post>(feed.postIds.size());
         for (ObjectId postId : feed.postIds) {
             Post post = Post.get(postId);
-            if (post.getCreated().getTime() < until)
+            if (post != null && post.getCreated().getTime() < until) {
+                post.postproduction(user.getId());
                 posts.add(post);
+            }
         }
 
         if (posts.size() > 0) {

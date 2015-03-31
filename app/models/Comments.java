@@ -15,7 +15,6 @@ public class Comments extends Model {
     @JsonProperty("post_id")
     private ObjectId postId;
     private int page;
-    private int count;
     private List<Comment> comments;
 
     public Comments() {
