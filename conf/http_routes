@@ -16,5 +16,8 @@ DELETE  /post/:post_id/like         PostsController/unlike
 POST    /comment/:comment_id/like   PostsController/likeComment
 DELETE  /comment/:comment_id/like   PostsController/unlikeComment
 POST    /media                      MediaController/upload
+GET     /messages/:user_id          MessagesController/get
+POST    /messages/:user_id          MessagesController/add
+
 POST    /echo                       TestController/echo
 POST    /ready                      TestController/ready
