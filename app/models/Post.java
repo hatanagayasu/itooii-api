@@ -56,7 +56,9 @@ public class Post extends Model {
 
     public void postproduction(ObjectId userId) {
         userName = name(this.userId);
-        Comment.postproduction(comments, userId);
+
+        if (comments != null)
+            Comment.postproduction(comments, userId);
     }
 
     public static Post get(ObjectId postId) {
