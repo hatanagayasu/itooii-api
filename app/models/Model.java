@@ -274,7 +274,7 @@ public class Model implements Serializable {
     }
 
     @SuppressWarnings(value = "unchecked")
-    public static <T extends Model> T cache(String key, Callable<T> callback) {
+    public static <T> T cache(String key, Callable<T> callback) {
         T t = null;
 
         Jedis jedis = getJedis();
