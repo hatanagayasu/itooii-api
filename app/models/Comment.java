@@ -96,6 +96,17 @@ public class Comment extends Model {
         if (comments.size() > limit)
             comments.subList(0, comments.size() - limit).clear();
 
+        postproduction(comments, userId);
+
+        if (comments.size() == limit) {
+            until = comments.get(0).getCreated().getTime();
+            previous = String.format("until=%d&limit=%d", until, limit);
+        }
+
+        return new Page(comments, previous);
+    }
+
+    public static void postproduction(List<Comment> comments, ObjectId userId) {
         for (Comment comment : comments) {
             comment.userName = name(comment.userId);
 
@@ -108,13 +119,6 @@ public class Comment extends Model {
                 comment.likes = null;
             }
         }
-
-        if (comments.size() == limit) {
-            until = comments.get(0).getCreated().getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
-        }
-
-        return new Page(comments, previous);
     }
 
     public static void like(ObjectId commentId, ObjectId userId) {

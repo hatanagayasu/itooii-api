@@ -54,8 +54,11 @@ public class Post extends Model {
         Feed.update(user, id);
     }
 
-    public void setUserName() {
-        userName = name(userId);
+    public void postproduction(ObjectId userId) {
+        userName = name(this.userId);
+
+        if (comments != null)
+            Comment.postproduction(comments, userId);
     }
 
     public static Post get(ObjectId postId) {
@@ -70,9 +73,6 @@ public class Post extends Model {
                 return post;
             }
         });
-
-        if (post != null)
-            post.setUserName();
 
         return post;
     }

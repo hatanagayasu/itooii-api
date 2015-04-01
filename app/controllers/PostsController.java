@@ -2,15 +2,10 @@ package controllers;
 
 import controllers.annotations.*;
 
-import models.Attachment;
 import models.Comment;
 import models.Feed;
 import models.Post;
 import models.User;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
@@ -41,26 +36,7 @@ public class PostsController extends AppController {
         User me = getMe(params);
         String text = params.has("text") ? params.get("text").textValue() : null;
 
-        List<Attachment> attachments = new ArrayList<Attachment>();
-        if (params.has("attachments")) {
-            Iterator<JsonNode> values = params.get("attachments").iterator();
-            while (values.hasNext()) {
-                JsonNode attachment = values.next();
-                String type = attachment.get("type").textValue();
-                if (attachment.has("photo_id"))
-                {
-                    ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
-                    attachments.add(new Attachment(type, photoId));
-                }
-                else if (attachment.has("preview"))
-                {
-                    String preview = attachment.get("preview").textValue();
-                    attachments.add(new Attachment(type, preview));
-                }
-            }
-        }
-
-        Post post = new Post(me.getId(), text, attachments);
+        Post post = new Post(me.getId(), text, getAttachments(params));
         post.save(me);
 
         return Ok(post);
@@ -68,11 +44,15 @@ public class PostsController extends AppController {
 
     @Validation(name = "post_id", type = "id", require = true)
     public static Result get(JsonNode params) {
+        User me = getMe(params);
         ObjectId postId = getObject(params, "post_id");
+
         Post post = Post.get(postId);
 
         if (post == null)
             return NotFound();
+
+        post.postproduction(me.getId());
 
         return Ok(post);
     }
@@ -82,10 +62,9 @@ public class PostsController extends AppController {
     @Validation(name = "limit", type = "integer", rule = "min=1,max=50")
     public static Result getComment(JsonNode params) {
         User me = getMe(params);
+        ObjectId postId = getObject(params, "post_id");
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 50;
-
-        ObjectId postId = getObject(params, "post_id");
 
         return Ok(Comment.get(postId, me.getId(), until, limit));
     }
@@ -102,26 +81,7 @@ public class PostsController extends AppController {
         ObjectId postId = getObject(params, "post_id");
         String text = params.has("text") ? params.get("text").textValue() : null;
 
-        List<Attachment> attachments = new ArrayList<Attachment>();
-        if (params.has("attachments")) {
-            Iterator<JsonNode> values = params.get("attachments").iterator();
-            while (values.hasNext()) {
-                JsonNode attachment = values.next();
-                String type = attachment.get("type").textValue();
-                if (attachment.has("photo_id"))
-                {
-                    ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
-                    attachments.add(new Attachment(type, photoId));
-                }
-                else if (attachment.has("preview"))
-                {
-                    String preview = attachment.get("preview").textValue();
-                    attachments.add(new Attachment(type, preview));
-                }
-            }
-        }
-
-        Comment comment = new Comment(me.getId(), text, attachments);
+        Comment comment = new Comment(me.getId(), text, getAttachments(params));
         comment.save(postId);
 
         return Ok(comment);

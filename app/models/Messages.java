@@ -7,16 +7,16 @@ import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
-public class Comments extends Model {
+public class Messages extends Model {
     private static final long serialVersionUID = -1;
 
     @Id
     private ObjectId id;
-    @JsonProperty("post_id")
-    private ObjectId postId;
+    @JsonProperty("chat_id")
+    private ObjectId chatId;
     private int page;
-    private List<Comment> comments;
+    private List<Message> messages;
 
-    public Comments() {
+    public Messages() {
     }
 }

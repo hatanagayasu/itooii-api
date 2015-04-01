@@ -4,11 +4,14 @@ import play.*;
 import play.mvc.*;
 import controllers.constants.Error;
 import controllers.pair.*;
+import models.Attachment;
 import models.Model;
 import models.User;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -103,6 +106,29 @@ public class AppController extends Controller {
     @SuppressWarnings(value = "unchecked")
     public static <T> T getObject(JsonNode params, String name) {
         return (T) ((POJONode) params.get(name)).getPojo();
+    }
+
+    public static List<Attachment> getAttachments(JsonNode params) {
+        List<Attachment> attachments = new ArrayList<Attachment>();
+        if (params.has("attachments")) {
+            Iterator<JsonNode> values = params.get("attachments").iterator();
+            while (values.hasNext()) {
+                JsonNode attachment = values.next();
+                String type = attachment.get("type").textValue();
+                if (attachment.has("photo_id"))
+                {
+                    ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
+                    attachments.add(new Attachment(type, photoId));
+                }
+                else if (attachment.has("preview"))
+                {
+                    String preview = attachment.get("preview").textValue();
+                    attachments.add(new Attachment(type, preview));
+                }
+            }
+        }
+
+        return attachments;
     }
 
     public static void sendEvent(ObjectId userId, String token, JsonNode event) {
