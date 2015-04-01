@@ -1,5 +1,8 @@
 package controllers;
 
+import play.Play;
+import play.Configuration;
+
 import controllers.annotations.*;
 import controllers.constants.Error;
 import controllers.pair.PairedTalkData;
@@ -9,9 +12,23 @@ import models.VideoChat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.bson.types.ObjectId;
 
 public class VideoChatController extends AppController {
+    private static ArrayNode iceServers = null;
+
+    static {
+        iceServers = mapper.createArrayNode();
+        Configuration conf = Play.application().configuration();
+        conf.getObjectList("webrtc.iceServers").forEach(
+            m -> {
+                ObjectNode node = iceServers.addObject();
+                m.forEach((k, v) -> node.put(k, v.toString()));
+            }
+        );
+    }
+
     private static void leave(VideoChat videoChat) {
         leave(videoChat, null);
     }
@@ -239,5 +256,10 @@ public class VideoChatController extends AppController {
         event.put("lang1", pairedData.getLang1());
 
         sendEvent(offer.getId(), offer.getToken(), event);
+    }
+
+    @Anonymous
+    public static Result getIceServers(JsonNode params) {
+        return Ok(iceServers);
     }
 }
