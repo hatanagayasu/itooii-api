@@ -3,222 +3,28 @@
 <head>
   <meta http-equiv = "Content-Type" content = "text/html; charset=utf-8" />
 <title>WebRTC</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="RTCPeerConnection-v1.6.js"></script>
 </head>
 <body>
-<select id="ws">
-    <option>ws://localhost:9000/websocket</option>
-    <option>ws://hata.ituii.com:9000/websocket</option>
-</select>
+email: <input id="email" type="text"/>
+<br/>
+password: <input id="password" type="text" value="P@ssw0rd"/>
+<input id="login" type="button" value="login"/>
 <br/>
 <input id="access_token" type="text" size="32"/>
-<input id="online" type="button" value="online" onclick="online()"/>
-<input id="offline" type="button" value="offline" onclick="offline()"/>
+<input id="online" type="button" value="online"/>
+<input id="offline" type="button" value="offline"/>
 <br/>
 <input id="user_id" type="text" size="32"/>
-<input id="request" type="button" value="request" onclick="request()"/>
+<input id="request" type="button" value="request"/>
 <br/>
-<input id="ready" type="button" value="ready" onclick="ready()"/>
-<input id="leave" type="button" value="leave" onclick="leave()"/>
+<input id="ready" type="button" value="ready"/>
+<input id="leave" type="button" value="leave"/>
 <br/>
 <br/>
 <video id="remote_video" width="480" height="360" autoplay></video>
 <video id="local_video" width="100" height="75" autoplay muted></video>
-
-<script>
-//    var mediaConstraints = {
-//        optional: [],
-//        mandatory: {
-//            OfferToReceiveAudio: true,
-//            OfferToReceiveVideo: true
-//        }
-//    };
-</script>
-<script>
-var socket, user_id, video_chat_id;
-var peer, offer_config, answer_config;
-var remote_video = document.getElementById('remote_video');
-var local_video = document.getElementById('local_video');
-
-var iceServers = [
-    {url: 'stun:220.134.112.166'},
-    {url: 'turn:220.134.112.166', credential: 'youhavetoberealistic', username: 'ninefingers'}
-];
-
-getUserMedia({
-    video: local_video,
-    onsuccess: function (stream) {
-        offer_config = {
-            iceServers: iceServers,
-            attachStream: stream,
-            onICE : function(candidate){
-                socket.send('{"action":"video/candidate","video_chat_id":"' + video_chat_id + '",' +
-                    '"candidate":' + JSON.stringify(candidate) + '}');
-            },
-            onRemoteStream: function(stream){
-                remote_video.src = URL.createObjectURL(stream);
-                remote_video.play();
-            },
-            onOfferSDP: function(sdp){
-                socket.send('{"action":"video/offer","video_chat_id":"' + video_chat_id + '",' +
-                    '"description":' + JSON.stringify(sdp) + '}');
-            }
-        };
-
-        answer_config = {
-            iceServers: iceServers,
-            attachStream: stream,
-            onICE : function(candidate){
-                socket.send('{"action":"video/candidate","video_chat_id":"' + video_chat_id + '",' +
-                    '"candidate":' + JSON.stringify(candidate) + '}');
-            },
-            onRemoteStream: function(stream){
-                remote_video.src = URL.createObjectURL(stream);
-                remote_video.play();
-            },
-            onAnswerSDP: function(sdp){
-                socket.send('{"action":"video/answer","video_chat_id":"' + video_chat_id + '",' +
-                    '"description":' + JSON.stringify(sdp) + '}');
-            }
-        };
-
-        //open_socket();
-    },
-    onerror: function(){
-        alert('Either you not allowed access to your microphone/webcam or another application already using it.');
-    }
-});
-
-//    var video_constraints = {
-//        mandatory: {},
-//        optional: []
-//    };
-//
-//    function getUserMedia(callback) {
-//        var n = navigator;
-//        n.getMedia = n.webkitGetUserMedia || n.mozGetUserMedia;
-//        n.getMedia({
-//            audio: true,
-//            video: video_constraints
-//        }, callback, onerror);
-//
-//        function onerror(e) {
-//            alert(JSON.stringify(e, null, '\t'));
-//        }
-//    }
-</script>
-<script>
-function online()
-{
-    var access_token = document.getElementById('access_token').value,
-        ws = document.getElementById('ws').value;
-    ws += '?access_token=' + access_token;
-    socket = new WebSocket(ws, "itooii");
-
-    socket.onopen = function(){
-        console.log('連線已開啟');
-    };
-
-    socket.onmessage = function(event){
-        console.log(event);
-
-        var params = JSON.parse(event.data);
-
-        if (params.action == 'video/request')
-        {
-            if (confirm("video/request from " + params.user_id))
-            {
-                user_id = params.user_id;
-                video_chat_id = params.video_chat_id;
-                socket.send('{"action":"video/response","user_id":"' + user_id + '",' +
-                    '"video_chat_id":"' + video_chat_id + '","confirm":true}');
-            }
-            else
-            {
-                socket.send('{"action":"video/response","user_id":"' + params.user_id + '",' +
-                    '"video_chat_id":"' + params.video_chat_id + '","confirm":false}');
-            }
-        }
-        else if (params.action == 'video/response')
-        {
-            if (params.confirm)
-            {
-                video_chat_id = params.video_chat_id;
-                peer = RTCPeerConnection(offer_config);
-            }
-            else
-            {
-                alert("reject");
-            }
-        }
-        else if (params.action == 'video/pair')
-        {
-            video_chat_id = params.video_chat_id;
-            socket.send('{"action":"video/pair_request","video_chat_id":"' + video_chat_id + '"}');
-        }
-        else if (params.action == 'video/pair_request')
-        {
-            video_chat_id = params.video_chat_id;
-            socket.send('{"action":"video/pair_response","video_chat_id":"' + video_chat_id + '"}');
-        }
-        else if (params.action == 'video/pair_response')
-        {
-            peer = RTCPeerConnection(offer_config);
-        }
-        else if (params.action == 'video/offer')
-        {
-            answer_config.offerSDP = params.description;
-            peer = RTCPeerConnection(answer_config);
-        }
-        else if (params.action == 'video/answer')
-        {
-            peer.addAnswerSDP(params.description);
-        }
-        else if (params.action == 'video/candidate')
-        {
-            peer.addICE(params.candidate);
-        }
-        else if (params.action == 'video/leave')
-        {
-            peer.peer.close();
-            remote_video.src = "";
-
-            alert('video/leave');
-        }
-    };
-
-    socket.onclose = function(event){
-        console.log('連線已關閉... state :' + socket.readyState);
-    };
-
-    socket.onerror = function(event){
-        console.log('發生錯誤: ' + event.data);
-    };
-}
-
-function offline()
-{
-    socket.close();
-}
-
-function request()
-{
-    user_id = document.getElementById('user_id').value;
-    socket.send('{"action":"video/request","user_id":"' + user_id + '"}');
-}
-
-function ready()
-{
-    socket.send('{"action":"video/ready"}');
-}
-
-function leave()
-{
-    peer.peer.close();
-    remote_video.src = "";
-    socket.send('{"action":"video/leave"}');
-}
-</script>
-
+<script src="webrtc.js"></script>
 </body>
 </html>
