@@ -2,8 +2,6 @@ package controllers.pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,7 +13,7 @@ import org.bson.types.ObjectId;
 public class CalcMatchScore implements Runnable {
     private ConcurrentHashMap<ObjectId, UserTable> UsrTabMap;
     private ArrayBlockingQueue<ObjectId> InPairQueue;
-    // local sim parameters	
+    // local sim parameters
     public static final int TOTLANGNUM = 5; // total language number
     public static final int MOSTCOMMLANGIDX = -1; // for simulation illustration
     public static final double LANGMATCHINC = 20; // language match score increment
@@ -31,43 +29,32 @@ public class CalcMatchScore implements Runnable {
     }
 
     public void run() {
-        ObjectId OldUID, NewUID;
-        UserTable OldUsrTab, NewUsrTab;
-        User OldUserInfo, NewUserInfo;
-
         ArrayList<Integer> LangList0 = new ArrayList<Integer>();
         ArrayList<Integer> LangList1 = new ArrayList<Integer>();
         ArrayList<Integer> LangList2 = new ArrayList<Integer>();
         ArrayList<Integer> LangList3 = new ArrayList<Integer>();
         int MatchCnt[] = new int[3];
-        double MatSco = 0.0; // match score
         int PraLangSeq[] = new int[2]; // practice language sequence
         int PracLangLvl[] = new int[2];
 
         try {
             while (true) {
 
-                NewUID = InPairQueue.take();
+                ObjectId NewUID = InPairQueue.take();
                 if (UsrTabMap.containsKey(NewUID))
                     continue;
 
                 // new user joining talk queue
-                NewUserInfo = User.getById(NewUID);
-                NewUsrTab = new UserTable();
+                User NewUserInfo = User.getById(NewUID);
+                UserTable NewUsrTab = new UserTable();
                 NewUsrTab.MSList = new ConcurrentHashMap<ObjectId, MSData>();
                 NewUsrTab.UInfo = NewUserInfo;
                 NewUsrTab.JoinTime = System.currentTimeMillis();
 
                 // following: compare old v.s new users
                 if (NewUserInfo != null) {
-                    Iterator<Map.Entry<ObjectId, UserTable>> UTMIter = UsrTabMap.entrySet()
-                        .iterator();
-                    while (UTMIter.hasNext()) {
-                        // existing old user in the queue
-                        Map.Entry<ObjectId, UserTable> UTMEntry = UTMIter.next();
-                        OldUID = UTMEntry.getKey();
-                        OldUsrTab = UTMEntry.getValue();
-                        OldUserInfo = OldUsrTab.UInfo;
+                    UsrTabMap.forEach((OldUID, OldUsrTab) -> {
+                        User OldUserInfo = OldUsrTab.UInfo;
 
                         HashMap<Integer, Integer> OldPraLang = new HashMap<Integer, Integer>();
                         for (PracticeLanguage PraLang : OldUserInfo.getPracticeLanguage())
@@ -97,7 +84,7 @@ public class CalcMatchScore implements Runnable {
                         LangList2.retainAll(LangList3); // common practice languages
                         MatchCnt[2] = LangList2.size();
 
-                        MatSco = 0.0;
+                        double MatSco = 0.0;
                         // Set practice sequence
                         if ((MatchCnt[0] * MatchCnt[1]) > 0) // perfect match: two-sided match
                         {
@@ -116,7 +103,7 @@ public class CalcMatchScore implements Runnable {
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(0));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
                                     * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
-                            } else if (MatchCnt[0] >= 2) // common practice non-existent, one-sided match more than 2 lang 
+                            } else if (MatchCnt[0] >= 2) // common practice non-existent, one-sided match more than 2 lang
                             {
                                 PraLangSeq[1] = LangList0.get(1);
                                 MatSco += LANGMATCHINC; // one-sided match score
@@ -136,7 +123,7 @@ public class CalcMatchScore implements Runnable {
                                 PracLangLvl[1] = NewPraLang.get(LangList2.get(0));
                                 MatSco += Math.abs(PracLangLvl[0] - PracLangLvl[1])
                                     * COMMPRALANGLVLMISMATCHDEC; // level mismatch causes deduction
-                            } else if (MatchCnt[1] >= 2) // common practice non-existent, one-sided match more than 2 lang 
+                            } else if (MatchCnt[1] >= 2) // common practice non-existent, one-sided match more than 2 lang
                             {
                                 PraLangSeq[1] = LangList1.get(1);
                                 MatSco += LANGMATCHINC; // one-sided match score
@@ -175,8 +162,8 @@ public class CalcMatchScore implements Runnable {
                             PraLangSeq[1]));
                         NewUsrTab.MSList.put(OldUID, new MSData(MatSco, PraLangSeq[0],
                             PraLangSeq[1]));
-                    } // while
-                } // if			
+                    });
+                } // if
 
                 UsrTabMap.put(NewUID, NewUsrTab);
             } // while

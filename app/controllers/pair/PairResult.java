@@ -31,66 +31,47 @@ public class PairResult implements Runnable {
 //		    		logger.error("InterruptedException");
             } // catch
         }//while
-    } // run 	
+    } // run
 
     public void Pair() {
-        ConcurrentHashMap<ObjectId, MSData> UMSList;
-        UserTable UsrTab;
-        ObjectId UID;
-        double WaitScore;
         long CurrTime = System.currentTimeMillis();
 
         // store qualified paired users (>= threshold)
-        MSData FinMatRes;
         TreeSet<PairedTalkData> FinMSList = new TreeSet<PairedTalkData>();
-        Iterator<Map.Entry<ObjectId, UserTable>> UTMIter = UsrTabMap.entrySet().iterator();
-        while (UTMIter.hasNext()) {
-            Map.Entry<ObjectId, UserTable> UTMEntry = UTMIter.next();
-            UID = UTMEntry.getKey();
-            UsrTab = UTMEntry.getValue();
-            UMSList = UsrTab.MSList;
-            WaitScore = WaitScoFac * (CurrTime - UsrTab.JoinTime) / 1000.0;
-            for (ObjectId MatchId : UMSList.keySet()) {
-                FinMatRes = UMSList.get(MatchId);
+        UsrTabMap.forEach((UID, UsrTab) -> {
+            double WaitScore = WaitScoFac * (CurrTime - UsrTab.JoinTime) / 1000.0;
+            UsrTab.MSList.forEach((MatchId, FinMatRes) -> {
                 if (FinMatRes.Score > (MATCHSCORETHD - WaitScore)) {
                     FinMSList.add(new PairedTalkData(FinMatRes.Score + WaitScore, UID, MatchId,
                         FinMatRes.lang0, FinMatRes.lang1));
                 }
-            }
-        } // while
+            });
+        });
 
         // extract finally qualified according to match scores
         // notice: some qualified matches may involve duplicate users (hot users), duplication is resolved below
         ArrayList<PairedTalkData> PairedUserData = new ArrayList<PairedTalkData>();
         ArrayList<ObjectId> PairedUserList = new ArrayList<ObjectId>();
-        for (PairedTalkData FinPair : FinMSList) {
+        FinMSList.forEach(FinPair -> {
             if (!PairedUserList.contains(FinPair.getOfferId())
                 && !PairedUserList.contains(FinPair.getAnswerId())) {
                 PairedUserList.add(FinPair.getOfferId());
                 PairedUserList.add(FinPair.getAnswerId());
                 PairedUserData.add(FinPair);
-            } // if
-        }
+            }
+        });
         // remove all paired users
-        Iterator<ObjectId> PULIter0 = PairedUserList.iterator();
-        while (PULIter0.hasNext()) {
-            UsrTabMap.remove(PULIter0.next());
-        }
+        PairedUserList.forEach(UserId -> UsrTabMap.remove(UserId));
 
         // remove all match scores of the paired users in the remaining users
-        for (ObjectId UserId : UsrTabMap.keySet()) {
-            UsrTab = UsrTabMap.get(UserId);
-            for (ObjectId MatchId : UsrTab.MSList.keySet()) {
-                if (PairedUserList.contains(MatchId)) // pick the match score related to paired users and remove it
-                {
+        UsrTabMap.forEach((UserId, UsrTab) ->
+            UsrTab.MSList.keySet().forEach(MatchId -> {
+                if (PairedUserList.contains(MatchId))
                     UsrTab.MSList.remove(MatchId);
-                }
-            }
-        } // while
+            })
+        );
 
-        Iterator<PairedTalkData> PILIter = PairedUserData.iterator();
-        while (PILIter.hasNext()) {
-            PairedTalkData PInfo = PILIter.next();
+        PairedUserData.forEach(PInfo -> {
             try {
                 OutPairQueue.put(PInfo);
             } catch (Exception e) {
@@ -100,7 +81,7 @@ public class PairResult implements Runnable {
             System.out.println(" " + PInfo.getOfferId() + " " + PInfo.getAnswerId() + " "
                 + PInfo.getLang0() + " " + PInfo.getLang1());
             CntTotalPaired += 2;
-        }
+        });
         if (PairedUserData.size() > 0) {
             System.out.println("CntTotalPaired = " + CntTotalPaired
                 + ", Paired users count this time = " + 2 * PairedUserData.size());
@@ -110,6 +91,6 @@ public class PairResult implements Runnable {
                     .format(new Date()));
         }
 
-    } // PairResult	
+    } // PairResult
 
 } // LangPair
