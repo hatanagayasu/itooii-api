@@ -1,6 +1,7 @@
 package controllers;
 
 import controllers.annotations.*;
+import controllers.constants.Error;
 
 import models.Chat;
 import models.Message;
@@ -19,6 +20,9 @@ public class MessagesController extends AppController {
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
         ObjectId chatId = Chat.getChatId(me.getId(), userId);
 
         return Ok(Message.get(chatId, until, limit));
@@ -35,6 +39,9 @@ public class MessagesController extends AppController {
         User me = getMe(params);
         ObjectId userId = getObject(params, "user_id");
         String text = params.has("text") ? params.get("text").textValue() : null;
+
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
 
         ObjectId chatId = Chat.getChatId(me.getId(), userId);
 

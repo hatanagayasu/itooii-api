@@ -83,13 +83,16 @@ public class UsersController extends AppController {
 
     @Validation(name = "user_id", type = "id", require = true)
     public static Result follow(JsonNode params) {
+        User me = getMe(params);
         ObjectId userId = getObject(params, "user_id");
         User user = User.getById(userId);
 
         if (user == null)
             return Error(Error.USER_NOT_FOUND);
 
-        User me = getMe(params);
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
         if (!me.getFollowings().contains(userId))
             me.follow(userId);
 
@@ -98,13 +101,16 @@ public class UsersController extends AppController {
 
     @Validation(name = "user_id", type = "id", require = true)
     public static Result unfollow(JsonNode params) {
+        User me = getMe(params);
         ObjectId userId = getObject(params, "user_id");
         User user = User.getById(userId);
 
         if (user == null)
             return Error(Error.USER_NOT_FOUND);
 
-        User me = getMe(params);
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
         if (me.getFollowings().contains(userId))
             me.unfollow(userId);
 
