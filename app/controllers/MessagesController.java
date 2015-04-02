@@ -8,6 +8,7 @@ import models.Message;
 import models.User;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
 public class MessagesController extends AppController {
@@ -47,6 +48,13 @@ public class MessagesController extends AppController {
 
         Message message = new Message(me.getId(), text, getAttachments(params));
         message.save(chatId);
+
+        ObjectNode event = mapper.createObjectNode();
+        event.put("action", "message");
+        event.putPOJO("data", message);
+
+        sendEvent(userId, event);
+        sendEvent(me.getId(), event);
 
         return Ok(message);
     }

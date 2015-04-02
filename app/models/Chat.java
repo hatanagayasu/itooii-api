@@ -34,7 +34,7 @@ public class Chat extends Model {
                 MongoCollection chatCol = jongo.getCollection("chat");
 
                 Chat chat = chatCol
-                    .findAndModify("{user_ids:{$in:[#,#]}}", userId0, userId1)
+                    .findAndModify("{user_ids:{$in:[#,#],$size:2}}", userId0, userId1)
                     .with("{$setOnInsert:{user_ids:[#,#],created:#}}", userId0, userId1, new Date())
                     .upsert()
                     .returnNew()
