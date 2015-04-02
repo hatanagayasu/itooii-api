@@ -304,4 +304,8 @@ public class Model implements Serializable {
             throw new RuntimeException(e);
         }
     }
+
+    public String toString() {
+        return toJson(this).toString();
+    }
 }
