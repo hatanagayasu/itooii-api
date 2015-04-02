@@ -19,3 +19,7 @@ libraryDependencies ++= Seq(
   "org.projectlombok" % "lombok" % "1.16.2",
   "redis.clients"% "jedis" % "2.6.2"
 )
+
+sources in (Compile,doc) := Seq.empty
+
+publishArtifact in (Compile, packageDoc) := false
