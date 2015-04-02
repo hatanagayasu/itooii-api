@@ -101,7 +101,7 @@ $(function() {
                 console.log(data);
                 iceServers = data;
         },
-        error: function(){
+        error: function() {
         }
     });
 
@@ -121,7 +121,7 @@ $(function() {
                     $("#access_token").val(data.access_token);
                 }
             },
-            error: function(){
+            error: function() {
             }
         });
     });
@@ -141,22 +141,24 @@ $(function() {
             var params = JSON.parse(event.data);
 
             if (params.action == 'message') {
-                $("<p>").text(params.data.text).prependTo("#messages");
+                $("<p>").text(event.data).prependTo("#messages");
             } else if (params.action == 'video/request') {
-                if (confirm("video/request from " + params.user_id)) {
-                    user_id = params.user_id;
-                    video_chat_id = params.video_chat_id;
+                video_chat_id = params.video_chat_id;
+                user_id = params.user_id;
+                $("#user_id").val(user_id);
+
+                if (confirm("video/request from " + user_id)) {
                     send({
                         action: "video/response",
-                        user_id: user_id,
                         video_chat_id: video_chat_id,
+                        user_id: user_id,
                         confirm: true
                     });
                 } else {
                     send({
                         action: "video/response",
-                        user_id: params.user_id,
-                        video_chat_id: params.video_chat_id,
+                        video_chat_id: video_chat_id,
+                        user_id: user_id,
                         confirm: false
                     });
                 }
@@ -170,12 +172,16 @@ $(function() {
                 }
             } else if (params.action == 'video/pair') {
                 video_chat_id = params.video_chat_id;
+                user_id = params.user_id;
+                $("#user_id").val(user_id);
                 send({
                     action: "video/pair_request",
                     video_chat_id: video_chat_id
                 });
             } else if (params.action == 'video/pair_request') {
                 video_chat_id = params.video_chat_id;
+                user_id = params.user_id;
+                $("#user_id").val(user_id);
                 send({
                     action: "video/pair_response",
                     video_chat_id: video_chat_id
@@ -233,6 +239,8 @@ $(function() {
     $("#submit").click(function() {
         var access_token = $("#access_token").val(),
             text = $("#message").val();
+
+        user_id = $("#user_id").val();
 
         $.ajax({
             type: 'post',

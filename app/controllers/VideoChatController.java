@@ -98,8 +98,8 @@ public class VideoChatController extends AppController {
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/request");
-        event.put("user_id", me.getId().toString());
         event.put("video_chat_id", videoChatId.toString());
+        event.put("user_id", me.getId().toString());
 
         sendEvent(userId, event);
 
@@ -157,6 +157,7 @@ public class VideoChatController extends AppController {
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair_request");
         event.put("video_chat_id", videoChatId.toString());
+        event.put("user_id", me.getId().toString());
 
         sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
 
@@ -255,6 +256,7 @@ public class VideoChatController extends AppController {
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair");
         event.put("video_chat_id", id.toString());
+        event.put("user_id", answer.getUserId().toString());
         event.put("lang0", pairedData.getLang0());
         event.put("lang1", pairedData.getLang1());
 
