@@ -44,6 +44,7 @@ public class Post extends Model {
         this.created = new Date();
         this.commentCount = 0;
         this.likeCount = 0;
+        this.userName = name(userId);
     }
 
     public void save(User user) {

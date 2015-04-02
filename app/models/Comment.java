@@ -43,6 +43,7 @@ public class Comment extends Model {
         this.attachments = attachments == null ? null :
             (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
+        this.userName = name(userId);
     }
 
     public void save(ObjectId postId) {
