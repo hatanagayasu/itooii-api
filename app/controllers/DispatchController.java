@@ -200,7 +200,7 @@ public class DispatchController extends AppController {
                     if (rules.has("minSize") && param.size() < rules.get("minSize").intValue())
                         throw new MalformedParamException(validation);
 
-                    if (rules.equals("maxSize") && param.size() > rules.get("maxSize").intValue())
+                    if (rules.has("maxSize") && param.size() > rules.get("maxSize").intValue())
                         throw new MalformedParamException(validation);
                 }
 
@@ -296,7 +296,7 @@ public class DispatchController extends AppController {
                     throw new MalformedParamException(validation);
                 }
 
-                if (rules.equals("maxSize") && param.size() > rules.get("maxSize").intValue())
+                if (rules.has("maxSize") && param.size() > rules.get("maxSize").intValue())
                     throw new MalformedParamException(validation);
             }
 
