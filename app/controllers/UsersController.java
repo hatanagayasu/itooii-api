@@ -6,9 +6,9 @@ import controllers.constants.Error;
 import models.PracticeLanguage;
 import models.User;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -29,9 +29,9 @@ public class UsersController extends AppController {
     @Validation(name = "email", rule = "email", require = true)
     @Validation(name = "password", require = true)
     @Validation(name = "name", require = true)
-    @Validation(name = "native_language", type = "array", rule = "minSize=1", require = true)
+    @Validation(name = "native_language", type = "array", rule = "minSize=1,maxSize=2", require = true)
     @Validation(name = "native_language[]", type = "integer", require = true)
-    @Validation(name = "practice_language", type = "array", rule = "minSize=1", require = true)
+    @Validation(name = "practice_language", type = "array", rule = "minSize=1,maxSize=4", require = true)
     @Validation(name = "practice_language[]", type = "object")
     @Validation(name = "practice_language[].id", type = "integer", require = true)
     @Validation(name = "practice_language[].level", type = "integer", require = true)
@@ -45,12 +45,12 @@ public class UsersController extends AppController {
         String name = params.get("name").textValue();
 
         Iterator<JsonNode> values = params.get("native_language").iterator();
-        Set<Integer> nativeLanguage = new HashSet<Integer>();
+        List<Integer> nativeLanguage = new ArrayList<Integer>();
         while (values.hasNext())
             nativeLanguage.add(values.next().intValue());
 
         values = params.get("practice_language").iterator();
-        Set<PracticeLanguage> practiceLanguage = new HashSet<PracticeLanguage>();
+        List<PracticeLanguage> practiceLanguage = new ArrayList<PracticeLanguage>();
         while (values.hasNext()) {
             JsonNode value = values.next();
             int id = value.get("id").intValue();
@@ -68,9 +68,9 @@ public class UsersController extends AppController {
     @Validation(name = "email", rule = "email")
     @Validation(name = "password")
     @Validation(name = "name")
-    @Validation(name = "native_language", type = "array", rule = "minSize=1")
+    @Validation(name = "native_language", type = "array", rule = "minSize=1,maxSize=2")
     @Validation(name = "native_language[]", type = "integer")
-    @Validation(name = "practice_language", type = "array", rule = "minSize=1")
+    @Validation(name = "practice_language", type = "array", rule = "minSize=1,maxSize=4")
     @Validation(name = "practice_language[]", type = "object")
     @Validation(name = "practice_language[].id", type = "integer", require = true)
     @Validation(name = "practice_language[].level", type = "integer", require = true)

@@ -28,9 +28,9 @@ public class User extends Model {
     private String password;
     private String name;
     @JsonProperty("native_language")
-    private Set<Integer> nativeLanguage;
+    private List<Integer> nativeLanguage;
     @JsonProperty("practice_language")
-    private Set<PracticeLanguage> practiceLanguage;
+    private List<PracticeLanguage> practiceLanguage;
     private Date created;
     @JsonIgnore
     private Set<ObjectId> followings;
@@ -40,8 +40,8 @@ public class User extends Model {
     public User() {
     }
 
-    public User(String email, String password, String name, Set<Integer> nativeLanguage,
-        Set<PracticeLanguage> practiceLanguage) {
+    public User(String email, String password, String name, List<Integer> nativeLanguage,
+        List<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email;
         this.password = md5(password);
