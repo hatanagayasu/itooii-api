@@ -38,10 +38,10 @@ public class VideoChatController extends AppController {
         event.put("action", "video/leave");
 
         if (token != null && !token.equals(videoChat.getToken()))
-            sendEvent(videoChat.getUserId(), videoChat.getToken(), event);
+            sendEvent(videoChat.getToken(), event);
 
         if (videoChat.getPeerId() != null)
-            sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+            sendEvent(videoChat.getPeerToken(), event);
 
         videoChat.leave();
     }
@@ -130,14 +130,14 @@ public class VideoChatController extends AppController {
             event.put("video_chat_id", videoChatId.toString());
             event.put("confirm", true);
 
-            sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+            sendEvent(videoChat.getPeerToken(), event);
         } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
             event.put("video_chat_id", videoChatId.toString());
             event.put("confirm", false);
 
-            sendEvent(videoChat.getUserId(), videoChat.getToken(), event);
+            sendEvent(videoChat.getToken(), event);
 
             leave(videoChat);
         }
@@ -159,7 +159,7 @@ public class VideoChatController extends AppController {
         event.put("video_chat_id", videoChatId.toString());
         event.put("user_id", me.getId().toString());
 
-        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getPeerToken(), event);
 
         return Ok();
     }
@@ -177,7 +177,7 @@ public class VideoChatController extends AppController {
         event.put("action", "video/pair_response");
         event.put("video_chat_id", videoChatId.toString());
 
-        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getPeerToken(), event);
 
         return Ok();
     }
@@ -197,7 +197,7 @@ public class VideoChatController extends AppController {
         event.set("description", params.get("description"));
         event.put("video_chat_id", videoChatId.toString());
 
-        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getPeerToken(), event);
 
         return Ok();
     }
@@ -217,7 +217,7 @@ public class VideoChatController extends AppController {
         event.set("description", params.get("description"));
         event.put("video_chat_id", videoChatId.toString());
 
-        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getPeerToken(), event);
 
         return Ok();
     }
@@ -237,7 +237,7 @@ public class VideoChatController extends AppController {
         event.set("candidate", params.get("candidate"));
         event.put("video_chat_id", videoChatId.toString());
 
-        sendEvent(videoChat.getPeerId(), videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getPeerToken(), event);
 
         return Ok();
     }
@@ -260,7 +260,7 @@ public class VideoChatController extends AppController {
         event.put("lang0", pairedData.getLang0());
         event.put("lang1", pairedData.getLang1());
 
-        sendEvent(offer.getId(), offer.getToken(), event);
+        sendEvent(offer.getToken(), event);
     }
 
     @Anonymous

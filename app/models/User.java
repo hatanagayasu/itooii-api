@@ -3,7 +3,6 @@ package models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -183,25 +182,15 @@ public class User extends Model {
         returnJedis(jedis);
     }
 
-    public static void online(String userId, String token, String host) {
+    public static void online(String userId, String token) {
         Jedis jedis = getJedis();
         jedis.setex("token:" + token, 86400, userId);
-        jedis.hsetnx("host:" + userId, token, host);
         returnJedis(jedis);
     }
 
     public static void offline(String userId, String token) {
         Jedis jedis = getJedis();
         jedis.del("token:" + token);
-        jedis.hdel("host:" + userId, token);
         returnJedis(jedis);
-    }
-
-    public static Map<String, String> getTokenHosts(ObjectId userId) {
-        Jedis jedis = getJedis();
-        Map<String, String> result = jedis.hgetAll("host:" + userId.toString());
-        returnJedis(jedis);
-
-        return result;
     }
 }

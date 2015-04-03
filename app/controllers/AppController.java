@@ -2,8 +2,10 @@ package controllers;
 
 import play.*;
 import play.mvc.*;
+
 import controllers.constants.Error;
 import controllers.pair.*;
+
 import models.Attachment;
 import models.Model;
 import models.User;
@@ -13,7 +15,6 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
-
 import org.bson.types.ObjectId;
+import redis.clients.jedis.Jedis;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
@@ -131,26 +132,22 @@ public class AppController extends Controller {
         return attachments;
     }
 
-    public static void sendEvent(ObjectId userId, String token, JsonNode event) {
-        if (WebSocketController.webSocketMap.containsKey(token)) {
-            WebSocket.Out<String> out = WebSocketController.webSocketMap.get(token);
-            out.write(event.toString());
-        } else {
-            User.offline(userId.toString(), token);
-        }
+    public static void sendEvent(String session, JsonNode event) {
+        Jedis jedis = Model.getJedis();
+        jedis.publish("session", session + "\n" + event);
+        Model.returnJedis(jedis);
     }
 
     public static void sendEvent(ObjectId userId, JsonNode event) {
-        Map<String, String> hosts = User.getTokenHosts(userId);
+        Jedis jedis = Model.getJedis();
+        jedis.publish("user", userId + "\n" + event);
+        Model.returnJedis(jedis);
+    }
 
-        for (String token : hosts.keySet()) {
-            String host = hosts.get(token);
-            if (host.equals(WebSocketController.host)) {
-                sendEvent(userId, token, event);
-            } else {
-                //TODO
-            }
-        }
+    public static void sendEvent(JsonNode event) {
+        Jedis jedis = Model.getJedis();
+        jedis.publish("all", event.toString());
+        Model.returnJedis(jedis);
     }
 
     public static long now() {
