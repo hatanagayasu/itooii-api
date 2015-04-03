@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -19,9 +18,6 @@ public class Post extends Model {
     private ObjectId id;
     @JsonProperty("user_id")
     private ObjectId userId;
-    @JsonIgnore
-    @JsonProperty("user_name")
-    private String userName;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -44,7 +40,6 @@ public class Post extends Model {
         this.created = new Date();
         this.commentCount = 0;
         this.likeCount = 0;
-        this.userName = name(userId);
     }
 
     public void save(User user) {
@@ -56,8 +51,6 @@ public class Post extends Model {
     }
 
     public void postproduction(ObjectId userId) {
-        userName = name(this.userId);
-
         if (comments != null)
             Comment.postproduction(comments, userId);
     }

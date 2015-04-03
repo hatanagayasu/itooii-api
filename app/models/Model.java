@@ -151,6 +151,11 @@ public class Model implements Serializable {
                     objectToJson(value, result);
                 } else {
                     result.append("\"").append(name).append("\":\"").append(value).append("\"");
+
+                    if (name.equals("user_id")) {
+                        result.append(",\"").append("user_name").append("\":\"")
+                            .append(name((ObjectId)value)).append("\"");
+                    }
                 }
 
                 if (iterator.hasNext())
@@ -297,7 +302,7 @@ public class Model implements Serializable {
         return t;
     }
 
-    public static String name(ObjectId userId) {
+    private static String name(ObjectId userId) {
         try {
             return names.get(userId);
         } catch (Exception e) {

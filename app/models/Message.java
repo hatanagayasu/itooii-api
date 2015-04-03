@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -19,9 +18,6 @@ public class Message extends Model {
     private ObjectId id;
     @JsonProperty("user_id")
     private ObjectId userId;
-    @JsonIgnore
-    @JsonProperty("user_name")
-    private String userName;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -36,7 +32,6 @@ public class Message extends Model {
         this.attachments = attachments == null ? null :
             (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
-        this.userName = name(userId);
     }
 
     public void save(ObjectId chatId) {
@@ -87,9 +82,6 @@ public class Message extends Model {
 
         if (messages.size() > limit)
             messages.subList(0, messages.size() - limit).clear();
-
-        for (Message message : messages)
-            message.userName = name(message.userId);
 
         if (messages.size() == limit) {
             until = messages.get(0).getCreated().getTime();
