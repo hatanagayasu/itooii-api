@@ -33,7 +33,9 @@ public class Feed extends Model {
         postIds = new ArrayList<ObjectId>(100);
 
         Set<ObjectId> ids = new HashSet<ObjectId>();
-        ids.addAll(user.getFollowings());
+        Set<ObjectId> followings = user.getFollowings();
+        if (followings != null)
+            ids.addAll(followings);
         ids.add(user.getId());
 
         MongoCursor<Post> cursor = postCol.find("{user_id:{$in:#}}", ids)
@@ -56,7 +58,9 @@ public class Feed extends Model {
         MongoCollection feedCol = jongo.getCollection("feed");
 
         Set<ObjectId> ids = new HashSet<ObjectId>();
-        ids.addAll(user.getFollowers());
+        Set<ObjectId> followers = user.getFollowers();
+        if (followers != null)
+            ids.addAll(followers);
         ids.add(user.getId());
 
         feedCol.update("{_id:{$in:#}}", ids)
