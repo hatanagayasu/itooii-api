@@ -148,13 +148,6 @@ public class WebSocketController extends DispatchController {
         }).start();
     }
 
-    private static JsonNode match(String action) {
-        if (!routes.has(action))
-            return null;
-
-        return routes.get(action);
-    }
-
     private static Result dispatch(String token, String event) {
         try {
             ObjectNode params = mapper.readValue(event, ObjectNode.class);
@@ -164,7 +157,7 @@ public class WebSocketController extends DispatchController {
 
             String action = params.get("action").textValue();
 
-            JsonNode route = match(action);
+            JsonNode route = routes.get(action);
             if (route == null)
                 return Error(Error.SERVICE_UNAVAILABLE);
 
