@@ -121,7 +121,7 @@ public class AppController extends Controller {
                     ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
                     attachments.add(new Attachment(type, photoId));
                 }
-                else if (attachment.has("preview"))
+                else if (attachment.has("url"))
                 {
                     String url = attachment.get("url").textValue();
                     String preview = attachment.has("preview") ?
