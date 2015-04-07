@@ -85,7 +85,8 @@ public class VideoChatController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (!me.getFollowings().contains(userId) || !user.getFollowings().contains(me.getId()))
+        if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
+            user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
             return Error(Error.NOT_FRIEND);
 
         VideoChat videoChat = VideoChat.get(me.getId());

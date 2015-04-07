@@ -93,7 +93,7 @@ public class UsersController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (!me.getFollowings().contains(userId))
+        if (me.getFollowings() == null || !me.getFollowings().contains(userId))
             me.follow(userId);
 
         return Ok();
@@ -111,7 +111,7 @@ public class UsersController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (me.getFollowings().contains(userId))
+        if (me.getFollowings() != null && me.getFollowings().contains(userId))
             me.unfollow(userId);
 
         return Ok();
