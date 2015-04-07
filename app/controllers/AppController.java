@@ -123,8 +123,10 @@ public class AppController extends Controller {
                 }
                 else if (attachment.has("preview"))
                 {
-                    String preview = attachment.get("preview").textValue();
-                    attachments.add(new Attachment(type, preview));
+                    String url = attachment.get("url").textValue();
+                    String preview = attachment.has("preview") ?
+                        attachment.get("preview").textValue() : null;
+                    attachments.add(new Attachment(type, url, preview));
                 }
             }
         }

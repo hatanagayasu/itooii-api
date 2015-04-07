@@ -35,7 +35,8 @@ public class MessagesController extends AppController {
     @Validation(name = "attachments[]", type = "object")
     @Validation(name = "attachments[].type", rule = "(photo|url)", require = true)
     @Validation(name = "attachments[].photo_id", type = "id", depend = "type=photo")
-    @Validation(name = "attachments[].preview", depend = "type=url")
+    @Validation(name = "attachments[].url", depend = "type=url", rule = "url")
+    @Validation(name = "attachments[].preview", depend = "type=url", rule="empty")
     public static Result add(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObject(params, "user_id");

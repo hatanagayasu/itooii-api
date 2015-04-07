@@ -31,7 +31,8 @@ public class PostsController extends AppController {
     @Validation(name = "attachments[]", type = "object")
     @Validation(name = "attachments[].type", rule = "(photo|url)", require = true)
     @Validation(name = "attachments[].photo_id", type = "id", depend = "type=photo")
-    @Validation(name = "attachments[].preview", depend = "type=url")
+    @Validation(name = "attachments[].url", depend = "type=url", rule = "url")
+    @Validation(name = "attachments[].preview", depend = "type=url", rule="empty")
     public static Result add(JsonNode params) {
         User me = getMe(params);
         String text = params.has("text") ? params.get("text").textValue() : null;
@@ -75,7 +76,8 @@ public class PostsController extends AppController {
     @Validation(name = "attachments[]", type = "object")
     @Validation(name = "attachments[].type", rule = "(photo|url)", require = true)
     @Validation(name = "attachments[].photo_id", type = "id", depend = "type=photo")
-    @Validation(name = "attachments[].preview", depend = "type=url")
+    @Validation(name = "attachments[].url", depend = "type=url", rule = "url")
+    @Validation(name = "attachments[].preview", depend = "type=url", rule="empty")
     public static Result addComment(JsonNode params) {
         User me = getMe(params);
         ObjectId postId = getObject(params, "post_id");

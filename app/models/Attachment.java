@@ -10,6 +10,7 @@ public class Attachment extends Model {
     private AttachmentType type;
     @JsonProperty("photo_id")
     private ObjectId photoId;
+    private String url;
     private String preview;
 
     public Attachment() {
@@ -20,8 +21,9 @@ public class Attachment extends Model {
         this.photoId = photoId;
     }
 
-    public Attachment(String type, String preview) {
+    public Attachment(String type, String url, String preview) {
         this.type = AttachmentType.valueOf(type);
+        this.url = url;
         this.preview = preview;
     }
 }
