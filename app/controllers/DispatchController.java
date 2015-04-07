@@ -272,11 +272,17 @@ public class DispatchController extends AppController {
             if (!param.textValue().matches(regex))
                 throw new MalformedParamException(validation);
         } else if (type.equals("string")) {
-            if (!param.isTextual() || param.textValue().isEmpty())
+            if (!param.isTextual())
                 throw new MalformedParamException(validation);
 
-            if (rules != null && !validation(rules, param.textValue()))
-                throw new MalformedParamException(validation);
+            if (param.textValue().isEmpty()) {
+                if (rules == null || !rules.has("empty"))
+                    throw new MalformedParamException(validation);
+            }
+            else {
+                if (rules != null && !validation(rules, param.textValue()))
+                    throw new MalformedParamException(validation);
+            }
         } else if (type.equals("boolean")) {
             if (!param.isBoolean())
                 throw new MalformedParamException(validation);
@@ -336,6 +342,8 @@ public class DispatchController extends AppController {
                 regex = "[A-Za-z0-9]+";
             } else if (rule.equals("email")) {
                 regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
+            } else if (rule.equals("url")) {
+                regex = "(https?:\\/\\/[\\w-\\.]+(:\\d+)?(\\/[~\\w\\/\\.]*)?(\\?\\S*)?(#\\S*)?)";
             } else if (rule.matches("^(.*)$")) {
                 regex = "^" + rule + "$";
             } else if (rule.matches("^/.*/$")) {
