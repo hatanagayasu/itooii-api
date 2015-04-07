@@ -103,10 +103,13 @@ public class Feed extends Model {
         Feed feed = feedCol.findOne(user.getId())
             .projection("{post_ids:{$slice:[#,#]}}", skip, limit)
             .as(Feed.class);
+        int total = feed == null ? 0 : feed.postIds.size();
 
         if (feed == null) {
             feed = new Feed(user);
             feedCol.save(feed);
+
+            total = feed.postIds.size();
 
             if (skip > 0)
                 feed.postIds.subList(0, Math.min(skip, feed.postIds.size())).clear();
@@ -124,7 +127,7 @@ public class Feed extends Model {
             }
         }
 
-        if (posts.size() > 0) {
+        if (total >= 100 && posts.size() > 0) {
             until = posts.get(posts.size() - 1).getCreated().getTime();
 
             if (feed.postIds.size() < limit || skip + limit >= 100)
