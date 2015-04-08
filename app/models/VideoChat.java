@@ -5,13 +5,14 @@ import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class VideoChat extends Model {
-    private static final long serialVersionUID = -1;
-
     private ObjectId id;
     private ObjectId userId;
     private String token;
     private ObjectId peerId;
     private String peerToken;
+
+    public VideoChat() {
+    }
 
     public VideoChat(ObjectId userId, String token) {
         this.userId = userId;
@@ -32,48 +33,25 @@ public class VideoChat extends Model {
         this.peerToken = peerToken;
     }
 
-    private static VideoChat get(Jedis jedis, ObjectId userId) {
-        byte[] key = new String("video:chat:" + userId.toString()).getBytes();
-        byte[] bytes = jedis.get(key);
-
-        if (bytes == null)
-            return null;
-
-        return (VideoChat) unserialize(bytes);
-    }
-
     public static VideoChat get(ObjectId userId) {
         Jedis jedis = getJedis();
-        VideoChat videoChat = get(jedis, userId);
+        VideoChat videoChat = get(jedis, "video:chat:" + userId, VideoChat.class);
         returnJedis(jedis);
 
         return videoChat;
     }
 
-    private void set(Jedis jedis) {
-        byte[] key = new String("video:chat:" + userId.toString()).getBytes();
-        jedis.setex(key, 86400, serialize(this));
-    }
-
     public void set() {
         Jedis jedis = getJedis();
-        set(jedis);
+        set(jedis, "video:chat:" + userId);
         returnJedis(jedis);
-    }
-
-    private void leave(Jedis jedis) {
-        byte[] key = new String("video:chat:" + userId.toString()).getBytes();
-        jedis.del(key);
-
-        if (peerId != null) {
-            key = new String("video:chat:" + peerId.toString()).getBytes();
-            jedis.del(key);
-        }
     }
 
     public void leave() {
         Jedis jedis = getJedis();
-        leave(jedis);
+        jedis.del("video:chat:" + userId);
+        if (peerId != null)
+            jedis.del("video:chat:" + peerId);
         returnJedis(jedis);
     }
 

@@ -12,8 +12,6 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Post extends Model {
-    private static final long serialVersionUID = -1;
-
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
@@ -58,7 +56,7 @@ public class Post extends Model {
     public static Post get(ObjectId postId) {
         String key = "post:" + postId;
 
-        Post post = cache(key, new Callable<Post>() {
+        Post post = cache(key, Post.class, new Callable<Post>() {
             public Post call() {
                 MongoCollection postCol = jongo.getCollection("post");
 

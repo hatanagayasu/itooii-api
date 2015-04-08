@@ -2,11 +2,9 @@ package models;
 
 import play.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.UnknownHostException;
@@ -32,13 +30,13 @@ import com.google.common.cache.LoadingCache;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.types.ObjectId;
 import org.jongo.Jongo;
+import org.jongo.marshall.jackson.oid.Id;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
-public class Model implements Serializable {
-    private static final long serialVersionUID = -1;
+public class Model {
     public static ObjectMapper mapper = new ObjectMapper();
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
@@ -77,6 +75,12 @@ public class Model implements Serializable {
         } catch (JedisConnectionException e) {
             //TODO
         }
+    }
+
+    public static void errorlog(Throwable cause) {
+        StringWriter errors = new StringWriter();
+        cause.printStackTrace(new PrintWriter(errors));
+        Logger.error(errors.toString());
     }
 
     public static Jedis getJedis() {
@@ -124,6 +128,15 @@ public class Model implements Serializable {
                 field.setAccessible(true);
                 String name = field.getName();
                 Object value = field.get(object);
+
+                Id id = field.getAnnotation(Id.class);
+                if (id != null) {
+                    result.append("\"_id\":\"").append(value).append("\"") ;
+                    if (iterator.hasNext())
+                        result.append(",");
+
+                    continue;
+                }
 
                 JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
                 if (jsonProperty != null)
@@ -242,27 +255,20 @@ public class Model implements Serializable {
         }
     }
 
-    public static byte[] serialize(Object object) {
+    public static <T extends Model> T get(Jedis jedis, String key, Class<T> clazz) {
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(object);
-
-            return baos.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            String json = jedis.get(key);
+            if (json != null)
+                return mapper.readValue(json, clazz);
+        } catch (IOException e) {
+            errorlog(e);
         }
+
+        return null;
     }
 
-    public static Object unserialize(byte[] bytes) {
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-
-            return ois.readObject();
-        } catch (Exception e) {
-            return null;
-        }
+    public void set(Jedis jedis, String key) {
+        jedis.setex(key, 3600, this.toString());
     }
 
     public static void expire(String key) {
@@ -278,21 +284,17 @@ public class Model implements Serializable {
         returnJedis(jedis);
     }
 
-    @SuppressWarnings(value = "unchecked")
-    public static <T> T cache(String key, Callable<T> callback) {
+    public static <T extends Model> T cache(String key, Class<T> clazz, Callable<T> callback) {
         T t = null;
 
         Jedis jedis = getJedis();
-        byte[] bkey = key.getBytes();
-        byte[] bytes = jedis.get(bkey);
-        if (bytes != null)
-            t = (T) unserialize(bytes);
 
+        t = get(jedis, key, clazz);
         if (t == null) {
             try {
                 t = callback.call();
                 if (t != null)
-                    jedis.setex(bkey, 3600, serialize(t));
+                    t.set(jedis, key);
             } catch (Exception e) {
             }
         }

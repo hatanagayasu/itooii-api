@@ -4,8 +4,6 @@ import java.util.List;
 
 @lombok.Getter
 public class Page extends Model {
-    private static final long serialVersionUID = -1;
-
     private List<? extends Model> data;
     private Paging paging;
 

@@ -12,8 +12,6 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Chat extends Model {
-    private static final long serialVersionUID = -1;
-
     @Id
     private ObjectId id;
     @JsonProperty("user_ids")
@@ -29,8 +27,8 @@ public class Chat extends Model {
         String key = "chatId:" +
             (userId0.compareTo(userId1) < 0 ? userId0 + ":" + userId1 : userId1 + ":" + userId0);
 
-        return cache(key, new Callable<ObjectId>() {
-            public ObjectId call() {
+        Chat chat = cache(key, Chat.class, new Callable<Chat>() {
+            public Chat call() {
                 MongoCollection chatCol = jongo.getCollection("chat");
 
                 Chat chat = chatCol
@@ -40,8 +38,10 @@ public class Chat extends Model {
                     .returnNew()
                     .as(Chat.class);
 
-                return chat.id;
+                return chat;
             }
         });
+
+        return chat.id;
     }
 }

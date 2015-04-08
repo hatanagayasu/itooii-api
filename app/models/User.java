@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,8 +18,6 @@ import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class User extends Model {
-    private static final long serialVersionUID = -1;
-
     @Id
     private ObjectId id;
     private String email;
@@ -31,9 +28,7 @@ public class User extends Model {
     @JsonProperty("practice_language")
     private List<PracticeLanguage> practiceLanguage;
     private Date created;
-    @JsonIgnore
     private Set<ObjectId> followings;
-    @JsonIgnore
     private Set<ObjectId> followers;
 
     public User() {
@@ -119,7 +114,7 @@ public class User extends Model {
     public static User getById(ObjectId userId) {
         String key = "user:" + userId;
 
-        return cache(key, new Callable<User>() {
+        return cache(key, User.class, new Callable<User>() {
             public User call() {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).as(User.class);

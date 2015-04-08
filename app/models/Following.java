@@ -12,8 +12,6 @@ import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class Following extends Model {
-    private static final long serialVersionUID = -1;
-
     @Id
     private ObjectId id;
     @JsonProperty("user_id")

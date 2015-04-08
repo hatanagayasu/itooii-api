@@ -5,8 +5,6 @@ import org.bson.types.ObjectId;
 
 @lombok.Getter
 public class Attachment extends Model {
-    private static final long serialVersionUID = -1;
-
     private AttachmentType type;
     @JsonProperty("photo_id")
     private ObjectId photoId;
