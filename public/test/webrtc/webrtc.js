@@ -140,7 +140,7 @@ $(function() {
 
             var params = JSON.parse(event.data);
 
-            if (params.action == 'message') {
+            if (params.action == 'event') {
                 $("<p>").text(event.data).prependTo("#messages");
             } else if (params.action == 'video/request') {
                 video_chat_id = params.video_chat_id;

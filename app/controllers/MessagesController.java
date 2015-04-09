@@ -51,7 +51,8 @@ public class MessagesController extends AppController {
         message.save(chatId);
 
         ObjectNode event = mapper.createObjectNode();
-        event.put("action", "message");
+        event.put("action", "event");
+        event.put("type", "message");
         event.putPOJO("data", message);
 
         sendEvent(userId, event);
