@@ -21,4 +21,3 @@ POST    /messages/:user_id          MessagesController/add
 GET     /video/ice_servers          VideoChatController/getIceServers
 
 POST    /echo                       TestController/echo
-POST    /ready                      TestController/ready

@@ -84,22 +84,11 @@ public class WebSocketController extends DispatchController {
                 WebSocket.Out<String>out = sessionToSocket.get(segs[0]);
                 if (out != null)
                     out.write(segs[1]);
+            } else if (channel.equals("pair")) {
+                String[] segs = message.split("\n");
+                if (sessionToSocket.containsKey(segs[0]))
+                    dispatch(null, segs[1]);
             }
-        }
-
-        public void onSubscribe(String channel, int subscribedChannels) {
-        }
-
-        public void onUnsubscribe(String channel, int subscribedChannels) {
-        }
-
-        public void onPSubscribe(String pattern, int subscribedChannels) {
-        }
-
-        public void onPUnsubscribe(String pattern, int subscribedChannels) {
-        }
-
-        public void onPMessage(String pattern, String channel, String message) {
         }
     };
 
@@ -143,7 +132,7 @@ public class WebSocketController extends DispatchController {
 
         new Thread(new Runnable() {
             public void run() {
-                jedis.subscribe(pubsub, "all", "user", "session");
+                jedis.subscribe(pubsub, "all", "user", "session", "pair");
             }
         }).start();
     }
@@ -179,7 +168,7 @@ public class WebSocketController extends DispatchController {
 
         return new WebSocket<String>() {
             public void onReady(WebSocket.In<String> in, final WebSocket.Out<String> out) {
-                final String userId = models.User.getUserIdByToken(token);
+                final String userId = User.getUserIdByToken(token);
 
                 if (userId != null) {
                     User.online(userId, session);

@@ -4,7 +4,6 @@ import play.*;
 import play.mvc.*;
 
 import controllers.constants.Error;
-import controllers.pair.*;
 
 import models.Attachment;
 import models.Model;
@@ -15,8 +14,6 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,26 +24,6 @@ import redis.clients.jedis.Jedis;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
-    private static ConcurrentHashMap<ObjectId, UserTable> UsrTabMap =
-        new ConcurrentHashMap<ObjectId, UserTable>();
-    private static ArrayBlockingQueue<ObjectId> InPairQueue =
-        new ArrayBlockingQueue<ObjectId>(1000);
-    private static ArrayBlockingQueue<PairedTalkData> OutPairQueue =
-        new ArrayBlockingQueue<PairedTalkData>(1000);
-
-    static {
-        new Thread(new CalcMatchScore(UsrTabMap, InPairQueue)).start();
-        new Thread(new PairResult(UsrTabMap, OutPairQueue)).start();
-        new Thread(new SendPairedUsers(OutPairQueue)).start();
-    }
-
-    public static void inPairQueue(ObjectId id) {
-        try {
-            InPairQueue.put(id);
-        } catch (Exception e) {
-
-        }
-    }
 
     public static Result Ok() {
         return new Result(200);
@@ -132,6 +109,12 @@ public class AppController extends Controller {
         }
 
         return attachments;
+    }
+
+    public static void publish(String channel, Object event) {
+        Jedis jedis = Model.getJedis();
+        jedis.publish(channel, event.toString());
+        Model.returnJedis(jedis);
     }
 
     public static void sendEvent(String session, JsonNode event) {

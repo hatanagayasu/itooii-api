@@ -5,7 +5,6 @@ import play.Configuration;
 
 import controllers.annotations.*;
 import controllers.constants.Error;
-import controllers.pair.PairedTalkData;
 
 import models.User;
 import models.VideoChat;
@@ -57,7 +56,7 @@ public class VideoChatController extends AppController {
         videoChat = new VideoChat(me.getId(), token);
         videoChat.set();
 
-        inPairQueue(me.getId());
+        publish("ready", me.getId() + "\n" + token);
 
         return Ok();
     }
@@ -243,13 +242,18 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    public static void pair(PairedTalkData pairedData) {
+    @Anonymous
+    @Validation(name = "offer_id", type = "id", require = true)
+    @Validation(name = "answer_id", type = "id", require = true)
+    @Validation(name = "lang0", type = "integer", require = true)
+    @Validation(name = "lang1", type = "integer", require = true)
+    public static Result pair(JsonNode params) {
         ObjectId id = new ObjectId();
-        VideoChat offer = VideoChat.get(pairedData.getOfferId());
-        VideoChat answer = VideoChat.get(pairedData.getAnswerId());
+        VideoChat offer = VideoChat.get(getObject(params, "offer_id"));
+        VideoChat answer = VideoChat.get(getObject(params, "answer_id"));
 
         if (offer == null || answer == null || offer.getId() != null || answer.getId() != null)
-            return;
+            return Ok();
 
         offer.pair(id, answer.getUserId(), answer.getToken());
         answer.pair(id, offer.getUserId(), offer.getToken());
@@ -258,10 +262,20 @@ public class VideoChatController extends AppController {
         event.put("action", "video/pair");
         event.put("video_chat_id", id.toString());
         event.put("user_id", answer.getUserId().toString());
-        event.put("lang0", pairedData.getLang0());
-        event.put("lang1", pairedData.getLang1());
+        event.put("lang0", params.get("lang0").intValue());
+        event.put("lang1", params.get("lang1").intValue());
 
         sendEvent(offer.getToken(), event);
+
+        event.removeAll();
+        event.put("action", "event");
+        event.put("type", "pair");
+        event.put("offer_id", offer.getUserId().toString());
+        event.put("answer_id", answer.getUserId().toString());
+
+        sendEvent(event);
+
+        return Ok();
     }
 
     @Anonymous
