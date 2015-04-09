@@ -96,7 +96,7 @@ public class HttpController extends DispatchController {
 
                 String regex = "";
                 for (int i = 1; i < segs.length; i++)
-                    regex += "/" + (segs[i].startsWith(":") ? "^[0-9a-fA-F]{24}$" : segs[i]);
+                    regex += "/" + (segs[i].startsWith(":") ? "[0-9a-fA-F]{24}" : segs[i]);
 
                 if (!regexes.has(regex))
                     regexes.putObject(regex);
