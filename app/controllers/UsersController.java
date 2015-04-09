@@ -26,6 +26,20 @@ public class UsersController extends AppController {
     }
 
     @Anonymous
+    @Validation(name = "user_id", type = "id", require = true)
+    public static Result get(JsonNode params) {
+        ObjectId userId = getObject(params, "user_id");
+
+        User user = User.getById(userId);
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        user.removePassword();
+
+        return Ok(user);
+    }
+
+    @Anonymous
     @Validation(name = "email", rule = "email", require = true)
     @Validation(name = "password", require = true)
     @Validation(name = "name", require = true)
