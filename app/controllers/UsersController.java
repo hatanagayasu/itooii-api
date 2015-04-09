@@ -20,8 +20,6 @@ public class UsersController extends AppController {
         if (user == null)
             return Error(Error.INVALID_ACCESS_TOKEN);
 
-        user.removePassword();
-
         return Ok(user);
     }
 
@@ -33,8 +31,6 @@ public class UsersController extends AppController {
         User user = User.getById(userId);
         if (user == null)
             return Error(Error.USER_NOT_FOUND);
-
-        user.removePassword();
 
         return Ok(user);
     }
@@ -74,7 +70,6 @@ public class UsersController extends AppController {
 
         User user = new User(email, password, name, nativeLanguage, practiceLanguage);
         user.save();
-        user.removePassword();
 
         return Ok(user);
     }

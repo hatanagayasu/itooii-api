@@ -48,6 +48,7 @@ public class User extends Model {
     public void save() {
         MongoCollection userCol = jongo.getCollection("user");
         userCol.save(this);
+        password = null;
     }
 
     public void update(JsonNode params) {
@@ -107,17 +108,13 @@ public class User extends Model {
         return new Page(users);
     }
 
-    public void removePassword() {
-        password = null;
-    }
-
     public static User getById(ObjectId userId) {
         String key = "user:" + userId;
 
         return cache(key, User.class, new Callable<User>() {
             public User call() {
                 MongoCollection userCol = jongo.getCollection("user");
-                User user = userCol.findOne(userId).as(User.class);
+                User user = userCol.findOne(userId).projection("{password:0}").as(User.class);
 
                 user.followings = Following.getFollowingIds(userId);
                 user.followers = Follower.getFollowerIds(userId);
