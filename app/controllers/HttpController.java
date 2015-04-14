@@ -130,7 +130,9 @@ public class HttpController extends DispatchController {
         int status = result.getStatus();
         Object content = result.getObject();
 
-        response().setContentType("application/json");
+        play.mvc.Http.Response response = response();
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setContentType("application/json; charset=utf-8");
 
         if (content == null)
             return status(status);
