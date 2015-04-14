@@ -10,3 +10,4 @@ video/answer                VideoChatController/answer
 video/candidate             VideoChatController/candidate
 video/pair                  VideoChatController/pair
 video/unpair                VideoChatController/unpair
+video/connected             VideoChatController/connected

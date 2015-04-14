@@ -1,32 +1,35 @@
 package models;
 
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.bson.types.ObjectId;
+import org.jongo.MongoCollection;
+import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class VideoChat extends Model {
+    @Id
     private ObjectId id;
     private ObjectId userId;
     private String token;
     private ObjectId peerId;
     private String peerToken;
+    private Date created;
+    private int rate;
 
     public VideoChat() {
     }
 
     public VideoChat(ObjectId userId, String token) {
+        this.id = new ObjectId();
         this.userId = userId;
         this.token = token;
     }
 
-    public VideoChat(ObjectId id, ObjectId userId, String token) {
-        this.id = id;
-        this.userId = userId;
-        this.token = token;
-    }
-
-    public VideoChat(ObjectId id, ObjectId userId, String token, ObjectId peerId, String peerToken) {
-        this.id = id;
+    public VideoChat(ObjectId userId, String token, ObjectId peerId, String peerToken) {
+        this.id = new ObjectId();
         this.userId = userId;
         this.token = token;
         this.peerId = peerId;
@@ -61,10 +64,19 @@ public class VideoChat extends Model {
         set();
     }
 
-    public void pair(ObjectId id, ObjectId userId, String token) {
-        this.id = id;
-        this.peerId = userId;
-        this.peerToken = token;
-        set();
+    public void save() {
+        MongoCollection videoChatCol = jongo.getCollection("videochat");
+
+        this.token = null;
+        this.peerToken = null;
+        this.created = new Date();
+
+        videoChatCol.save(this);
+    }
+
+    public static void rate(ObjectId id, int rate) {
+        MongoCollection videoChatCol = jongo.getCollection("videochat");
+
+        videoChatCol.update(id).with("{$set:{rate:#}}", rate);
     }
 }

@@ -92,13 +92,12 @@ public class VideoChatController extends AppController {
         if (videoChat != null)
             leave(videoChat, token);
 
-        ObjectId videoChatId = new ObjectId();
-        videoChat = new VideoChat(videoChatId, me.getId(), token);
+        videoChat = new VideoChat(me.getId(), token);
         videoChat.set();
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/request");
-        event.put("video_chat_id", videoChatId.toString());
+        event.put("video_chat_id", videoChat.getId().toString());
         event.put("user_id", me.getId().toString());
 
         sendEvent(userId, event);
@@ -122,19 +121,18 @@ public class VideoChatController extends AppController {
         if (params.get("confirm").booleanValue()) {
             videoChat.pair(me.getId(), token);
 
-            videoChat = new VideoChat(videoChatId, me.getId(), token, userId, videoChat.getToken());
+            videoChat = new VideoChat(me.getId(), token, userId, videoChat.getToken());
             videoChat.set();
 
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
-            event.put("video_chat_id", videoChatId.toString());
+            event.put("video_chat_id", videoChat.getId().toString());
             event.put("confirm", true);
 
             sendEvent(videoChat.getPeerToken(), event);
         } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
-            event.put("video_chat_id", videoChatId.toString());
             event.put("confirm", false);
 
             sendEvent(videoChat.getToken(), event);
@@ -151,7 +149,9 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        if (!videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         ObjectNode event = mapper.createObjectNode();
@@ -170,14 +170,20 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        ObjectId id = videoChat.getId();
+        videoChat = VideoChat.get(videoChat.getPeerId());
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        if (!videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair_response");
-        event.put("video_chat_id", videoChatId.toString());
+        event.put("video_chat_id", id.toString());
 
-        sendEvent(videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getToken(), event);
 
         return Ok();
     }
@@ -189,15 +195,20 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        videoChat = VideoChat.get(videoChat.getPeerId());
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        if (!videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/offer");
         event.set("description", params.get("description"));
-        event.put("video_chat_id", videoChatId.toString());
+        event.put("video_chat_id", videoChat.getId().toString());
 
-        sendEvent(videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getToken(), event);
 
         return Ok();
     }
@@ -209,15 +220,20 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        videoChat = VideoChat.get(videoChat.getPeerId());
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        if (!videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/answer");
         event.set("description", params.get("description"));
-        event.put("video_chat_id", videoChatId.toString());
+        event.put("video_chat_id", videoChat.getId().toString());
 
-        sendEvent(videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getToken(), event);
 
         return Ok();
     }
@@ -229,15 +245,50 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObject(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        videoChat = VideoChat.get(videoChat.getPeerId());
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        if (!videoChatId.equals(videoChat.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/candidate");
         event.set("candidate", params.get("candidate"));
-        event.put("video_chat_id", videoChatId.toString());
+        event.put("video_chat_id", videoChat.getId().toString());
 
-        sendEvent(videoChat.getPeerToken(), event);
+        sendEvent(videoChat.getToken(), event);
+
+        return Ok();
+    }
+
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    public static Result connected(JsonNode params) {
+        User me = getMe(params);
+        ObjectId videoChatId = getObject(params, "video_chat_id");
+
+        VideoChat videoChat = VideoChat.get(me.getId());
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        videoChat = VideoChat.get(videoChat.getPeerId());
+        if (videoChat == null)
+            return Error(Error.INVALID_VIDEO_ACCESS_TOKEN);
+        if (!videoChatId.equals(videoChat.getId()))
+            return Error(Error.INVALID_VIDEO_CHAT_ID);
+
+        videoChat.save();
+
+        return Ok();
+    }
+
+    @Validation(name = "video_chat_id", type = "id", require = true)
+    @Validation(name = "rate", type = "integer", rule = "min=0,max=5", require = true)
+    public static Result rate(JsonNode params) {
+        ObjectId videoChatId = getObject(params, "video_chat_id");
+        int rate = params.get("rate").intValue();
+
+        VideoChat.rate(videoChatId, rate);
 
         return Ok();
     }
@@ -248,19 +299,18 @@ public class VideoChatController extends AppController {
     @Validation(name = "lang0", type = "integer", require = true)
     @Validation(name = "lang1", type = "integer", require = true)
     public static Result pair(JsonNode params) {
-        ObjectId id = new ObjectId();
         VideoChat offer = VideoChat.get(getObject(params, "offer_id"));
         VideoChat answer = VideoChat.get(getObject(params, "answer_id"));
 
-        if (offer == null || answer == null || offer.getId() != null || answer.getId() != null)
+        if (offer == null || answer == null)
             return Ok();
 
-        offer.pair(id, answer.getUserId(), answer.getToken());
-        answer.pair(id, offer.getUserId(), offer.getToken());
+        offer.pair(answer.getUserId(), answer.getToken());
+        answer.pair(offer.getUserId(), offer.getToken());
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair");
-        event.put("video_chat_id", id.toString());
+        event.put("video_chat_id", offer.getId().toString());
         event.put("user_id", answer.getUserId().toString());
         event.put("lang0", params.get("lang0").intValue());
         event.put("lang1", params.get("lang1").intValue());

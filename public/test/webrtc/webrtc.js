@@ -5,7 +5,7 @@
 //            OfferToReceiveVideo: true
 //        }
 //    };
-var socket, user_id, video_chat_id;
+var socket, user_id, video_chat_id, pair_talk;
 var peer, offer_config, answer_config, iceServers;
 var remote_video = document.getElementById('remote_video');
 var local_video = document.getElementById('local_video');
@@ -32,6 +32,13 @@ getUserMedia({
             onRemoteStream: function(stream) {
                 remote_video.src = URL.createObjectURL(stream);
                 remote_video.play();
+
+                if (pair_talk) {
+                    send({
+                        action: "video/connected",
+                        video_chat_id: video_chat_id
+                    });
+                }
             },
             onRemoteStreamEnded: function(stream) {
             },
@@ -57,6 +64,13 @@ getUserMedia({
             onRemoteStream: function(stream) {
                 remote_video.src = URL.createObjectURL(stream);
                 remote_video.play();
+
+                if (pair_talk) {
+                    send({
+                        action: "video/connected",
+                        video_chat_id: video_chat_id
+                    });
+                }
             },
             onRemoteStreamEnded: function(stream) {
             },
@@ -147,6 +161,7 @@ $(function() {
             if (params.action == 'event') {
                 $("<p>").text(event.data).prependTo("#messages");
             } else if (params.action == 'video/request') {
+                pair_talk = false;
                 video_chat_id = params.video_chat_id;
                 user_id = params.user_id;
                 $("#user_id").val(user_id);
@@ -161,7 +176,6 @@ $(function() {
                 } else {
                     send({
                         action: "video/response",
-                        video_chat_id: video_chat_id,
                         user_id: user_id,
                         confirm: false
                     });
@@ -175,14 +189,15 @@ $(function() {
                     alert("reject");
                 }
             } else if (params.action == 'video/pair') {
-                video_chat_id = params.video_chat_id;
+                pair_talk = true;
                 user_id = params.user_id;
                 $("#user_id").val(user_id);
                 send({
                     action: "video/pair_request",
-                    video_chat_id: video_chat_id
+                    video_chat_id: params.video_chat_id
                 });
             } else if (params.action == 'video/pair_request') {
+                pair_talk = true;
                 video_chat_id = params.video_chat_id;
                 user_id = params.user_id;
                 $("#user_id").val(user_id);
@@ -191,6 +206,7 @@ $(function() {
                     video_chat_id: video_chat_id
                 });
             } else if (params.action == 'video/pair_response') {
+                video_chat_id = params.video_chat_id;
                 peer = RTCPeerConnection(offer_config);
             } else if (params.action == 'video/offer') {
                 answer_config.offerSDP = params.description;
@@ -223,6 +239,7 @@ $(function() {
     });
 
     $("#request").click(function() {
+        pair_talk = false;
         user_id = $("#user_id").val();
         send({
             action: "video/request",

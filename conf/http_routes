@@ -21,5 +21,6 @@ POST    /media                      MediaController/upload
 GET     /messages/:user_id          MessagesController/get
 POST    /messages/:user_id          MessagesController/add
 GET     /video/ice_servers          VideoChatController/getIceServers
+POST    /video/rate/:video_chat_id  VideoChatController/rate
 
 POST    /echo                       TestController/echo
