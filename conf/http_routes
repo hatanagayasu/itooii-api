@@ -1,4 +1,5 @@
 GET     /user                       UsersController/me
+HEAD    /user                       UsersController/exist
 GET     /user/:user_id              UsersController/get
 POST    /user                       UsersController/add
 PUT     /user                       UsersController/update

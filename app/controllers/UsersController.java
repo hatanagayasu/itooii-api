@@ -37,6 +37,15 @@ public class UsersController extends AppController {
 
     @Anonymous
     @Validation(name = "email", rule = "email", require = true)
+    public static Result exist(JsonNode params)
+    {
+        String email = params.get("email").textValue();
+
+        return User.getByEmail(email) != null ? Ok() : Error(Error.NOT_FOUND);
+    }
+
+    @Anonymous
+    @Validation(name = "email", rule = "email", require = true)
     @Validation(name = "password", require = true)
     @Validation(name = "name", require = true)
     @Validation(name = "native_language", type = "array", rule = "minSize=1,maxSize=2", require = true)
