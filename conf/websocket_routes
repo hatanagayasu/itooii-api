@@ -9,3 +9,4 @@ video/offer                 VideoChatController/offer
 video/answer                VideoChatController/answer
 video/candidate             VideoChatController/candidate
 video/pair                  VideoChatController/pair
+video/unpair                VideoChatController/unpair

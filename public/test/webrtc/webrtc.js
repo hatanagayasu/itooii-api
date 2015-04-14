@@ -200,6 +200,8 @@ $(function() {
                 remote_video.src = "";
 
                 alert('video/leave');
+            } else if (params.action == 'video/unpair') {
+                $("<p>").text(event.data).prependTo("#messages");
             }
         };
 

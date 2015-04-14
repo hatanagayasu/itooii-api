@@ -279,6 +279,21 @@ public class VideoChatController extends AppController {
     }
 
     @Anonymous
+    @Validation(name = "offer_id", type = "id", require = true)
+    public static Result unpair(JsonNode params) {
+        VideoChat videoChat = VideoChat.get(getObject(params, "offer_id"));
+
+        ObjectNode event = mapper.createObjectNode();
+        event.put("action", "video/unpair");
+
+        sendEvent(videoChat.getToken(), event);
+
+        leave(videoChat);
+
+        return Ok();
+    }
+
+    @Anonymous
     public static Result getIceServers(JsonNode params) {
         return Ok(iceServers);
     }
