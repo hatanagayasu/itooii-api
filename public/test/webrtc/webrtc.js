@@ -33,6 +33,8 @@ getUserMedia({
                 remote_video.src = URL.createObjectURL(stream);
                 remote_video.play();
             },
+            onRemoteStreamEnded: function(stream) {
+            },
             onOfferSDP: function(sdp) {
                 send({
                     action: "video/offer",
@@ -55,6 +57,8 @@ getUserMedia({
             onRemoteStream: function(stream) {
                 remote_video.src = URL.createObjectURL(stream);
                 remote_video.play();
+            },
+            onRemoteStreamEnded: function(stream) {
             },
             onAnswerSDP: function(sdp) {
                 send({
