@@ -222,7 +222,7 @@ public class DispatchController extends AppController {
 
                 String token = param.textValue();
                 String regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
-                if (!token.matches(regex) || !models.User.checkToken(token))
+                if (!token.matches(regex) || models.User.getUserIdByToken(token) == null)
                     throw new InvalidAccessTokenException();
             } else if (type.equals("epoch")) {
                 if (param.isTextual()) {

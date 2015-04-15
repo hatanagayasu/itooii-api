@@ -27,11 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 
 public class WebSocketController extends DispatchController {
-    private static Jedis jedis = Model.getJedis();
     private static Map<String, Set<WebSocket.Out<String>>> userToSockets =
         new ConcurrentHashMap<String, Set<WebSocket.Out<String>>>();
     private static Map<String, WebSocket.Out<String>> sessionToSocket =
@@ -132,7 +130,7 @@ public class WebSocketController extends DispatchController {
 
         new Thread(new Runnable() {
             public void run() {
-                jedis.subscribe(pubsub, "all", "user", "session", "pair");
+                Model.subscribe(pubsub, "all", "user", "session", "pair");
             }
         }).start();
     }
@@ -171,7 +169,7 @@ public class WebSocketController extends DispatchController {
                 final String userId = User.getUserIdByToken(token);
 
                 if (userId != null) {
-                    User.online(userId, session);
+                    User.newToken(userId, session);
 
                     Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
                     if (sockets == null) {
@@ -199,7 +197,7 @@ public class WebSocketController extends DispatchController {
                             if (sockets.isEmpty())
                                 userToSockets.remove(userId);
 
-                            User.offline(userId, session);
+                            User.deleteToken(session);
 
                             VideoChat videoChat = VideoChat.get(new ObjectId(userId));
                             if (videoChat != null)

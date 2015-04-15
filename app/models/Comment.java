@@ -57,7 +57,7 @@ public class Comment extends Model {
         commentCol.update("{post_id:#,page:#}", postId, page).upsert()
             .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
 
-        expire("post:" + postId);
+        del("post:" + postId);
     }
 
     public static Page get(ObjectId postId, ObjectId userId, long until, int limit) {
@@ -126,7 +126,7 @@ public class Comment extends Model {
             .as(Post.class);
 
         if (post != null)
-            expire("post:" + post.getId());
+            del("post:" + post.getId());
     }
 
     public static void unlike(ObjectId commentId, ObjectId userId) {
@@ -141,6 +141,6 @@ public class Comment extends Model {
             .as(Post.class);
 
         if (post != null)
-            expire("post:" + post.getId());
+            del("post:" + post.getId());
     }
 }

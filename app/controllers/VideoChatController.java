@@ -77,7 +77,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "user_id", type = "id", require = true)
     public static Result request(JsonNode params) {
         User me = getMe(params);
-        ObjectId userId = getObject(params, "user_id");
+        ObjectId userId = getObjectId(params, "user_id");
         User user = User.getById(userId);
         String token = params.get("access_token").textValue();
 
@@ -110,8 +110,8 @@ public class VideoChatController extends AppController {
     @Validation(name = "confirm", type = "boolean", require = true)
     public static Result response(JsonNode params) {
         User me = getMe(params);
-        ObjectId userId = getObject(params, "user_id");
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId userId = getObjectId(params, "user_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
         String token = params.get("access_token").textValue();
 
         VideoChat videoChat = VideoChat.get(userId);
@@ -146,7 +146,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result pairRequest(JsonNode params) {
         User me = getMe(params);
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null)
@@ -167,7 +167,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result pairResponse(JsonNode params) {
         User me = getMe(params);
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null)
@@ -192,7 +192,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result offer(JsonNode params) {
         User me = getMe(params);
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null)
@@ -217,7 +217,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result answer(JsonNode params) {
         User me = getMe(params);
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null)
@@ -242,7 +242,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result candidate(JsonNode params) {
         User me = getMe(params);
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null)
@@ -266,7 +266,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result connected(JsonNode params) {
         User me = getMe(params);
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat == null)
@@ -285,7 +285,7 @@ public class VideoChatController extends AppController {
     @Validation(name = "video_chat_id", type = "id", require = true)
     @Validation(name = "rate", type = "integer", rule = "min=0,max=5", require = true)
     public static Result rate(JsonNode params) {
-        ObjectId videoChatId = getObject(params, "video_chat_id");
+        ObjectId videoChatId = getObjectId(params, "video_chat_id");
         int rate = params.get("rate").intValue();
 
         VideoChat.rate(videoChatId, rate);
@@ -299,8 +299,8 @@ public class VideoChatController extends AppController {
     @Validation(name = "lang0", type = "integer", require = true)
     @Validation(name = "lang1", type = "integer", require = true)
     public static Result pair(JsonNode params) {
-        VideoChat offer = VideoChat.get(getObject(params, "offer_id"));
-        VideoChat answer = VideoChat.get(getObject(params, "answer_id"));
+        VideoChat offer = VideoChat.get(getObjectId(params, "offer_id"));
+        VideoChat answer = VideoChat.get(getObjectId(params, "answer_id"));
 
         if (offer == null || answer == null)
             return Ok();
@@ -331,7 +331,7 @@ public class VideoChatController extends AppController {
     @Anonymous
     @Validation(name = "offer_id", type = "id", require = true)
     public static Result unpair(JsonNode params) {
-        VideoChat videoChat = VideoChat.get(getObject(params, "offer_id"));
+        VideoChat videoChat = VideoChat.get(getObjectId(params, "offer_id"));
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/unpair");

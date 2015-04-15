@@ -45,7 +45,7 @@ public class PostsController extends AppController {
     @Validation(name = "post_id", type = "id", require = true)
     public static Result get(JsonNode params) {
         User me = getMe(params);
-        ObjectId postId = getObject(params, "post_id");
+        ObjectId postId = getObjectId(params, "post_id");
 
         Post post = Post.get(postId);
 
@@ -62,7 +62,7 @@ public class PostsController extends AppController {
     @Validation(name = "limit", type = "integer", rule = "min=1,max=50")
     public static Result getComment(JsonNode params) {
         User me = getMe(params);
-        ObjectId postId = getObject(params, "post_id");
+        ObjectId postId = getObjectId(params, "post_id");
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 50;
 
@@ -78,7 +78,7 @@ public class PostsController extends AppController {
     @Validation(name = "attachments[].url", depend = "type=url", rule = "url")
     public static Result addComment(JsonNode params) {
         User me = getMe(params);
-        ObjectId postId = getObject(params, "post_id");
+        ObjectId postId = getObjectId(params, "post_id");
         String text = params.has("text") ? params.get("text").textValue() : null;
 
         Comment comment = new Comment(me.getId(), text, getAttachments(params));
@@ -90,7 +90,7 @@ public class PostsController extends AppController {
     @Validation(name = "post_id", type = "id", require = true)
     public static Result like(JsonNode params) {
         User me = getMe(params);
-        ObjectId postId = getObject(params, "post_id");
+        ObjectId postId = getObjectId(params, "post_id");
 
         Post.like(postId, me.getId());
 
@@ -100,7 +100,7 @@ public class PostsController extends AppController {
     @Validation(name = "post_id", type = "id", require = true)
     public static Result unlike(JsonNode params) {
         User me = getMe(params);
-        ObjectId postId = getObject(params, "post_id");
+        ObjectId postId = getObjectId(params, "post_id");
 
         Post.unlike(postId, me.getId());
 
@@ -110,7 +110,7 @@ public class PostsController extends AppController {
     @Validation(name = "comment_id", type = "id", require = true)
     public static Result likeComment(JsonNode params) {
         User me = getMe(params);
-        ObjectId commentId = getObject(params, "comment_id");
+        ObjectId commentId = getObjectId(params, "comment_id");
 
         Comment.like(commentId, me.getId());
 
@@ -120,7 +120,7 @@ public class PostsController extends AppController {
     @Validation(name = "comment_id", type = "id", require = true)
     public static Result unlikeComment(JsonNode params) {
         User me = getMe(params);
-        ObjectId commentId = getObject(params, "comment_id");
+        ObjectId commentId = getObjectId(params, "comment_id");
 
         Comment.unlike(commentId, me.getId());
 

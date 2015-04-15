@@ -34,6 +34,7 @@ import org.jongo.marshall.jackson.oid.Id;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class Model {
@@ -52,7 +53,6 @@ public class Model {
     public static Jongo jongo;
 
     private static JedisPool jedisPool;
-    private static int redisDB;
 
     public static void init() {
         Configuration conf = Play.application().configuration();
@@ -63,7 +63,6 @@ public class Model {
 
         String redisHost = conf.getString("redis.host", "localhost");
         int redisPort = conf.getInt("redis.port", 6379);
-        redisDB = conf.getInt("redis.db", 0);
 
         try {
             mongodb = new MongoClient(mongodbHost, mongodbPort).getDB(mongodbDB);
@@ -81,17 +80,6 @@ public class Model {
         StringWriter errors = new StringWriter();
         cause.printStackTrace(new PrintWriter(errors));
         Logger.error(errors.toString());
-    }
-
-    public static Jedis getJedis() {
-        Jedis jedis = jedisPool.getResource();
-        jedis.select(redisDB);
-
-        return jedis;
-    }
-
-    public static void returnJedis(Jedis jedis) {
-        jedisPool.returnResource(jedis);
     }
 
     public static StringBuilder toJson(Model model) {
@@ -255,53 +243,135 @@ public class Model {
         }
     }
 
-    public static <T extends Model> T get(Jedis jedis, String key, Class<T> clazz) {
+    public static String get(String key) {
+        Jedis jedis = jedisPool.getResource();
+        String result = null;
+
         try {
-            String json = jedis.get(key);
-            if (json != null)
-                return mapper.readValue(json, clazz);
-        } catch (IOException e) {
+            result = jedis.get(key);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
             errorlog(e);
         }
 
-        return null;
+        return result;
     }
 
-    public void set(Jedis jedis, String key) {
-        jedis.setex(key, 3600, this.toString());
+    public static void set(String key, String value) {
+        set(key, 3600, value);
     }
 
-    public static void expire(String key) {
-        Jedis jedis = getJedis();
-        jedis.del(key.getBytes());
-        returnJedis(jedis);
+    public static void set(String key, int seconds, String value) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            jedis.setex(key, seconds, value);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
     }
 
-    public static void expire(String[] keys) {
-        Jedis jedis = getJedis();
-        for (String key : keys)
-            jedis.del(key.getBytes());
-        returnJedis(jedis);
+    public static <T extends Model> T get(String key, Class<T> clazz) {
+        Jedis jedis = jedisPool.getResource();
+        T t = null;
+
+        try {
+            String json = jedis.get(key);
+            if (json != null)
+                t = mapper.readValue(json, clazz);
+
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        } catch (IOException e) {
+            jedisPool.returnResource(jedis);
+            errorlog(e);
+        }
+
+        return t;
+    }
+
+    public void set(String key) {
+        set(key, 3600);
+    }
+
+    public void set(String key, int seconds) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            jedis.setex(key, seconds, this.toString());
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+    }
+
+    public static void del(String... keys) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            for (String key : keys)
+                jedis.del(key);
+
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
     }
 
     public static <T extends Model> T cache(String key, Class<T> clazz, Callable<T> callback) {
         T t = null;
 
-        Jedis jedis = getJedis();
-
-        t = get(jedis, key, clazz);
+        t = get(key, clazz);
         if (t == null) {
             try {
                 t = callback.call();
                 if (t != null)
-                    t.set(jedis, key);
+                    t.set(key);
             } catch (Exception e) {
+                errorlog(e);
             }
         }
 
-        returnJedis(jedis);
-
         return t;
+    }
+
+    public static void publish(String channel, String message) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            jedis.publish(channel, message);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+    }
+
+    public static void subscribe(JedisPubSub pubsub, String... channels) {
+        Jedis jedis = jedisPool.getResource();
+
+        while (true) {
+            try {
+                System.out.println("subscribe...");
+                jedis.subscribe(pubsub, channels);
+            } catch (JedisConnectionException e) {
+                try {
+                    jedisPool.returnBrokenResource(jedis);
+                    e.printStackTrace();
+                    Thread.sleep(3000L);
+                    jedis = jedisPool.getResource();
+                    System.out.print("re");
+                } catch (InterruptedException ie) {
+                }
+            }
+        }
     }
 
     private static String name(ObjectId userId) {

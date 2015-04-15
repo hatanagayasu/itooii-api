@@ -14,7 +14,6 @@ import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
-import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class User extends Model {
@@ -67,7 +66,7 @@ public class User extends Model {
 
         userCol.update(id).with("{$set:#}", params);
 
-        expire("user:" + id);
+        del("user:" + id);
     }
 
     public void follow(ObjectId userId) {
@@ -77,7 +76,7 @@ public class User extends Model {
         following.save(new Following(id, userId));
         follower.save(new Follower(userId, id));
 
-        expire(new String[] { "user:" + id, "user:" + userId });
+        del("user:" + id, "user:" + userId);
     }
 
     public void unfollow(ObjectId userId) {
@@ -87,7 +86,7 @@ public class User extends Model {
         following.remove("{user_id:#,following_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        expire(new String[] { "user:" + id, "user:" + userId });
+        del("user:" + id, "user:" + userId);
     }
 
     public static Page search() {
@@ -133,9 +132,7 @@ public class User extends Model {
     }
 
     public static User getByToken(String token) {
-        Jedis jedis = getJedis();
-        String id = jedis.get("token:" + token);
-        returnJedis(jedis);
+        String id = get("token:" + token);
 
         if (id == null)
             return null;
@@ -144,45 +141,23 @@ public class User extends Model {
     }
 
     public static String getUserIdByToken(String token) {
-        Jedis jedis = getJedis();
-        String id = jedis.get("token:" + token);
-        returnJedis(jedis);
+        String id = get("token:" + token);
 
         return id;
     }
 
-    public static boolean checkToken(String token) {
-        Jedis jedis = getJedis();
-        boolean exists = jedis.exists("token:" + token);
-        returnJedis(jedis);
-
-        return exists;
-    }
-
     public String newToken() {
         String token = UUID.randomUUID().toString();
-        Jedis jedis = getJedis();
-        jedis.setex("token:" + token, 86400, id.toString());
-        returnJedis(jedis);
+        set("token:" + token, 86400, id.toString());
 
         return token;
     }
 
+    public static void newToken(String userId, String token) {
+        set("token:" + token, 86400, userId);
+    }
+
     public static void deleteToken(String token) {
-        Jedis jedis = getJedis();
-        jedis.del("token:" + token);
-        returnJedis(jedis);
-    }
-
-    public static void online(String userId, String token) {
-        Jedis jedis = getJedis();
-        jedis.setex("token:" + token, 86400, userId);
-        returnJedis(jedis);
-    }
-
-    public static void offline(String userId, String token) {
-        Jedis jedis = getJedis();
-        jedis.del("token:" + token);
-        returnJedis(jedis);
+        del("token:" + token);
     }
 }

@@ -26,7 +26,7 @@ public class UsersController extends AppController {
     @Anonymous
     @Validation(name = "user_id", type = "id", require = true)
     public static Result get(JsonNode params) {
-        ObjectId userId = getObject(params, "user_id");
+        ObjectId userId = getObjectId(params, "user_id");
 
         User user = User.getById(userId);
         if (user == null)
@@ -102,7 +102,7 @@ public class UsersController extends AppController {
     @Validation(name = "user_id", type = "id", require = true)
     public static Result follow(JsonNode params) {
         User me = getMe(params);
-        ObjectId userId = getObject(params, "user_id");
+        ObjectId userId = getObjectId(params, "user_id");
         User user = User.getById(userId);
 
         if (user == null)
@@ -120,7 +120,7 @@ public class UsersController extends AppController {
     @Validation(name = "user_id", type = "id", require = true)
     public static Result unfollow(JsonNode params) {
         User me = getMe(params);
-        ObjectId userId = getObject(params, "user_id");
+        ObjectId userId = getObjectId(params, "user_id");
         User user = User.getById(userId);
 
         if (user == null)

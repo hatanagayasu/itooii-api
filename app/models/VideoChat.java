@@ -2,11 +2,9 @@ package models;
 
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
-import redis.clients.jedis.Jedis;
 
 @lombok.Getter
 public class VideoChat extends Model {
@@ -37,25 +35,17 @@ public class VideoChat extends Model {
     }
 
     public static VideoChat get(ObjectId userId) {
-        Jedis jedis = getJedis();
-        VideoChat videoChat = get(jedis, "video:chat:" + userId, VideoChat.class);
-        returnJedis(jedis);
-
-        return videoChat;
+        return get("video:chat:" + userId, VideoChat.class);
     }
 
     public void set() {
-        Jedis jedis = getJedis();
-        set(jedis, "video:chat:" + userId);
-        returnJedis(jedis);
+        set("video:chat:" + userId);
     }
 
     public void leave() {
-        Jedis jedis = getJedis();
-        jedis.del("video:chat:" + userId);
+        del("video:chat:" + userId);
         if (peerId != null)
-            jedis.del("video:chat:" + peerId);
-        returnJedis(jedis);
+            del("video:chat:" + peerId);
     }
 
     public void pair(ObjectId userId, String token) {

@@ -17,7 +17,7 @@ public class MessagesController extends AppController {
     @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
     public static Result get(JsonNode params) {
         User me = getMe(params);
-        ObjectId userId = getObject(params, "user_id");
+        ObjectId userId = getObjectId(params, "user_id");
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
@@ -38,7 +38,7 @@ public class MessagesController extends AppController {
     @Validation(name = "attachments[].url", depend = "type=url", rule = "url")
     public static Result add(JsonNode params) {
         User me = getMe(params);
-        ObjectId userId = getObject(params, "user_id");
+        ObjectId userId = getObjectId(params, "user_id");
         String text = params.has("text") ? params.get("text").textValue() : null;
 
         if (userId.equals(me.getId()))

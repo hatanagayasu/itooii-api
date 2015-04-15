@@ -78,7 +78,7 @@ public class Post extends Model {
             .as(Post.class);
 
         if (post != null)
-            expire("post:" + postId);
+            del("post:" + postId);
     }
 
     public static void unlike(ObjectId postId, ObjectId userId) {
@@ -90,6 +90,6 @@ public class Post extends Model {
             .as(Post.class);
 
         if (post != null)
-            expire("post:" + postId);
+            del("post:" + postId);
     }
 }

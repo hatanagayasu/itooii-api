@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import org.bson.types.ObjectId;
-import redis.clients.jedis.Jedis;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
@@ -81,9 +80,8 @@ public class AppController extends Controller {
         return User.getByToken(token);
     }
 
-    @SuppressWarnings(value = "unchecked")
-    public static <T> T getObject(JsonNode params, String name) {
-        return (T) ((POJONode) params.get(name)).getPojo();
+    public static ObjectId getObjectId(JsonNode params, String name) {
+        return (ObjectId) ((POJONode) params.get(name)).getPojo();
     }
 
     public static List<Attachment> getAttachments(JsonNode params) {
@@ -95,7 +93,7 @@ public class AppController extends Controller {
                 String type = attachment.get("type").textValue();
                 if (attachment.has("photo_id"))
                 {
-                    ObjectId photoId = (ObjectId) getObject(attachment, "photo_id");
+                    ObjectId photoId = getObjectId(attachment, "photo_id");
                     attachments.add(new Attachment(type, photoId));
                 }
                 else if (attachment.has("url"))
@@ -112,27 +110,19 @@ public class AppController extends Controller {
     }
 
     public static void publish(String channel, Object event) {
-        Jedis jedis = Model.getJedis();
-        jedis.publish(channel, event.toString());
-        Model.returnJedis(jedis);
+        Model.publish(channel, event.toString());
     }
 
     public static void sendEvent(String session, JsonNode event) {
-        Jedis jedis = Model.getJedis();
-        jedis.publish("session", session + "\n" + event);
-        Model.returnJedis(jedis);
+        Model.publish("session", session + "\n" + event);
     }
 
     public static void sendEvent(ObjectId userId, JsonNode event) {
-        Jedis jedis = Model.getJedis();
-        jedis.publish("user", userId + "\n" + event);
-        Model.returnJedis(jedis);
+        Model.publish("user", userId + "\n" + event);
     }
 
     public static void sendEvent(JsonNode event) {
-        Jedis jedis = Model.getJedis();
-        jedis.publish("all", event.toString());
-        Model.returnJedis(jedis);
+        Model.publish("all", event.toString());
     }
 
     public static long now() {
