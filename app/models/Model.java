@@ -46,7 +46,9 @@ public class Model {
         .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
         .build(new CacheLoader<ObjectId, String>() {
             public String load(ObjectId userId) {
-                return User.getById(userId).getName();
+                User user = User.get(userId);
+
+                return user == null ? null : user.getName();
             }
         });
 

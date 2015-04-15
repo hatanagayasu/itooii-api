@@ -28,7 +28,7 @@ public class UsersController extends AppController {
     public static Result get(JsonNode params) {
         ObjectId userId = getObjectId(params, "user_id");
 
-        User user = User.getById(userId);
+        User user = User.get(userId);
         if (user == null)
             return Error(Error.USER_NOT_FOUND);
 
@@ -103,7 +103,7 @@ public class UsersController extends AppController {
     public static Result follow(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
-        User user = User.getById(userId);
+        User user = User.get(userId);
 
         if (user == null)
             return Error(Error.USER_NOT_FOUND);
@@ -121,7 +121,7 @@ public class UsersController extends AppController {
     public static Result unfollow(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
-        User user = User.getById(userId);
+        User user = User.get(userId);
 
         if (user == null)
             return Error(Error.USER_NOT_FOUND);

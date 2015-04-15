@@ -78,7 +78,7 @@ public class VideoChatController extends AppController {
     public static Result request(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
-        User user = User.getById(userId);
+        User user = User.get(userId);
         String token = params.get("access_token").textValue();
 
         if (userId.equals(me.getId()))

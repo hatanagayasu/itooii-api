@@ -107,7 +107,7 @@ public class User extends Model {
         return new Page(users);
     }
 
-    public static User getById(ObjectId userId) {
+    public static User get(ObjectId userId) {
         String key = "user:" + userId;
 
         return cache(key, User.class, new Callable<User>() {
@@ -137,7 +137,7 @@ public class User extends Model {
         if (id == null)
             return null;
 
-        return getById(new ObjectId(id));
+        return get(new ObjectId(id));
     }
 
     public static String getUserIdByToken(String token) {
