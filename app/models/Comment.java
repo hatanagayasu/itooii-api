@@ -18,6 +18,9 @@ public class Comment extends Model {
     private ObjectId id;
     @JsonProperty("user_id")
     private ObjectId userId;
+    @JsonIgnore
+    @JsonProperty("user_name")
+    private String userName;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -91,7 +94,7 @@ public class Comment extends Model {
         if (comments.size() > limit)
             comments.subList(0, comments.size() - limit).clear();
 
-        postproduction(comments, userId);
+        postproduct(comments, userId);
 
         if (comments.size() == limit) {
             until = comments.get(0).getCreated().getTime();
@@ -101,8 +104,10 @@ public class Comment extends Model {
         return new Page(comments, previous);
     }
 
-    public static void postproduction(List<Comment> comments, ObjectId userId) {
+    public static void postproduct(List<Comment> comments, ObjectId userId) {
         for (Comment comment : comments) {
+            comment.userName = name(comment.userId);
+
             if (comment.likes == null) {
                 comment.likeCount = 0;
                 comment.liked = false;

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
@@ -55,6 +56,8 @@ public class Model {
     private static JedisPool jedisPool;
 
     public static void init() {
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         Configuration conf = Play.application().configuration();
 
         String mongodbHost = conf.getString("mongodb.host");
@@ -152,11 +155,6 @@ public class Model {
                     objectToJson(value, result);
                 } else {
                     result.append("\"").append(name).append("\":\"").append(value).append("\"");
-
-                    if (name.equals("user_id")) {
-                        result.append(",\"").append("user_name").append("\":\"")
-                            .append(name((ObjectId)value)).append("\"");
-                    }
                 }
 
                 if (iterator.hasNext())
@@ -374,7 +372,7 @@ public class Model {
         }
     }
 
-    private static String name(ObjectId userId) {
+    public static String name(ObjectId userId) {
         try {
             return names.get(userId);
         } catch (Exception e) {

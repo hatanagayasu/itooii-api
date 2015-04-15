@@ -52,7 +52,7 @@ public class PostsController extends AppController {
         if (post == null)
             return NotFound();
 
-        post.postproduction(me.getId());
+        post.postproduct(me.getId());
 
         return Ok(post);
     }
