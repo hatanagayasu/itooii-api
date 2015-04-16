@@ -197,9 +197,10 @@ public class DispatchController extends AppController {
 
                 JsonNode rules = validation.get("rules");
                 if (rules != null) {
+                    if (rules.has("size") && param.size() == rules.get("size").intValue())
+                        throw new MalformedParamException(validation);
                     if (rules.has("minSize") && param.size() < rules.get("minSize").intValue())
                         throw new MalformedParamException(validation);
-
                     if (rules.has("maxSize") && param.size() > rules.get("maxSize").intValue())
                         throw new MalformedParamException(validation);
                 }
@@ -297,11 +298,10 @@ public class DispatchController extends AppController {
                 throw new MalformedParamException(validation);
 
             if (rules != null) {
-                if (rules.has("minSize") && param.size() < rules.get("minSize").intValue()) {
-                    errorlog(param.size());
+                if (rules.has("size") && param.size() == rules.get("size").intValue())
                     throw new MalformedParamException(validation);
-                }
-
+                if (rules.has("minSize") && param.size() < rules.get("minSize").intValue())
+                    throw new MalformedParamException(validation);
                 if (rules.has("maxSize") && param.size() > rules.get("maxSize").intValue())
                     throw new MalformedParamException(validation);
             }
@@ -344,10 +344,15 @@ public class DispatchController extends AppController {
                 regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
             } else if (rule.equals("url")) {
                 regex = "(https?:\\/\\/[\\w-\\.]+(:\\d+)?(\\/[~\\w\\/\\.]*)?(\\?\\S*)?(#\\S*)?)";
-            } else if (rule.matches("^(.*)$")) {
+            } else if (rule.matches("^\\(.*\\)$")) {
                 regex = "^" + rule + "$";
             } else if (rule.matches("^/.*/$")) {
                 regex = rule.replaceFirst("^/", "").replaceFirst("/$", "");
+            } else if (rule.equals("length")) {
+                if (value.length() == rules.get(rule).intValue())
+                    continue;
+                else
+                    return false;
             } else if (rule.equals("minLength")) {
                 if (value.length() >= rules.get(rule).intValue())
                     continue;
