@@ -88,15 +88,20 @@ public class HttpController extends DispatchController {
                     route.set("validations", validations);
 
                 for (int i = 1; i < segs.length; i++) {
-                    if (segs[i].startsWith(":"))
-                        pathParamsMap.put(segs[i].replaceAll("^:", ""), i);
+                    if (segs[i].startsWith("@")) {
+                        pathParamsMap.put(segs[i].substring(1), i);
+                        segs[i] = "[0-9a-fA-F]{24}";
+                    } else if (segs[i].startsWith(":")) {
+                        pathParamsMap.put(segs[i].substring(1), i);
+                        segs[i] = "[^/]+";
+                    }
                 }
                 if (pathParamsMap.size() > 0)
                     route.set("pathParamsMap", pathParamsMap);
 
                 String regex = "";
                 for (int i = 1; i < segs.length; i++)
-                    regex += "/" + (segs[i].startsWith(":") ? "[0-9a-fA-F]{24}" : segs[i]);
+                    regex += "/" + segs[i];
 
                 if (!regexes.has(regex))
                     regexes.putObject(regex);
