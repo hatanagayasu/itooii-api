@@ -207,7 +207,11 @@ public class UsersController extends AppController {
     }
 
     @Anonymous
+    @Validation(name = "skip", type = "integer", rule = "min=0")
+    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
     public static Result search(JsonNode params) {
-        return Ok(User.search());
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+        return Ok(User.search(skip, limit));
     }
 }

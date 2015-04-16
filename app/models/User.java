@@ -89,14 +89,17 @@ public class User extends Model {
         del("user:" + id, "user:" + userId);
     }
 
-    public static Page search() {
+    public static Page search(int skip, int limit) {
         MongoCollection userCol = jongo.getCollection("user");
+        String next = null;
 
-        MongoCursor<User> cursor = userCol.find()
-            .projection("{_id:1,name:1}").as(User.class);
-        List<User> users = new ArrayList<User>();
+        MongoCursor<Other> cursor = userCol.find()
+            .skip(skip)
+            .limit(limit)
+            .as(Other.class);
+        List<Other> others = new ArrayList<Other>();
         while (cursor.hasNext())
-            users.add(cursor.next());
+            others.add(cursor.next());
 
         try {
             cursor.close();
@@ -104,7 +107,10 @@ public class User extends Model {
             throw new RuntimeException(e);
         }
 
-        return new Page(users);
+        if (others.size() == limit)
+            next = String.format("skip=%d&limit=%d", skip + limit, limit);
+
+        return new Page(others, next);
     }
 
     public static User get(ObjectId userId) {
