@@ -1,7 +1,10 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,5 +50,33 @@ public class Follower extends Model {
         }
 
         return followers;
+    }
+
+    public static Page get(User user, int skip, int limit) {
+        List<Other> others = new ArrayList<Other>();
+        String next = null;
+
+        if (user.getFollowers() != null) {
+            Iterator<ObjectId> iterator = user.getFollowers().iterator();
+
+            int count = 0;
+            while (count < skip && iterator.hasNext()) {
+                iterator.next();
+                count++;
+            }
+
+            count = 0;
+            while (count < limit && iterator.hasNext()) {
+                Other other = Other.get(iterator.next());
+                if (other != null)
+                   others.add(other);
+                count++;
+            }
+
+            if (iterator.hasNext())
+                next = String.format("skip=%d&limit=%d", skip + limit, limit);
+        }
+
+        return new Page(others, null, next);
     }
 }

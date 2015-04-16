@@ -4,6 +4,8 @@ import controllers.annotations.*;
 import controllers.constants.Error;
 
 import models.PracticeLanguage;
+import models.Follower;
+import models.Following;
 import models.User;
 
 import java.util.ArrayList;
@@ -162,6 +164,46 @@ public class UsersController extends AppController {
         User.deleteToken(token);
 
         return Ok();
+    }
+
+    @Validation(name = "user_id", type = "id")
+    @Validation(name = "skip", type = "integer", rule = "min=0")
+    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
+    public static Result getFollower(JsonNode params) {
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        User user;
+        if (params.has("user_id")) {
+            ObjectId userId = getObjectId(params, "user_id");
+            user = User.get(userId);
+            if (user == null)
+                return NotFound();
+        } else {
+            user = getMe(params);
+        }
+
+        return Ok(Follower.get(user, skip, limit));
+    }
+
+    @Validation(name = "user_id", type = "id")
+    @Validation(name = "skip", type = "integer", rule = "min=0")
+    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
+    public static Result getFollowing(JsonNode params) {
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        User user;
+        if (params.has("user_id")) {
+            ObjectId userId = getObjectId(params, "user_id");
+            user = User.get(userId);
+            if (user == null)
+                return NotFound();
+        } else {
+            user = getMe(params);
+        }
+
+        return Ok(Following.get(user, skip, limit));
     }
 
     @Anonymous
