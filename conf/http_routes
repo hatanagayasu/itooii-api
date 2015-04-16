@@ -3,10 +3,10 @@ HEAD    /user                       UsersController/exist
 GET     /user/:user_id              UsersController/get
 POST    /user                       UsersController/add
 PUT     /user                       UsersController/update
-GET     /user/follower              UsersController/getFollower
-GET     /user/follower/:user_id     UsersController/getFollower
-GET     /user/following             UsersController/getFollowing
-GET     /user/following/:user_id    UsersController/getFollowing
+GET     /user/followers             UsersController/getFollower
+GET     /user/followers/:user_id    UsersController/getFollower
+GET     /user/followings            UsersController/getFollowing
+GET     /user/followings/:user_id   UsersController/getFollowing
 POST    /user/following/:user_id    UsersController/follow
 DELETE  /user/following/:user_id    UsersController/unfollow
 POST    /access_token               UsersController/login
