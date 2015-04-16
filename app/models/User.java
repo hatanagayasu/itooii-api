@@ -121,8 +121,10 @@ public class User extends Model {
                 MongoCollection userCol = jongo.getCollection("user");
                 User user = userCol.findOne(userId).projection("{password:0}").as(User.class);
 
-                user.followings = Following.getFollowingIds(userId);
-                user.followers = Follower.getFollowerIds(userId);
+                if (user != null) {
+                    user.followings = Following.getFollowingIds(userId);
+                    user.followers = Follower.getFollowerIds(userId);
+                }
 
                 return user;
             }
