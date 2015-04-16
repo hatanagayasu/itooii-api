@@ -26,5 +26,8 @@ GET     /messages/@user_id          MessagesController/get
 POST    /messages/@user_id          MessagesController/add
 GET     /video/ice_servers          VideoChatController/getIceServers
 POST    /video/rate/@video_chat_id  VideoChatController/rate
+GET     /app/countries              Application/getCountry
+GET     /app/country/:id/cities     Application/getCity
+GET     /app/languages              Application/getLanguage
 
 POST    /echo                       TestController/echo
