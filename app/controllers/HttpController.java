@@ -40,7 +40,7 @@ public class HttpController extends DispatchController {
                             name : { ..., validations : {{}, ...} },
                             ...
                         },
-                        pathParamsMap : {
+                        path_params_map : {
                             String name : int offset,
                             ...
                         }
@@ -97,7 +97,7 @@ public class HttpController extends DispatchController {
                     }
                 }
                 if (pathParamsMap.size() > 0)
-                    route.set("pathParamsMap", pathParamsMap);
+                    route.set("path_params_map", pathParamsMap);
 
                 String regex = "";
                 for (int i = 1; i < segs.length; i++)
@@ -193,7 +193,7 @@ public class HttpController extends DispatchController {
         ObjectNode params = mapper.createObjectNode();
 
         if (route.has("pathParamsMap")) {
-            JsonNode pathParamsMap = route.get("pathParamsMap");
+            JsonNode pathParamsMap = route.get("path_params_map");
             path = "/" + path;
             String[] segs = path.split("/");
 
