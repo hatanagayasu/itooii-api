@@ -7,6 +7,8 @@ import java.lang.NumberFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -138,6 +140,8 @@ public class DispatchController extends AppController {
 
     public static void validations(JsonNode validations, ObjectNode params)
         throws MissingParamException, MalformedParamException, InvalidAccessTokenException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
         Iterator<String> fieldNames = validations.fieldNames();
         while (fieldNames.hasNext()) {
             String name = fieldNames.next();
@@ -248,6 +252,15 @@ public class DispatchController extends AppController {
                         params.put(name, param.longValue());
                     else
                         throw new MalformedParamException(validation);
+                }
+            } else if (type.equals("date")) {
+                if (!param.isTextual())
+                    throw new MalformedParamException(validation);
+
+                try {
+                    params.putPOJO(name, sdf.parse(param.textValue()));
+                } catch (ParseException e) {
+                    throw new MalformedParamException(validation);
                 }
             } else {
                 if (type.equals("integer") && param.isTextual()) {
