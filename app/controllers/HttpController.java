@@ -198,7 +198,7 @@ public class HttpController extends DispatchController {
     private static ObjectNode parseParams(JsonNode route, String path) {
         ObjectNode params = mapper.createObjectNode();
 
-        if (route.has("pathParamsMap")) {
+        if (route.has("path_params_map")) {
             JsonNode pathParamsMap = route.get("path_params_map");
             path = "/" + path;
             String[] segs = path.split("/");
