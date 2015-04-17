@@ -2,6 +2,7 @@ package controllers;
 
 import play.Play;
 
+import controllers.annotations.*;
 import controllers.constants.Error;
 
 import java.io.BufferedReader;
@@ -27,6 +28,7 @@ public class HttpController extends DispatchController {
                 regex : {
                     method : {
                         method : Method,
+                        cache_control : String,
                         validations : {
                             name : {
                                 fullName : String,
@@ -81,6 +83,10 @@ public class HttpController extends DispatchController {
                 Class<?> clazz = Class.forName("controllers." + pair[0]);
                 Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
                 route.putPOJO("method", method);
+
+                CacheControl cacheControl = method.getAnnotation(CacheControl.class);
+                if (cacheControl != null)
+                    route.put("cache_control", cacheControl.value());
 
                 ObjectNode validations = parseValidations(method);
 

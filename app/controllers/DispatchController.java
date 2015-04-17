@@ -107,7 +107,14 @@ public class DispatchController extends AppController {
             if (route.has("validations"))
                 validations(route.get("validations"), params);
 
-            return (Result) method.invoke(null, new Object[] { params });
+            Result result = (Result) method.invoke(null, new Object[] { params });
+
+            if (route.has("cache_control") && result.getStatus() == 200) {
+                int maxAge = route.get("cache_control").intValue();
+                response().setHeader("Cache-Control", "max-age=" + maxAge);
+            }
+
+            return result;
         } catch (IllegalAccessException e) {
             errorlog(e);
 
