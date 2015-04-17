@@ -344,6 +344,7 @@ public class VideoChatController extends AppController {
     }
 
     @Anonymous
+    @CacheControl
     public static Result getIceServers(JsonNode params) {
         return Ok(iceServers);
     }
