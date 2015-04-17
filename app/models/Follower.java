@@ -53,7 +53,7 @@ public class Follower extends Model {
     }
 
     public static Page get(User user, int skip, int limit) {
-        List<Other> others = new ArrayList<Other>();
+        List<Skim> skims = new ArrayList<Skim>();
         String next = null;
 
         if (user.getFollowers() != null) {
@@ -67,9 +67,9 @@ public class Follower extends Model {
 
             count = 0;
             while (count < limit && iterator.hasNext()) {
-                Other other = Other.get(iterator.next());
-                if (other != null)
-                   others.add(other);
+                Skim skim = Skim.get(iterator.next());
+                if (skim != null)
+                   skims.add(skim);
                 count++;
             }
 
@@ -77,6 +77,6 @@ public class Follower extends Model {
                 next = String.format("skip=%d&limit=%d", skip + limit, limit);
         }
 
-        return new Page(others, null, next);
+        return new Page(skims, null, next);
     }
 }

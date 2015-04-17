@@ -6,6 +6,7 @@ import controllers.constants.Error;
 import models.PracticeLanguage;
 import models.Follower;
 import models.Following;
+import models.Other;
 import models.User;
 
 import java.util.ArrayList;
@@ -30,11 +31,11 @@ public class UsersController extends AppController {
     public static Result get(JsonNode params) {
         ObjectId userId = getObjectId(params, "user_id");
 
-        User user = User.get(userId);
-        if (user == null)
+        Other other = Other.get(userId);
+        if (other == null)
             return Error(Error.USER_NOT_FOUND);
 
-        return Ok(user);
+        return Ok(other);
     }
 
     @Anonymous

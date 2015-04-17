@@ -6,13 +6,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
-import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
 public class User extends Other {
@@ -82,13 +80,13 @@ public class User extends Other {
         MongoCollection userCol = jongo.getCollection("user");
         String next = null;
 
-        MongoCursor<Other> cursor = userCol.find()
+        MongoCursor<Skim> cursor = userCol.find()
             .skip(skip)
             .limit(limit)
-            .as(Other.class);
-        List<Other> others = new ArrayList<Other>();
+            .as(Skim.class);
+        List<Skim> skims = new ArrayList<Skim>();
         while (cursor.hasNext())
-            others.add(cursor.next());
+            skims.add(cursor.next());
 
         try {
             cursor.close();
@@ -96,10 +94,10 @@ public class User extends Other {
             throw new RuntimeException(e);
         }
 
-        if (others.size() == limit)
+        if (skims.size() == limit)
             next = String.format("skip=%d&limit=%d", skip + limit, limit);
 
-        return new Page(others, next);
+        return new Page(skims, next);
     }
 
     public static User get(ObjectId userId) {
