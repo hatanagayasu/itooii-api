@@ -3,7 +3,6 @@ package models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -16,19 +15,9 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
-public class User extends Model {
-    @Id
-    private ObjectId id;
+public class User extends Other {
     private String email;
     private String password;
-    private String name;
-    @JsonProperty("native_language")
-    private List<Integer> nativeLanguage;
-    @JsonProperty("practice_language")
-    private List<PracticeLanguage> practiceLanguage;
-    private Date created;
-    private Set<ObjectId> followings;
-    private Set<ObjectId> followers;
 
     public User() {
     }

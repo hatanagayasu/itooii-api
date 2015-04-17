@@ -1,6 +1,8 @@
 package models;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
@@ -9,12 +11,15 @@ import org.jongo.marshall.jackson.oid.Id;
 @lombok.Getter
 public class Other extends Model {
     @Id
-    private ObjectId id;
-    private String name;
+    protected ObjectId id;
+    protected String name;
     @JsonProperty("native_language")
-    private List<Integer> nativeLanguage;
+    protected List<Integer> nativeLanguage;
     @JsonProperty("practice_language")
-    private List<PracticeLanguage> practiceLanguage;
+    protected List<PracticeLanguage> practiceLanguage;
+    protected Date created;
+    protected Set<ObjectId> followings;
+    protected Set<ObjectId> followers;
 
     public Other() {
     }
