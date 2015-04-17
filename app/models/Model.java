@@ -114,6 +114,16 @@ public class Model {
                     fields.add(field);
             }
 
+            Class parent = object.getClass().getSuperclass();
+            while (parent != Model.class) {
+                for (Field field : parent.getDeclaredFields()) {
+                    field.setAccessible(true);
+                    if (field.get(object) != null && !Modifier.isStatic(field.getModifiers()))
+                        fields.add(field);
+                }
+                parent = parent.getSuperclass();
+            }
+
             Iterator<Field> iterator = fields.iterator();
             while (iterator.hasNext()) {
                 Field field = iterator.next();
