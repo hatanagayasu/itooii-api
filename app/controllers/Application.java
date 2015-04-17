@@ -13,6 +13,7 @@ public class Application extends AppController {
     private static JsonNode countries;
     private static JsonNode cities;
     private static JsonNode languages;
+    private static JsonNode locales;
 
     static {
         init();
@@ -25,6 +26,7 @@ public class Application extends AppController {
             countries = mapper.readValue(new File(path + "country.json"), JsonNode.class);
             cities = mapper.readValue(new File(path + "city.json"), JsonNode.class);
             languages = mapper.readValue(new File(path + "language.json"), JsonNode.class);
+            locales = mapper.readValue(new File(path + "locale.json"), JsonNode.class);
         } catch (IOException e) {
             errorlog(e);
         }
@@ -49,5 +51,10 @@ public class Application extends AppController {
     @Anonymous
     public static Result getLanguage(JsonNode params) {
         return Ok(languages);
+    }
+
+    @Anonymous
+    public static Result getLocale(JsonNode params) {
+        return Ok(locales);
     }
 }
