@@ -4,8 +4,6 @@ import controllers.annotations.*;
 import controllers.constants.Error;
 
 import models.PracticeLanguage;
-import models.Follower;
-import models.Following;
 import models.Other;
 import models.User;
 
@@ -40,8 +38,7 @@ public class UsersController extends AppController {
 
     @Anonymous
     @Validation(name = "email", rule = "email", require = true)
-    public static Result exist(JsonNode params)
-    {
+    public static Result exist(JsonNode params) {
         String email = params.get("email").textValue();
 
         return User.getByEmail(email) != null ? Ok() : Error(Error.NOT_FOUND);
@@ -114,6 +111,9 @@ public class UsersController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
+        if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+            return Error(Error.FORBIDDEN);
+
         if (me.getFollowings() == null || !me.getFollowings().contains(userId))
             me.follow(userId);
 
@@ -134,6 +134,42 @@ public class UsersController extends AppController {
 
         if (me.getFollowings() != null && me.getFollowings().contains(userId))
             me.unfollow(userId);
+
+        return Ok();
+    }
+
+    @Validation(name = "user_id", type = "id", require = true)
+    public static Result blocking(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
+        if (me.getBlockings() == null || !me.getBlockings().contains(userId))
+            me.blocking(userId);
+
+        return Ok();
+    }
+
+    @Validation(name = "user_id", type = "id", require = true)
+    public static Result unblocking(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
+        if (me.getBlockings() != null && me.getBlockings().contains(userId))
+            me.unblocking(userId);
 
         return Ok();
     }
@@ -184,7 +220,7 @@ public class UsersController extends AppController {
             user = getMe(params);
         }
 
-        return Ok(Follower.get(user, skip, limit));
+        return Ok(user.getFollower(skip, limit));
     }
 
     @Validation(name = "user_id", type = "id")
@@ -204,7 +240,17 @@ public class UsersController extends AppController {
             user = getMe(params);
         }
 
-        return Ok(Following.get(user, skip, limit));
+        return Ok(user.getFollowing(skip, limit));
+    }
+
+    @Validation(name = "skip", type = "integer", rule = "min=0")
+    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
+    public static Result getBlocking(JsonNode params) {
+        User me = getMe(params);
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(me.getBlocking(skip, limit));
     }
 
     @Anonymous

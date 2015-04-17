@@ -8,7 +8,10 @@ GET     /user/followers/@user_id    UsersController/getFollower
 GET     /user/followings            UsersController/getFollowing
 GET     /user/followings/@user_id   UsersController/getFollowing
 POST    /user/following/@user_id    UsersController/follow
-DELETE  /user/following/@user_id   UsersController/unfollow
+DELETE  /user/following/@user_id    UsersController/unfollow
+GET     /user/blockings             UsersController/getBlocking
+POST    /user/blocking/@user_id     UsersController/blocking
+DELETE  /user/blocking/@user_id     UsersController/unblocking
 POST    /access_token               UsersController/login
 DELETE  /access_token               UsersController/logout
 GET     /users                      UsersController/search

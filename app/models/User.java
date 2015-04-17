@@ -3,6 +3,7 @@ package models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -16,6 +17,7 @@ import org.jongo.MongoCursor;
 public class User extends Other {
     private String email;
     private String password;
+    private Set<ObjectId> blockings;
 
     public User() {
     }
@@ -74,6 +76,42 @@ public class User extends Other {
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
         del("user:" + id, "user:" + userId);
+    }
+
+    public void blocking(ObjectId userId) {
+        MongoCollection userCol = jongo.getCollection("user");
+        MongoCollection following = jongo.getCollection("following");
+        MongoCollection follower = jongo.getCollection("follower");
+
+        userCol.update(id).with("{$addToSet:{blockings:#}}", userId);
+
+        following.remove("{user_id:#,following_id:#}", id, userId);
+        following.remove("{user_id:#,following_id:#}", userId, id);
+
+        follower.remove("{user_id:#,follower_id:#}", id, userId);
+        follower.remove("{user_id:#,follower_id:#}", userId, id);
+
+        del("user:" + id, "user:" + userId);
+    }
+
+    public void unblocking(ObjectId userId) {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        userCol.update(id).with("{$pull:{blockings:#}}", userId);
+
+        del("user:" + id);
+    }
+
+    public Page getFollower(int skip, int limit) {
+        return page(followers, skip, limit, Skim.class);
+    }
+
+    public Page getFollowing(int skip, int limit) {
+        return page(followings, skip, limit, Skim.class);
+    }
+
+    public Page getBlocking(int skip, int limit) {
+        return page(blockings, skip, limit, Skim.class);
     }
 
     public static Page search(int skip, int limit) {

@@ -15,14 +15,6 @@ public class Other extends Skim {
     }
 
     public static Other get(ObjectId userId) {
-        String key = "user:" + userId;
-
-        Other other = get(key, Other.class);
-        if (other == null) {
-            User.get(userId);
-            other = get(key, Other.class);
-        }
-
-        return other;
+        return get(userId, Other.class);
     }
 }
