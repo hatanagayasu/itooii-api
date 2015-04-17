@@ -108,20 +108,15 @@ public class Model {
             result.append("{");
 
             List<Field> fields = new ArrayList<Field>();
-            for (Field field : object.getClass().getDeclaredFields()) {
-                field.setAccessible(true);
-                if (field.get(object) != null && !Modifier.isStatic(field.getModifiers()))
-                    fields.add(field);
-            }
 
-            Class parent = object.getClass().getSuperclass();
-            while (parent != Model.class) {
-                for (Field field : parent.getDeclaredFields()) {
+            Class<?> clazz = object.getClass();
+            while (clazz != Model.class) {
+                for (Field field : clazz.getDeclaredFields()) {
                     field.setAccessible(true);
                     if (field.get(object) != null && !Modifier.isStatic(field.getModifiers()))
                         fields.add(field);
                 }
-                parent = parent.getSuperclass();
+                clazz = clazz.getSuperclass();
             }
 
             Iterator<Field> iterator = fields.iterator();
@@ -148,7 +143,7 @@ public class Model {
                 if (value == null)
                     continue;
 
-                Class<?> clazz = value.getClass();
+                clazz = value.getClass();
                 if (clazz == Boolean.class) {
                     result.append("\"").append(name).append("\":").append((Boolean) value);
                 } else if (clazz == Date.class) {
