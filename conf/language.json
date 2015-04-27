@@ -26,10 +26,6 @@
     {"id":24,"name":"Catalan"},
     {"id":25,"name":"Cebuano"},
     {"id":26,"name":"Chewa"},
-    {"id":27,"name":"Chinese (Cantonese)"},
-    {"id":28,"name":"Chinese (Shanghainese)"},
-    {"id":29,"name":"Chinese (Taiwanese)"},
-    {"id":30,"name":"Chinese (Other)"},
     {"id":31,"name":"Croatian"},
     {"id":32,"name":"Czech"},
     {"id":33,"name":"Danish"},
@@ -121,5 +117,6 @@
     {"id":119,"name":"Yoruba"},
     {"id":120,"name":"Yucatec Maya"},
     {"id":121,"name":"Zhuang"},
-    {"id":122,"name":"Zulu"}
+    {"id":122,"name":"Zulu"},
+    {"id":123,"name":"Other"}
 ]
