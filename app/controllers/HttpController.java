@@ -189,6 +189,18 @@ public class HttpController extends DispatchController {
         return ok();
     }
 
+    public static play.mvc.Result options(String path) {
+        play.mvc.Http.Response response = response();
+
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods",
+            "GET, DELETE, HEAD, OPTIONS, POST, PUT");
+        response.setHeader("Access-Control-Allow-Headers",
+            "Origin, X-Requested-With, Content-Type, Accept, Referer, User-Agent");
+
+        return ok();
+    }
+
     private static class ServiceUnavailableException extends Exception {
         private static final long serialVersionUID = -1;
     }
