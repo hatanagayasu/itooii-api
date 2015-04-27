@@ -2,7 +2,6 @@ package controllers;
 
 import play.Play;
 
-import controllers.annotations.*;
 import controllers.constants.Error;
 
 import java.io.BufferedReader;
@@ -15,6 +14,7 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class HttpController extends DispatchController {
     private static ObjectNode routes = mapper.createObjectNode();
+    private static ObjectNode macros = mapper.createObjectNode();
+
     /*
         {
             first_segment : {
@@ -60,59 +62,71 @@ public class HttpController extends DispatchController {
 
     private static void init() {
         try {
+            ObjectNode validations = null;
+            ObjectNode access = mapper.createObjectNode();
+            int maxAge = 0;
+
+            access.put("fullName", "access_token")
+                .put("type", "access_token")
+                .put("require", true);
+
             File file = new File(Play.application().path(), "conf/http_routes");
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
+            boolean accumulation = false;
             String line;
+            int no = 0;
             while ((line = bufferedReader.readLine()) != null) {
+                no++;
+
+                if (!accumulation && (line.startsWith("@") || line.matches("\\s*"))) {
+                    accumulation = true;
+
+                    validations = mapper.createObjectNode();
+                    validations.set("access_token", access);
+                    maxAge = 0;
+                }
+
                 if (line.startsWith("#") || line.matches("\\s*"))
                     continue;
 
-                // method path controller/action
-                String[] parts = line.split("\\s+");
-                String[] segs = parts[1].split("/");
-                String[] pair = parts[2].split("/");
+                if (line.startsWith("@Anonymous")) {
+                    validations.remove("access_token");
+                } else if (line.startsWith("@CacheControl")) {
+                    Matcher matcher = parenthesesPattern.matcher(line);
+                    maxAge = matcher.find() ? Integer.parseInt(matcher.group(1)) : 3600;
+                } else if (line.startsWith("@Macro")) {
+                    accumulation = false;
 
-                if (!routes.has(segs[1]))
-                    routes.putObject(segs[1]);
+                    if (validations.has("access_token"))
+                        validations.remove("access_token");
 
-                ObjectNode regexes = routes.with(segs[1]);
-                ObjectNode route = mapper.createObjectNode();
-                ObjectNode pathParamsMap = mapper.createObjectNode();
+                    if (validations.size() > 0) {
+                        Matcher matcher = parenthesesPattern.matcher(line);
 
-                Class<?> clazz = Class.forName("controllers." + pair[0]);
-                Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
-                route.putPOJO("method", method);
-
-                CacheControl cacheControl = method.getAnnotation(CacheControl.class);
-                if (cacheControl != null)
-                    route.put("cache_control", cacheControl.value());
-
-                ObjectNode validations = parseValidations(method);
-
-                if (validations.size() > 0)
-                    route.set("validations", validations);
-
-                for (int i = 1; i < segs.length; i++) {
-                    if (segs[i].startsWith("@")) {
-                        pathParamsMap.put(segs[i].substring(1), i);
-                        segs[i] = "[0-9a-fA-F]{24}";
-                    } else if (segs[i].startsWith(":")) {
-                        pathParamsMap.put(segs[i].substring(1), i);
-                        segs[i] = "[^/]+";
+                        if (matcher.find())
+                            macros.set(matcher.group(1), validations);
                     }
+                } else if (line.startsWith("@Validation")) {
+                    parseVlidation(line, no, validations);
+                } else if (line.startsWith("@")) {
+                    String name = line.substring(1);
+                    if (!macros.has(name)) {
+                        errorlog("No Such Macro " + name + " at line " + no);
+                        break;
+                    }
+
+
+                    JsonNode macro = macros.get(name);
+                    Iterator<String> fieldNames = macro.fieldNames();
+                    while (fieldNames.hasNext()) {
+                        String fieldName = fieldNames.next();
+                        validations.set(fieldName, macro.get(fieldName));
+                    }
+                } else {
+                    accumulation = false;
+                    parseRoute(line, validations, maxAge);
                 }
-                if (pathParamsMap.size() > 0)
-                    route.set("path_params_map", pathParamsMap);
-
-                String regex = "";
-                for (int i = 1; i < segs.length; i++)
-                    regex += "/" + segs[i];
-
-                if (!regexes.has(regex))
-                    regexes.putObject(regex);
-
-                regexes.with(regex).set(parts[0], route);
             }
 
             bufferedReader.close();
@@ -123,6 +137,52 @@ public class HttpController extends DispatchController {
         } catch (ClassNotFoundException | NoSuchMethodException e) {
             errorlog(e);
         }
+    }
+
+    private static void parseRoute(String line, ObjectNode validations, int maxAge)
+        throws ClassNotFoundException, NoSuchMethodException {
+        // method path controller/action
+        String[] parts = line.split("\\s+");
+        String[] segs = parts[1].split("/");
+        String[] pair = parts[2].split("/");
+
+        if (!routes.has(segs[1]))
+            routes.putObject(segs[1]);
+
+        ObjectNode regexes = routes.with(segs[1]);
+        ObjectNode route = mapper.createObjectNode();
+        ObjectNode pathParamsMap = mapper.createObjectNode();
+
+        Class<?> clazz = Class.forName("controllers." + pair[0]);
+        Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
+        route.putPOJO("method", method);
+
+        if (maxAge > 0)
+            route.put("cache_control", maxAge);
+
+        if (validations.size() > 0)
+            route.set("validations", validations);
+
+        for (int i = 1; i < segs.length; i++) {
+            if (segs[i].startsWith("@")) {
+                pathParamsMap.put(segs[i].substring(1), i);
+                segs[i] = "[0-9a-fA-F]{24}";
+            } else if (segs[i].startsWith(":")) {
+                pathParamsMap.put(segs[i].substring(1), i);
+                segs[i] = "[^/]+";
+            }
+        }
+        if (pathParamsMap.size() > 0)
+            route.set("path_params_map", pathParamsMap);
+
+        String regex = "";
+        for (int i = 1; i < segs.length; i++)
+            regex += "/" + segs[i];
+
+        if (!regexes.has(regex))
+            regexes.putObject(regex);
+
+        regexes.with(regex).set(parts[0], route);
     }
 
     public static play.mvc.Result index() {

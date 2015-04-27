@@ -3,7 +3,6 @@ package controllers;
 import play.Play;
 import play.Configuration;
 
-import controllers.annotations.*;
 import controllers.constants.Error;
 
 import models.User;
@@ -74,7 +73,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id", require = true)
     public static Result request(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -105,9 +103,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id", require = true)
-    @Validation(name = "video_chat_id", type = "id", require = true)
-    @Validation(name = "confirm", type = "boolean", require = true)
     public static Result response(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -143,7 +138,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result pairRequest(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
@@ -164,7 +158,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result pairResponse(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
@@ -188,8 +181,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "description", type = "object", rule = "passUnder", require = true)
-    @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result offer(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
@@ -213,8 +204,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "description", type = "object", rule = "passUnder", require = true)
-    @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result answer(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
@@ -238,8 +227,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "candidate", type = "object", rule = "passUnder", require = true)
-    @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result candidate(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
@@ -263,7 +250,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "video_chat_id", type = "id", require = true)
     public static Result connected(JsonNode params) {
         User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
@@ -282,8 +268,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "video_chat_id", type = "id", require = true)
-    @Validation(name = "rate", type = "integer", rule = "min=0,max=5", require = true)
     public static Result rate(JsonNode params) {
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
         int rate = params.get("rate").intValue();
@@ -293,11 +277,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Anonymous
-    @Validation(name = "offer_id", type = "id", require = true)
-    @Validation(name = "answer_id", type = "id", require = true)
-    @Validation(name = "lang0", type = "integer", require = true)
-    @Validation(name = "lang1", type = "integer", require = true)
     public static Result pair(JsonNode params) {
         VideoChat offer = VideoChat.get(getObjectId(params, "offer_id"));
         VideoChat answer = VideoChat.get(getObjectId(params, "answer_id"));
@@ -328,8 +307,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Anonymous
-    @Validation(name = "offer_id", type = "id", require = true)
     public static Result unpair(JsonNode params) {
         VideoChat videoChat = VideoChat.get(getObjectId(params, "offer_id"));
 
@@ -343,8 +320,6 @@ public class VideoChatController extends AppController {
         return Ok();
     }
 
-    @Anonymous
-    @CacheControl
     public static Result getIceServers(JsonNode params) {
         return Ok(iceServers);
     }

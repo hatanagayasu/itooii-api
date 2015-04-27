@@ -1,6 +1,5 @@
 package controllers;
 
-import controllers.annotations.*;
 import controllers.constants.Error;
 
 import models.PracticeLanguage;
@@ -24,8 +23,6 @@ public class UsersController extends AppController {
         return Ok(user);
     }
 
-    @Anonymous
-    @Validation(name = "user_id", type = "id", require = true)
     public static Result get(JsonNode params) {
         ObjectId userId = getObjectId(params, "user_id");
 
@@ -36,24 +33,12 @@ public class UsersController extends AppController {
         return Ok(other);
     }
 
-    @Anonymous
-    @Validation(name = "email", rule = "email", require = true)
     public static Result exist(JsonNode params) {
         String email = params.get("email").textValue();
 
         return User.getByEmail(email) != null ? Ok() : Error(Error.NOT_FOUND);
     }
 
-    @Anonymous
-    @Validation(name = "email", rule = "email", require = true)
-    @Validation(name = "password", require = true)
-    @Validation(name = "name", require = true)
-    @Validation(name = "native_language", type = "array", rule = "minSize=1,maxSize=2", require = true)
-    @Validation(name = "native_language[]", type = "integer", require = true)
-    @Validation(name = "practice_language", type = "array", rule = "minSize=1,maxSize=4", require = true)
-    @Validation(name = "practice_language[]", type = "object")
-    @Validation(name = "practice_language[].id", type = "integer", require = true)
-    @Validation(name = "practice_language[].level", type = "integer", require = true)
     public static Result add(JsonNode params) {
         String email = params.get("email").textValue();
 
@@ -83,15 +68,6 @@ public class UsersController extends AppController {
         return Ok(user);
     }
 
-    @Validation(name = "email", rule = "email")
-    @Validation(name = "password")
-    @Validation(name = "name")
-    @Validation(name = "native_language", type = "array", rule = "minSize=1,maxSize=2")
-    @Validation(name = "native_language[]", type = "integer")
-    @Validation(name = "practice_language", type = "array", rule = "minSize=1,maxSize=4")
-    @Validation(name = "practice_language[]", type = "object")
-    @Validation(name = "practice_language[].id", type = "integer", require = true)
-    @Validation(name = "practice_language[].level", type = "integer", require = true)
     public static Result update(JsonNode params) {
         User me = getMe(params);
         me.update(params);
@@ -99,7 +75,6 @@ public class UsersController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id", require = true)
     public static Result follow(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -120,7 +95,6 @@ public class UsersController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id", require = true)
     public static Result unfollow(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -138,7 +112,6 @@ public class UsersController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id", require = true)
     public static Result blocking(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -156,7 +129,6 @@ public class UsersController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id", require = true)
     public static Result unblocking(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -174,9 +146,6 @@ public class UsersController extends AppController {
         return Ok();
     }
 
-    @Anonymous
-    @Validation(name = "email", rule = "email", require = true)
-    @Validation(name = "password", require = true)
     public static Result login(JsonNode params) {
         String email = params.get("email").textValue();
         String password = params.get("password").textValue();
@@ -203,9 +172,6 @@ public class UsersController extends AppController {
         return Ok();
     }
 
-    @Validation(name = "user_id", type = "id")
-    @Validation(name = "skip", type = "integer", rule = "min=0")
-    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
     public static Result getFollower(JsonNode params) {
         int skip = params.has("skip") ? params.get("skip").intValue() : 0;
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
@@ -223,9 +189,6 @@ public class UsersController extends AppController {
         return Ok(user.getFollower(skip, limit));
     }
 
-    @Validation(name = "user_id", type = "id")
-    @Validation(name = "skip", type = "integer", rule = "min=0")
-    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
     public static Result getFollowing(JsonNode params) {
         int skip = params.has("skip") ? params.get("skip").intValue() : 0;
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
@@ -243,8 +206,6 @@ public class UsersController extends AppController {
         return Ok(user.getFollowing(skip, limit));
     }
 
-    @Validation(name = "skip", type = "integer", rule = "min=0")
-    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
     public static Result getBlocking(JsonNode params) {
         User me = getMe(params);
         int skip = params.has("skip") ? params.get("skip").intValue() : 0;
@@ -253,9 +214,6 @@ public class UsersController extends AppController {
         return Ok(me.getBlocking(skip, limit));
     }
 
-    @Anonymous
-    @Validation(name = "skip", type = "integer", rule = "min=0")
-    @Validation(name = "limit", type = "integer", rule = "min=1,max=25")
     public static Result search(JsonNode params) {
         int skip = params.has("skip") ? params.get("skip").intValue() : 0;
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;

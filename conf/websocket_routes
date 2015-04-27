@@ -1,13 +1,38 @@
-test/echo                   TestController/echo
+
 video/ready                 VideoChatController/ready
 video/leave                 VideoChatController/leave
+
+@Validation(name="user_id",type="id",require=true)
 video/request               VideoChatController/request
+
+@Validation(name="user_id",type="id",require=true)
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="confirm",type="boolean",require=true)
 video/response              VideoChatController/response
+
+@Validation(name="video_chat_id",type="id",require=true)
 video/pair_request          VideoChatController/pairRequest
 video/pair_response         VideoChatController/pairResponse
+
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="description",type="object",rule="passUnder",require=true)
 video/offer                 VideoChatController/offer
 video/answer                VideoChatController/answer
+
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="candidate",type="object",rule="passUnder",require=true)
 video/candidate             VideoChatController/candidate
+
+@Anonymous
+@Validation(name="offer_id",type="id",require=true)
+@Validation(name="answer_id",type="id",require=true)
+@Validation(name="lang0",type="integer",require=true)
+@Validation(name="lang1",type="integer",require=true)
 video/pair                  VideoChatController/pair
+
+@Anonymous
+@Validation(name="offer_id",type="id",require=true)
 video/unpair                VideoChatController/unpair
+
+@Validation(name="video_chat_id",type="id",require=true)
 video/connected             VideoChatController/connected

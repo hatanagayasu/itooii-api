@@ -1,6 +1,5 @@
 package controllers;
 
-import controllers.annotations.*;
 import controllers.constants.Error;
 
 import java.lang.NumberFormatException;
@@ -9,6 +8,8 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,68 +19,86 @@ import org.bson.types.ObjectId;
 import com.mongodb.DuplicateKeyException;
 
 public class DispatchController extends AppController {
-    public static ObjectNode parseValidations(Method method) {
-        ObjectNode validations = mapper.createObjectNode();
+    public static final Pattern parenthesesPattern = Pattern.compile("\\(\\s*(.+)\\s*\\)"),
+        pairPattern = Pattern.compile("([^\\s=,]+)\\s*=\\s*(\"[^\"]+\"|[^\\s,\"]+)");
 
-        if (method.getAnnotation(Anonymous.class) == null) {
-            validations.putObject("access_token")
-                .put("fullName", "access_token")
-                .put("type", "access_token")
-                .put("require", true);
+    private static void parseRule(String value, ObjectNode rules) {
+        for (String rule : value.split(",")) {
+            if (rule.contains("=") && !rule.startsWith("/")) {
+                //TODO
+                String[] pair = rule.split("=");
+                rules.put(pair[0], Integer.parseInt(pair[1]));
+            } else {
+                rules.put(rule, false);
+            }
+        }
+    }
+
+    public static void parseVlidation(String line, int no, ObjectNode validations) {
+        Matcher matcher = parenthesesPattern.matcher(line);
+        if(!matcher.find()) {
+            errorlog("Malformed Vlidation at line " + no);
+            return;
         }
 
-        for (Validation v : method.getAnnotationsByType(Validation.class)) {
-            ObjectNode validation = mapper.createObjectNode();
-            String name = v.name();
-            String type = v.type();
-            validation.put("fullName", name);
-            validation.put("type", type);
-            validation.put("require", v.require());
+        ObjectNode validation = mapper.createObjectNode();
 
-            if (!v.depend().isEmpty()) {
+        matcher = pairPattern.matcher(matcher.group(1));
+        while(matcher.find()) {
+            String key = matcher.group(1);
+            String value = matcher.group(2).replaceAll("(^\"|\"$)", "");
+
+            if (key.equals("name")) {
+                validation.put("fullName", value);
+            } else if (key.equals("type")) {
+                validation.put("type", value);
+
+                if (value.equals("object"))
+                    validation.putObject("validations");
+            } else if (key.equals("rule")) {
+                parseRule(value, validation.putObject("rules"));
+            } else if (key.equals("depend")) {
                 ObjectNode depend = validation.putObject("depend");
-                String[] segs = v.depend().split("=");
+                String[] segs = value.split("=");
                 depend.put("name", segs[0]);
                 if (segs.length == 2)
                     depend.put("value", segs[1]);
+            } else if (key.equals("require")) {
+                validation.put("require", Boolean.parseBoolean(value));
+            } else {
+                errorlog("Unknown attribute " + key + " at line " + no);
             }
-
-            if (!v.rule().isEmpty()) {
-                ObjectNode rules = validation.putObject("rules");
-                for (String rule : v.rule().split(",")) {
-                    if (rule.contains("=") && !rule.startsWith("/")) {
-                        //TODO
-                        String[] pair = rule.split("=");
-                        rules.put(pair[0], Integer.parseInt(pair[1]));
-                    } else {
-                        rules.put(rule, false);
-                    }
-                }
-            }
-
-            if (type.equals("object"))
-                validation.putObject("validations");
-
-            ObjectNode parent = validations;
-            String[] segs = name.split("\\.");
-            if (segs.length > 1) {
-                for (int i = 0; i < segs.length - 1; i++) {
-                    if (segs[i].endsWith("[]")) {
-                        parent = parent.with(segs[i].replace("[]", "")).with("validation");
-                        parent = parent.with("validations");
-                    } else {
-                        parent = parent.with(segs[i]).with("validations");
-                    }
-                }
-            }
-
-            if (name.endsWith("[]"))
-                parent.with(name.replace("[]", "")).set("validation", validation);
-            else
-                parent.set(segs[segs.length - 1], validation);
         }
 
-        return validations;
+        if (!validation.has("fullName")) {
+            errorlog("Validation with out name at line " + no);
+            return;
+        }
+
+        if (!validation.has("type"))
+            validation.put("type", "string");
+
+        if (!validation.has("require"))
+            validation.put("require", false);
+
+        ObjectNode parent = validations;
+        String name = validation.get("fullName").textValue();
+        String[] segs = name.split("\\.");
+        if (segs.length > 1) {
+            for (int i = 0; i < segs.length - 1; i++) {
+                if (segs[i].endsWith("[]")) {
+                    parent = parent.with(segs[i].replace("[]", "")).with("validation");
+                    parent = parent.with("validations");
+                } else {
+                    parent = parent.with(segs[i]).with("validations");
+                }
+            }
+        }
+
+        if (name.endsWith("[]"))
+            parent.with(name.replace("[]", "")).set("validation", validation);
+        else
+            parent.set(segs[segs.length - 1], validation);
     }
 
     private static class MissingParamException extends Exception {

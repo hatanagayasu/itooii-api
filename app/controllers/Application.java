@@ -2,8 +2,6 @@ package controllers;
 
 import play.Play;
 
-import controllers.annotations.*;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -32,15 +30,10 @@ public class Application extends AppController {
         }
     }
 
-    @Anonymous
-    @CacheControl
     public static Result getCountry(JsonNode params) {
         return Ok(countries);
     }
 
-    @Anonymous
-    @CacheControl
-    @Validation(name = "id", rule = "length=2", require = true)
     public static Result getCity(JsonNode params) {
         String id = params.get("id").textValue();
 
@@ -50,14 +43,10 @@ public class Application extends AppController {
         return Ok(cities.get(id));
     }
 
-    @Anonymous
-    @CacheControl
     public static Result getLanguage(JsonNode params) {
         return Ok(languages);
     }
 
-    @Anonymous
-    @CacheControl
     public static Result getLocale(JsonNode params) {
         return Ok(locales);
     }

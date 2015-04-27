@@ -96,27 +96,51 @@ public class WebSocketController extends DispatchController {
 
     private static void init() {
         try {
+            ObjectNode validations = null;
+            ObjectNode access = mapper.createObjectNode();
+
+            access.put("fullName", "access_token")
+                .put("type", "access_token")
+                .put("require", true);
+
             File file = new File(Play.application().path(), "conf/websocket_routes");
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
+            boolean accumulation = false;
             String line;
+            int no = 0;
             while ((line = bufferedReader.readLine()) != null) {
+                no++;
+
+                if (!accumulation && (line.startsWith("@") || line.matches("\\s*"))) {
+                    accumulation = true;
+
+                    validations = mapper.createObjectNode();
+                    validations.set("access_token", access);
+                }
+
                 if (line.startsWith("#") || line.matches("\\s*"))
                     continue;
 
-                String[] parts = line.split("\\s+");
-                String[] pair = parts[1].split("/");
+                if (line.startsWith("@Anonymous")) {
+                    validations.remove("access_token");
+                } else if (line.startsWith("@Validation")) {
+                    parseVlidation(line, no, validations);
+                } else {
+                    accumulation = false;
 
-                ObjectNode route = routes.putObject(parts[0]);
+                    String[] parts = line.split("\\s+");
+                    String[] pair = parts[1].split("/");
 
-                Class<?> clazz = Class.forName("controllers." + pair[0]);
-                Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
-                route.putPOJO("method", method);
+                    ObjectNode route = routes.putObject(parts[0]);
 
-                ObjectNode validations = parseValidations(method);
+                    Class<?> clazz = Class.forName("controllers." + pair[0]);
+                    Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
+                    route.putPOJO("method", method);
 
-                if (validations.size() > 0)
-                    route.set("validations", validations);
+                    if (validations.size() > 0)
+                        route.set("validations", validations);
+                }
             }
 
             bufferedReader.close();
