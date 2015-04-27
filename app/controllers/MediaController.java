@@ -2,7 +2,6 @@ package controllers;
 
 import play.*;
 import play.mvc.*;
-import controllers.annotations.*;
 
 import java.io.File;
 
@@ -24,7 +23,6 @@ public class MediaController extends AppController {
     private static String KeyID = "AKIAJGUFVNUVZXWLETZQ";
     private static String AccessKey = "BE1EGqQfzZEUVXZiy9HgsBferHEaBQuoNQ3402Ct";
 
-    @Anonymous
     public static Result upload(JsonNode params) {
 
         //File file = request().body().asRaw().asFile();
