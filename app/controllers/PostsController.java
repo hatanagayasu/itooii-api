@@ -10,15 +10,24 @@ import org.bson.types.ObjectId;
 
 public class PostsController extends AppController {
     public static Result getFeed(JsonNode params) {
-        User me = getMe(params);
         int skip = params.has("skip") ? params.get("skip").intValue() : 0;
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
+        User user;
+        if (params.has("user_id")) {
+            ObjectId userId = getObjectId(params, "user_id");
+            user = User.get(userId);
+            if (user == null)
+                return NotFound();
+        } else {
+            user = getMe(params);
+        }
+
         if (params.has("until") && !params.has("skip"))
-            return Ok(Feed.get(me, until, limit));
+            return Ok(Feed.get(user, until, limit));
         else
-            return Ok(Feed.get(me, skip, until, limit));
+            return Ok(Feed.get(user, skip, until, limit));
     }
 
     public static Result add(JsonNode params) {

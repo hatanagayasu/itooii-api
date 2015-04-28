@@ -76,6 +76,13 @@ DELETE  /access_token               UsersController/logout
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 GET     /user/feed                  PostsController/getFeed
 
+@Anonymous
+@Validation(name="user_id",type="id")
+@Validation(name="skip",type="integer",rule="min=0")
+@Validation(name="until",type="epoch")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /user/feed/@user_id         PostsController/getFeed
+
 @Validation(name="text",depend="|attachments")
 @attachments
 POST    /user/feed                  PostsController/add
