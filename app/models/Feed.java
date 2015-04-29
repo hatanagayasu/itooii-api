@@ -86,6 +86,12 @@ public class Feed extends Model {
             posts.add(post);
         }
 
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         if (posts.size() == limit) {
             until = posts.get(posts.size() - 1).getCreated().getTime();
             previous = String.format("until=%d&limit=%d", until, limit);
