@@ -1,5 +1,6 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
@@ -73,6 +75,37 @@ public class Post extends Model {
         });
 
         return post;
+    }
+
+    public static Page getTimeline(ObjectId userId, long until, int limit) {
+        MongoCollection postCol = jongo.getCollection("post");
+        String previous = null;
+
+        MongoCursor<Post> cursor = postCol
+            .find("{user_id:#,created:{$lt:#}}", userId, new Date(until))
+            .sort("{created:-1}")
+            .limit(limit)
+            .as(Post.class);
+
+        List<Post> posts = new ArrayList<Post>(limit);
+        while (cursor.hasNext()) {
+            Post post = cursor.next();
+            post.postproduct(userId);
+            posts.add(post);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (posts.size() == limit) {
+            until = posts.get(posts.size() - 1).getCreated().getTime();
+            previous = String.format("until=%d&limit=%d", until, limit);
+        }
+
+        return new Page(posts, previous);
     }
 
     public static void like(ObjectId postId, ObjectId userId) {
