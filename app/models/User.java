@@ -19,6 +19,7 @@ public class User extends Other {
     private String password;
     private Set<ObjectId> blockings;
     private Privilege privilege;
+    private int tos;
 
     public User() {
     }
@@ -33,6 +34,7 @@ public class User extends Other {
         this.practiceLanguage = practiceLanguage;
         created = new Date();
         privilege = Privilege.Observer;
+        tos = 1;
     }
 
     public void save() {

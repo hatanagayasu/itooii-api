@@ -21,7 +21,6 @@ public class Skim extends Model {
     protected List<PracticeLanguage> practiceLanguage;
     protected Date birthday;
     protected int gender;
-    protected int tos;
     protected String nationality;
     protected String country;
     protected String city;
