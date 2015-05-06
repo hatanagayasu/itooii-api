@@ -18,6 +18,7 @@ public class User extends Other {
     private String email;
     private String password;
     private Set<ObjectId> blockings;
+    private Privilege privilege;
 
     public User() {
     }
@@ -31,6 +32,7 @@ public class User extends Other {
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
+        privilege = Privilege.Observer;
     }
 
     public void save() {
@@ -47,6 +49,15 @@ public class User extends Other {
         MongoCollection userCol = jongo.getCollection("user");
 
         params.remove("access_token");
+
+        if (privilege == Privilege.Observer &&
+            (birthday != null || params.has("birthday")) &&
+            (gender != 0 || params.has("gender")) &&
+            (nationality != null || params.has("nationality")) &&
+            (country != null || params.has("country")) &&
+            (city != null || params.has("city")) &&
+            (avatar != null || params.has("avatar")))
+            params.put("privilege", Privilege.Member.getWeight());
 
         if (params.has("password")) {
             String password = params.get("password").textValue();
