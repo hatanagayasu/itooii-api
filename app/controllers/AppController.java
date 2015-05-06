@@ -94,8 +94,9 @@ public class AppController extends Controller {
                 JsonNode attachment = values.next();
                 String type = attachment.get("type").textValue();
                 if (attachment.has("photo_id")) {
+                    String url = attachment.get("url").textValue();
                     ObjectId photoId = getObjectId(attachment, "photo_id");
-                    attachments.add(new Attachment(type, photoId));
+                    attachments.add(new Attachment(type, url, photoId));
                 }
                 else if (attachment.has("url")) {
                     String url = attachment.get("url").textValue();
