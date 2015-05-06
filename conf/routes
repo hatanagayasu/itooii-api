@@ -10,6 +10,8 @@ GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 GET     /websocket                  controllers.WebSocketController.websocket()
 
+GET     /test/verify_email          controllers.TestController.verifyEmail()
+
 GET     /*path                      controllers.HttpController.dispatch(path)
 DELETE  /*path                      controllers.HttpController.dispatch(path)
 HEAD    /*path                      controllers.HttpController.dispatch(path)

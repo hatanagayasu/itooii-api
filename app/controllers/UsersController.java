@@ -9,12 +9,16 @@ import models.User;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
 public class UsersController extends AppController {
+    private static final Pattern titlePattern = Pattern.compile("<title>([^<]+)</title>");
+
     public static Result me(JsonNode params) {
         User user = getMe(params);
         if (user == null)
@@ -64,6 +68,7 @@ public class UsersController extends AppController {
 
         User user = new User(email, password, name, nativeLanguage, practiceLanguage);
         user.save();
+        user.reverifyEmail();
 
         return Ok(user);
     }
@@ -142,6 +147,26 @@ public class UsersController extends AppController {
 
         if (me.getBlockings() != null && me.getBlockings().contains(userId))
             me.unblocking(userId);
+
+        return Ok();
+    }
+
+    public static Result verifyEmail(JsonNode params) {
+        String token = params.get("token").textValue();
+
+        return User.verifyEmail(token) ? Ok() : NotFound();
+    }
+
+    public static Result reverifyEmail(JsonNode params) {
+        User me = getMe(params);
+
+        String token = me.reverifyEmail();
+        String link = webServer + "account/verify-email/" + token;
+        String content = views.html.Email.verify_email.render(link).toString();
+
+        Matcher matcher = titlePattern.matcher(content);
+        if(matcher.find())
+            sendmail(me.getEmail(), matcher.group(1), content);
 
         return Ok();
     }

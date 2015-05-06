@@ -27,6 +27,8 @@ import com.mongodb.MongoClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.sendgrid.SendGrid;
+import com.sendgrid.SendGridException;
 
 import org.apache.commons.codec.binary.Hex;
 import org.bson.types.ObjectId;
@@ -39,6 +41,7 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class Model {
+    public static Configuration conf = Play.application().configuration();
     public static ObjectMapper mapper = new ObjectMapper();
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
@@ -57,17 +60,19 @@ public class Model {
 
     private static JedisPool jedisPool;
 
+    private static SendGrid sendgrid;
+
     public static void init() {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        Configuration conf = Play.application().configuration();
-
-        String mongodbHost = conf.getString("mongodb.host");
-        int mongodbPort = conf.getInt("mongodb.port");
-        String mongodbDB = conf.getString("mongodb.db");
+        String mongodbHost = conf.getString("mongodb.host", "localhost");
+        int mongodbPort = conf.getInt("mongodb.port", 27017);
+        String mongodbDB = conf.getString("mongodb.db", "itooii");
 
         String redisHost = conf.getString("redis.host", "localhost");
         int redisPort = conf.getInt("redis.port", 6379);
+
+        sendgrid = new SendGrid(conf.getString("sendgrid.api_key"));
 
         try {
             mongodb = new MongoClient(mongodbHost, mongodbPort).getDB(mongodbDB);
@@ -383,6 +388,21 @@ public class Model {
         try {
             return names.get(userId);
         } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void sendmail(String to, String subject, String body) {
+        try {
+            SendGrid.Email email = new SendGrid.Email();
+
+            email.setFrom("no-reply@ituii.com");
+            email.addTo(to);
+            email.setSubject(subject);
+            email.setHtml(body);
+
+            SendGrid.Response response = sendgrid.send(email);
+        } catch (SendGridException e) {
             throw new RuntimeException(e);
         }
     }

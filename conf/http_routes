@@ -27,7 +27,6 @@ GET     /user/@user_id              UsersController/get
 @Validation(name="practice_language[].level",type="integer",rule="min=0,max=5",require=true)
 POST    /user                       UsersController/add
 
-@Validation(name="email",rule="email")
 @Validation(name="password")
 @Validation(name="name")
 @Validation(name="native_language",type="array",rule="minSize=1,maxSize=3")
@@ -38,7 +37,6 @@ POST    /user                       UsersController/add
 @Validation(name="practice_language[].level",type="integer",rule="min=0,max=5",require=true)
 @Validation(name="birthday",type="date")
 @Validation(name="gender",type="integer",rule="min=0,max=2")
-@Validation(name="tos",type="integer")
 @Validation(name="nationality",rule="length=2")
 @Validation(name="country",rule="length=2")
 @Validation(name="city")
@@ -64,6 +62,11 @@ POST    /user/following/@user_id    UsersController/follow
 DELETE  /user/following/@user_id    UsersController/unfollow
 POST    /user/blocking/@user_id     UsersController/blocking
 DELETE  /user/blocking/@user_id     UsersController/unblocking
+
+@Validation(name="token")
+GET     /user/verify_email/:token   UsersController/verifyEmail
+
+POST    /user/verify_email          UsersController/reverifyEmail
 
 @Anonymous
 @Validation(name="email",rule="email",require=true)

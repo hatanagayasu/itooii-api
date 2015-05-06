@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
     public static final String webServer = Model.conf.getString("web_server");
+    private static final boolean sendmail = Model.conf.getBoolean("sendmail", false);
 
     public static Result Ok() {
         return new Result(200);
@@ -125,7 +126,13 @@ public class AppController extends Controller {
     }
 
     public static void sendmail(String to, String subject, String content) {
-        Model.sendmail(to, subject, content);
+        if (sendmail) {
+            Model.sendmail(to, subject, content);
+        } else {
+            Logger.debug(to);
+            Logger.debug(subject);
+            Logger.debug(content);
+        }
     }
 
     public static long now() {

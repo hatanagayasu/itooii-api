@@ -3,4 +3,4 @@
 ./activator clean dist
 rm -rf itooii-api-1.0-SNAPSHOT
 unzip target/universal/itooii-api-1.0-SNAPSHOT.zip
-itooii-api-1.0-SNAPSHOT/bin/itooii-api &
+itooii-api-1.0-SNAPSHOT/bin/itooii-api $* &

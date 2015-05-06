@@ -115,6 +115,26 @@ public class User extends Other {
         del("user:" + id);
     }
 
+    public static boolean verifyEmail(String token) {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        User user = userCol.findAndModify("{email_verified_token:#}", token)
+            .with("{$set:{email_verified:true},$unset:{email_verified_token:0}}")
+            .projection("{_id:1}")
+            .as(User.class);
+
+        return user != null;
+    }
+
+    public String reverifyEmail() {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        String token = UUID.randomUUID().toString();
+        userCol.update(id).with("{$set:{email_verified:false,email_verified_token:#}}", token);
+
+        return token;
+    }
+
     public Page getFollower(int skip, int limit) {
         return page(followers, skip, limit, Skim.class);
     }
