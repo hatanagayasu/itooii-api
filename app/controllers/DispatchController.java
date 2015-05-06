@@ -5,9 +5,11 @@ import controllers.constants.Error;
 import java.lang.NumberFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Iterator;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -382,7 +384,12 @@ public class DispatchController extends AppController {
             } else if (rule.equals("email")) {
                 regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
             } else if (rule.equals("url")) {
-                regex = "(https?:\\/\\/[\\w-\\.]+(:\\d+)?(\\/[~\\w\\/\\.]*)?(\\?\\S*)?(#\\S*)?)";
+                try {
+                    new URL(value);
+                    continue;
+                } catch (MalformedURLException e) {
+                    return false;
+                }
             } else if (rule.matches("^\\(.*\\)$")) {
                 regex = "^" + rule + "$";
             } else if (rule.matches("^/.*/$")) {
