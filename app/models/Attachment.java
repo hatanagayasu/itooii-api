@@ -14,8 +14,9 @@ public class Attachment extends Model {
     public Attachment() {
     }
 
-    public Attachment(String type, ObjectId photoId) {
+    public Attachment(String type, String url, ObjectId photoId) {
         this.type = AttachmentType.valueOf(type);
+        this.url = url;
         this.photoId = photoId;
     }
 
