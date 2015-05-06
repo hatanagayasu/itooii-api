@@ -23,6 +23,7 @@ import org.bson.types.ObjectId;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
+    public static final String webServer = Model.conf.getString("web_server");
 
     public static Result Ok() {
         return new Result(200);
@@ -91,13 +92,11 @@ public class AppController extends Controller {
             while (values.hasNext()) {
                 JsonNode attachment = values.next();
                 String type = attachment.get("type").textValue();
-                if (attachment.has("photo_id"))
-                {
+                if (attachment.has("photo_id")) {
                     ObjectId photoId = getObjectId(attachment, "photo_id");
                     attachments.add(new Attachment(type, photoId));
                 }
-                else if (attachment.has("url"))
-                {
+                else if (attachment.has("url")) {
                     String url = attachment.get("url").textValue();
                     String preview = attachment.has("preview") ?
                         attachment.get("preview").textValue() : null;
@@ -123,6 +122,10 @@ public class AppController extends Controller {
 
     public static void sendEvent(JsonNode event) {
         Model.publish("all", event.toString());
+    }
+
+    public static void sendmail(String to, String subject, String content) {
+        Model.sendmail(to, subject, content);
     }
 
     public static long now() {
