@@ -27,10 +27,12 @@ public enum Privilege {
     }
 
     @JsonCreator
-    public static Privilege create(int weight) {
-        Privilege privilege = mapping.get(weight);
-
-        return privilege == null ? Observer : privilege;
+    public static Privilege create(String privilege) {
+        try {
+            return mapping.get(Integer.parseInt(privilege));
+        } catch (NumberFormatException e) {
+            return valueOf(privilege);
+        }
     }
 
     @JsonValue
