@@ -119,7 +119,7 @@ public class User extends Other {
         del("user:" + id);
     }
 
-    public static boolean verifyEmail(String token) {
+    public static User verifyEmail(String token) {
         MongoCollection userCol = jongo.getCollection("user");
 
         User user = userCol.findAndModify("{email_verified_token:#}", token)
@@ -127,12 +127,10 @@ public class User extends Other {
             .projection("{_id:1}")
             .as(User.class);
 
-        if (user == null)
-            return false;
+        if (user != null)
+            del("user:" + user.id);
 
-        del("user:" + user.id);
-
-        return true;
+        return user;
     }
 
     public String reverifyEmail() {

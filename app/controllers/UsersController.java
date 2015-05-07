@@ -155,7 +155,15 @@ public class UsersController extends AppController {
     public static Result verifyEmail(JsonNode params) {
         String token = params.get("token").textValue();
 
-        return User.verifyEmail(token) ? Ok() : NotFound();
+        User user = User.verifyEmail(token);
+
+        if (user == null)
+            return NotFound();
+
+        ObjectNode result = mapper.createObjectNode();
+        result.put("access_token", user.newToken());
+
+        return Ok(result);
     }
 
     private static void reverifyEmail(User me) {
