@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
@@ -16,6 +17,8 @@ import org.jongo.MongoCursor;
 @lombok.Getter
 public class User extends Other {
     private String email;
+    @JsonProperty("email_verified")
+    private boolean emailVerified;
     private String password;
     private Set<ObjectId> blockings;
     private Privilege privilege;
@@ -53,6 +56,7 @@ public class User extends Other {
         params.remove("access_token");
 
         if (privilege == Privilege.Observer &&
+            emailVerified == true &&
             (birthday != null || params.has("birthday")) &&
             (gender != 0 || params.has("gender")) &&
             (nationality != null || params.has("nationality")) &&
@@ -123,7 +127,12 @@ public class User extends Other {
             .projection("{_id:1}")
             .as(User.class);
 
-        return user != null;
+        if (user == null)
+            return false;
+
+        del("user:" + user.id);
+
+        return true;
     }
 
     public String reverifyEmail() {

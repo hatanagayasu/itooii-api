@@ -4,6 +4,8 @@ import play.Play;
 
 import controllers.constants.Error;
 
+import models.Privilege;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,12 +65,7 @@ public class HttpController extends DispatchController {
     private static void init() {
         try {
             ObjectNode validations = null;
-            ObjectNode access = mapper.createObjectNode();
             int maxAge = 0;
-
-            access.put("fullName", "access_token")
-                .put("type", "access_token")
-                .put("require", true);
 
             File file = new File(Play.application().path(), "conf/http_routes");
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
@@ -83,7 +80,12 @@ public class HttpController extends DispatchController {
                     accumulation = true;
 
                     validations = mapper.createObjectNode();
-                    validations.set("access_token", access);
+                    validations.putObject("access_token")
+                        .put("fullName", "access_token")
+                        .put("type", "access_token")
+                        .put("require", true)
+                        .put("weight", Privilege.Observer.getWeight());
+
                     maxAge = 0;
                 }
 
@@ -92,6 +94,12 @@ public class HttpController extends DispatchController {
 
                 if (line.startsWith("@Anonymous")) {
                     validations.remove("access_token");
+                } else if (line.startsWith("@Privilege")) {
+                    Matcher matcher = parenthesesPattern.matcher(line);
+                    if (matcher.find()) {
+                        int weight = Privilege.valueOf(matcher.group(1)).getWeight();
+                        validations.with("access_token").put("weight", weight);
+                    }
                 } else if (line.startsWith("@CacheControl")) {
                     Matcher matcher = parenthesesPattern.matcher(line);
                     maxAge = matcher.find() ? Integer.parseInt(matcher.group(1)) : 3600;

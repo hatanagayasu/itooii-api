@@ -2,6 +2,9 @@ package controllers;
 
 import controllers.constants.Error;
 
+import models.Privilege;
+import models.User;
+
 import java.lang.NumberFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -123,6 +126,10 @@ public class DispatchController extends AppController {
         public static final long serialVersionUID = -1;
     }
 
+    private static class ForbiddenException extends Exception {
+        public static final long serialVersionUID = -1;
+    }
+
     public static Result invoke(JsonNode route, ObjectNode params) {
         try {
             Method method = (Method) ((POJONode) route.get("method")).getPojo();
@@ -156,11 +163,14 @@ public class DispatchController extends AppController {
             return Error(Error.MALFORMED_PARAM, e.getMessage());
         } catch (InvalidAccessTokenException e) {
             return Error(Error.INVALID_ACCESS_TOKEN);
+        } catch (ForbiddenException e) {
+            return Error(Error.FORBIDDEN);
         }
     }
 
     public static void validations(JsonNode validations, ObjectNode params)
-        throws MissingParamException, MalformedParamException, InvalidAccessTokenException {
+        throws MissingParamException, MalformedParamException, InvalidAccessTokenException,
+        ForbiddenException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         Iterator<String> fieldNames = validations.fieldNames();
@@ -255,8 +265,16 @@ public class DispatchController extends AppController {
 
                 String token = param.textValue();
                 String regex = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
-                if (!token.matches(regex) || models.User.getUserIdByToken(token) == null)
+                if (!token.matches(regex))
                     throw new InvalidAccessTokenException();
+
+                User user = User.getByToken(token);
+                if (user == null)
+                    throw new InvalidAccessTokenException();
+
+                int weight = validation.get("weight").intValue();
+                if (user.getPrivilege().getWeight() < weight)
+                    throw new ForbiddenException();
             } else if (type.equals("epoch")) {
                 if (param.isTextual()) {
                     try {
@@ -302,7 +320,8 @@ public class DispatchController extends AppController {
     }
 
     private static void validation(JsonNode validation, JsonNode param)
-        throws MissingParamException, MalformedParamException, InvalidAccessTokenException {
+        throws MissingParamException, MalformedParamException, InvalidAccessTokenException,
+        ForbiddenException {
         String type = validation.get("type").textValue();
         JsonNode rules = validation.get("rules");
 

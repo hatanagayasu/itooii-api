@@ -56,12 +56,14 @@ GET     /user/followers/@user_id    UsersController/getFollower
 GET     /user/followings/@user_id   UsersController/getFollowing
 GET     /users                      UsersController/search
 
+@Privilege(Member)
 @Validation(name="user_id",type="id",require=true)
 POST    /user/following/@user_id    UsersController/follow
 DELETE  /user/following/@user_id    UsersController/unfollow
 POST    /user/blocking/@user_id     UsersController/blocking
 DELETE  /user/blocking/@user_id     UsersController/unblocking
 
+@Anonymous
 @Validation(name="token")
 GET     /user/verify_email/:token   UsersController/verifyEmail
 
@@ -89,6 +91,7 @@ GET     /user/timeline              PostsController/getTimeline
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 GET     /user/timeline/@user_id     PostsController/getTimeline
 
+@Privilege(Member)
 @Validation(name="text",depend="|attachments")
 @attachments
 POST    /user/feed                  PostsController/add
@@ -101,15 +104,18 @@ GET     /post/@post_id              PostsController/get
 @Validation(name="limit",type="integer",rule="min=1,max=50")
 GET     /post/@post_id/comment      PostsController/getComment
 
+@Privilege(Member)
 @Validation(name="post_id",type="id")
 @Validation(name="text",depend="|attachments")
 @attachments
 POST    /post/@post_id/comment      PostsController/addComment
 
+@Privilege(Member)
 @Validation(name="post_id",type="id")
 POST    /post/@post_id/like         PostsController/like
 DELETE  /post/@post_id/like         PostsController/unlike
 
+@Privilege(Member)
 @Validation(name="comment_id",type="id")
 POST    /comment/@comment_id/like   PostsController/likeComment
 DELETE  /comment/@comment_id/like   PostsController/unlikeComment
@@ -121,6 +127,7 @@ DELETE  /comment/@comment_id/like   PostsController/unlikeComment
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 GET     /messages/@user_id          MessagesController/get
 
+@Privilege(Member)
 @Validation(name="user_id",type="id")
 @Validation(name="text",depend="|attachments")
 @attachments
@@ -130,6 +137,7 @@ POST    /messages/@user_id          MessagesController/add
 @CacheControl
 GET     /video/ice_servers          VideoChatController/getIceServers
 
+@Privilege(Member)
 @Validation(name="video_chat_id",type="id",require=true)
 @Validation(name="rate",type="integer",rule="min=0,max=5",require=true)
 POST    /video/rate/@video_chat_id  VideoChatController/rate

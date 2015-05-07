@@ -1,10 +1,12 @@
-
+@Privilege(Member)
 video/ready                 VideoChatController/ready
 video/leave                 VideoChatController/leave
 
+@Privilege(Member)
 @Validation(name="user_id",type="id",require=true)
 video/request               VideoChatController/request
 
+@Privilege(Member)
 @Validation(name="user_id",type="id",require=true)
 @Validation(name="video_chat_id",type="id",require=true)
 @Validation(name="confirm",type="boolean",require=true)
