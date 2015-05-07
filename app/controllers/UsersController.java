@@ -68,7 +68,8 @@ public class UsersController extends AppController {
 
         User user = new User(email, password, name, nativeLanguage, practiceLanguage);
         user.save();
-        user.reverifyEmail();
+
+        reverifyEmail(user);
 
         return Ok(user);
     }
@@ -157,9 +158,7 @@ public class UsersController extends AppController {
         return User.verifyEmail(token) ? Ok() : NotFound();
     }
 
-    public static Result reverifyEmail(JsonNode params) {
-        User me = getMe(params);
-
+    private static void reverifyEmail(User me) {
         String token = me.reverifyEmail();
         String link = webServer + "account/verify-email/" + token;
         String content = views.html.Email.verify_email.render(link).toString();
@@ -167,6 +166,12 @@ public class UsersController extends AppController {
         Matcher matcher = titlePattern.matcher(content);
         if(matcher.find())
             sendmail(me.getEmail(), matcher.group(1), content);
+    }
+
+    public static Result reverifyEmail(JsonNode params) {
+        User me = getMe(params);
+
+        reverifyEmail(me);
 
         return Ok();
     }
