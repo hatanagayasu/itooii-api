@@ -91,7 +91,6 @@ GET     /user/timeline              PostsController/getTimeline
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 GET     /user/timeline/@user_id     PostsController/getTimeline
 
-@Privilege(Member)
 @Validation(name="text",depend="|attachments")
 @attachments
 POST    /user/feed                  PostsController/add
