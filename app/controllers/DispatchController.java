@@ -2,7 +2,6 @@ package controllers;
 
 import controllers.constants.Error;
 
-import models.Privilege;
 import models.User;
 
 import java.lang.NumberFormatException;
@@ -272,8 +271,8 @@ public class DispatchController extends AppController {
                 if (user == null)
                     throw new InvalidAccessTokenException();
 
-                int weight = validation.get("weight").intValue();
-                if (user.getPrivilege().getWeight() < weight)
+                int privilege = validation.get("privilege").intValue();
+                if (user.getPrivilege() < privilege)
                     throw new ForbiddenException();
             } else if (type.equals("epoch")) {
                 if (param.isTextual()) {

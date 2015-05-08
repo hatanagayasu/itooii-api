@@ -21,7 +21,7 @@ public class User extends Other {
     private boolean emailVerified;
     private String password;
     private Set<ObjectId> blockings;
-    private Privilege privilege;
+    private int privilege;
     private int tos;
 
     public User() {
@@ -36,7 +36,7 @@ public class User extends Other {
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
-        privilege = Privilege.Observer;
+        privilege = Privilege.Observer.value();
         tos = 1;
     }
 
@@ -55,7 +55,7 @@ public class User extends Other {
 
         params.remove("access_token");
 
-        if (privilege == Privilege.Observer &&
+        if (privilege == Privilege.Observer.value() &&
             emailVerified == true &&
             (birthday != null || params.has("birthday")) &&
             (gender != 0 || params.has("gender")) &&
@@ -63,7 +63,7 @@ public class User extends Other {
             (country != null || params.has("country")) &&
             (city != null || params.has("city")) &&
             (avatar != null || params.has("avatar")))
-            params.put("privilege", Privilege.Member.getWeight());
+            params.put("privilege", Privilege.Member.value());
 
         if (params.has("password")) {
             String password = params.get("password").textValue();

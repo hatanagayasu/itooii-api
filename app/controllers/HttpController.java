@@ -84,7 +84,7 @@ public class HttpController extends DispatchController {
                         .put("fullName", "access_token")
                         .put("type", "access_token")
                         .put("require", true)
-                        .put("weight", Privilege.Observer.getWeight());
+                        .put("privilege", Privilege.Observer.value());
 
                     maxAge = 0;
                 }
@@ -97,8 +97,8 @@ public class HttpController extends DispatchController {
                 } else if (line.startsWith("@Privilege")) {
                     Matcher matcher = parenthesesPattern.matcher(line);
                     if (matcher.find()) {
-                        int weight = Privilege.valueOf(matcher.group(1)).getWeight();
-                        validations.with("access_token").put("weight", weight);
+                        int privilege = Privilege.valueOf(matcher.group(1)).value();
+                        validations.with("access_token").put("privilege", privilege);
                     }
                 } else if (line.startsWith("@CacheControl")) {
                     Matcher matcher = parenthesesPattern.matcher(line);
