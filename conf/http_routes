@@ -1,7 +1,7 @@
 @Validation(name="attachments",type="array")
 @Validation(name="attachments[]",type="object")
 @Validation(name="attachments[].type",rule="(photo|url)",require=true)
-@Validation(name="attachments[].url",depend="type",rule="url")
+@Validation(name="attachments[].url",depend="type")
 @Macro(attachments)
 
 GET     /user                       UsersController/me
