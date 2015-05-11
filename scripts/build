@@ -2,11 +2,10 @@
 
 target=itooii-api-1.0-SNAPSHOT
 
-if [ -f ${target}/itooii-api.pid ]; then
-    kill `cat ${target}/itooii-api.pid`
+if [ -f ${target}/RUNNING_PID ]; then
+    kill `cat ${target}/RUNNING_PID`
 fi
 rm -rf $target
 ./activator clean dist
 unzip target/universal/${target}.zip
 itooii-api-1.0-SNAPSHOT/bin/itooii-api $* &
-echo $! > ${target}/itooii-api.pid
