@@ -46,12 +46,22 @@ public class Model {
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
     private static LoadingCache<ObjectId, String> names = CacheBuilder.newBuilder()
-        .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
+        .maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES)
         .build(new CacheLoader<ObjectId, String>() {
             public String load(ObjectId userId) {
                 User user = User.get(userId);
 
                 return user == null ? null : user.getName();
+            }
+        });
+
+    private static LoadingCache<ObjectId, String> avatars = CacheBuilder.newBuilder()
+        .maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES)
+        .build(new CacheLoader<ObjectId, String>() {
+            public String load(ObjectId userId) {
+                User user = User.get(userId);
+
+                return user == null ? null : user.getAvatar();
             }
         });
 
@@ -387,6 +397,14 @@ public class Model {
     public static String name(ObjectId userId) {
         try {
             return names.get(userId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String avatar(ObjectId userId) {
+        try {
+            return avatars.get(userId);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
