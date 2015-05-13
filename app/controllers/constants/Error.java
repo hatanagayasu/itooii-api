@@ -5,6 +5,7 @@ public enum Error {
     MISSING_PARAM(40001, "Missing Param %s"),
     MALFORMED_PARAM(40002, "Malformed Param %s"),
     MALFORMED_JSON(40003, "Malformed json"),
+    MALFORMED_MULTIPART_FORM(40004, "Malformed Multipart Form"),
 
     UNAUTHORIZED(40100, "Unauthorized"),
     INCORRECT_USER(40101, "Incorrect User"),
