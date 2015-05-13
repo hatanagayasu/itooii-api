@@ -39,12 +39,8 @@ public class AppController extends Controller {
         return new Result(200, Model.toJson(models));
     }
 
-    public static Result Ok(JsonNode node) {
-        return new Result(200, node);
-    }
-
-    public static Result Ok(ObjectNode node) {
-        return new Result(200, node);
+    public static Result Ok(Object object) {
+        return new Result(200, object);
     }
 
     public static Result Error(Error error) {
