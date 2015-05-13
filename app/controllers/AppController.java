@@ -23,8 +23,9 @@ import org.bson.types.ObjectId;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
-    public static final String webServer = Model.conf.getString("web_server");
-    private static final boolean sendmail = Model.conf.getBoolean("sendmail", false);
+    public static final Configuration conf = Model.conf;
+    public static final String webServer = conf.getString("web_server");
+    private static final boolean sendmail = conf.getBoolean("sendmail", false);
 
     public static Result Ok() {
         return new Result(200);
