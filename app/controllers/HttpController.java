@@ -7,16 +7,19 @@ import controllers.constants.Error;
 import models.Privilege;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.ClassNotFoundException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.zip.GZIPOutputStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -221,17 +224,30 @@ public class HttpController extends DispatchController {
         int status = result.getStatus();
         Object content = result.getObject();
 
-        play.mvc.Http.Response response = response();
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setContentType("application/json; charset=utf-8");
+        if (content == null) {
+            response().setHeader("Access-Control-Allow-Origin", "*");
 
-        if (content == null)
             return status(status);
+        } else if (content instanceof File) {
+            return ok((File) content, true);
+        } else {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                OutputStream os = new GZIPOutputStream(baos);
+                os.write(content.toString().getBytes());
+                os.close();
 
-        if (content instanceof ObjectNode)
-            return status(status, (ObjectNode) content);
+                response().setHeader("Access-Control-Allow-Origin", "*");
+                response().setContentType("application/json; charset=utf-8");
+                response().setHeader("Content-Encoding", "gzip");
 
-        return status(status, content.toString());
+                return status(status, baos.toByteArray());
+            } catch (IOException e) {
+                errorlog(e);
+
+                return internalServerError();
+            }
+        }
     }
 
     public static play.mvc.Result dispatch(String path) {
