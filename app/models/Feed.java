@@ -62,6 +62,7 @@ public class Feed extends Model {
         ids.add(user.getId());
 
         feedCol.update("{_id:{$in:#}}", ids)
+            .multi()
             .with("{$push:{post_ids:{$each:[#],$position:0,$slice:100}}}", postId);
     }
 
