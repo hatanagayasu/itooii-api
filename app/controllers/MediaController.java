@@ -1,109 +1,158 @@
 package controllers;
 
-import play.*;
-import play.mvc.*;
+import play.mvc.Http.MultipartFormData;
 
+import controllers.constants.Error;
+
+import models.AttachmentType;
+import models.Media;
+import models.Model;
+import models.User;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.bson.types.ObjectId;
+
+import org.imgscalr.Scalr;
+
 public class MediaController extends AppController {
+    private static AmazonS3 s3client;
+    private static String bucket;
 
-    private static String bucketName = "itooii_test1";
-    private static String KeyID = "AKIAJGUFVNUVZXWLETZQ";
-    private static String AccessKey = "BE1EGqQfzZEUVXZiy9HgsBferHEaBQuoNQ3402Ct";
+    static {
+        String access = conf.getString("media.s3.access");
+        String secret = conf.getString("media.s3.secret");
+        bucket = conf.getString("media.s3.bucket");
 
-    public static Result upload(JsonNode params) {
-
-        //File file = request().body().asRaw().asFile();
-        //response().setHeader("Access-Control-Allow-Origin", "*");
-        /*
-         * JSONArray json = new JSONArray(); try { List<FileItem> items =
-         * uploadHandler.parseRequest(request); for (FileItem item : items) { if
-         * (!item.isFormField()) { File file = new File(fileUploadPath, item.getName());
-         * item.write(file); JSONObject jsono = new JSONObject(); jsono.put("name", item.getName());
-         * jsono.put("size", item.getSize()); jsono.put("url", "upload?getfile=" + item.getName());
-         * jsono.put("thumbnail_url", "upload?getthumb=" + item.getName()); jsono.put("delete_url",
-         * "upload?delfile=" + item.getName()); jsono.put("delete_type", "GET"); json.put(jsono); }
-         * } }
-         */
-
-        ObjectNode res = mapper.createObjectNode();
-        ArrayNode files = res.putArray("files");
-
-        Logger.info("enter!");
-        Http.MultipartFormData body = request().body().asMultipartFormData();
-
-        for (Http.MultipartFormData.FilePart part : body.getFiles()) {
-            Logger.debug(part.getFilename());
-            Logger.debug(part.getKey());
-            Logger.debug(part.getContentType());
-            Logger.debug(part.getFile().getName());
-            Logger.debug(part.getFile().getAbsolutePath());
-            Logger.debug(String.valueOf(part.getFile().getTotalSpace()));
-            move2s3(part.getFile().getAbsolutePath(), part.getFilename());
-
-            ObjectNode file = files.addObject();
-            file.put("name", part.getFile().getName());
-            file.put("size", part.getFile().getTotalSpace());
-            file.put("url", "upload?getfile=" + part.getFile().getName());
-            file.put("thumbnail_url", "upload?getthumb=" + part.getFile().getName());
-            file.put("delete_url", "upload?delfile=" + part.getFile().getName());
-            file.put("delete_type", "GET");
-        }
-
-        errorlog(res);
-
-        return Ok(res);
+        AWSCredentials credentials = new BasicAWSCredentials(access, secret);
+        s3client = new AmazonS3Client(credentials);
     }
 
-    private static boolean move2s3(String src_path, String targetName) {
-        AWSCredentials credentials = new BasicAWSCredentials(KeyID, AccessKey);
+    public static Result avatar(JsonNode params) {
+        ObjectId id = getObjectId(params, "id");
 
-        //AmazonS3 s3client = new AmazonS3Client(new ProfileCredentialsProvider());
-        AmazonS3 s3client = new AmazonS3Client(credentials);
+        File file = new File("/tmp/" + id);
+        if (!file.exists())
+            s3client.getObject(new GetObjectRequest(bucket, id.toString()), file);
 
         try {
-            System.out.println("Uploading a new object to S3 from a file\n");
-            //File file = new File(uploadFileName);
+            int size = params.get("size").intValue();
+            File thumb = new File("/tmp/" + id + "_avatar_" + size);
 
-            //String fileName = folderName + SUFFIX + "testvideo.mp4";
-            String path = System.getProperty("user.dir");
-            Logger.debug("user.dir:" + path);
+            BufferedImage img = ImageIO.read(file);
+            BufferedImage resizedImg;
+            int width = img.getWidth();
+            int height = img.getHeight();
 
-            s3client.putObject(new PutObjectRequest(bucketName, targetName, new File(src_path)));
+            if (width > height)
+                resizedImg = Scalr.crop(img, (width - height) / 2, 0, height, height);
+            else
+                resizedImg = Scalr.crop(img, 0, (height - width) / 2, width, width);
 
-            //s3client.putObject(new PutObjectRequest(
-            //	                 bucketName, keyName, file));
+            resizedImg = Scalr.resize(resizedImg, size);
+            ImageIO.write(resizedImg, "jpg", thumb);
 
-        } catch (AmazonServiceException ase) {
-            Logger.debug("Caught an AmazonServiceException, which " + "means your request made it "
-                + "to Amazon S3, but was rejected with an error response"
-                + " for some reason.");
-            Logger.debug("Error Message:    " + ase.getMessage());
-            Logger.debug("HTTP Status Code: " + ase.getStatusCode());
-            Logger.debug("AWS Error Code:   " + ase.getErrorCode());
-            Logger.debug("Error Type:       " + ase.getErrorType());
-            Logger.debug("Request ID:       " + ase.getRequestId());
-        } catch (AmazonClientException ace) {
-            Logger.debug("Caught an AmazonClientException, which "
-                + "means the client encountered "
-                + "an internal error while trying to " + "communicate with S3, "
-                + "such as not being able to access the network.");
-            Logger.debug("Error Message: " + ace.getMessage());
+            return Ok(thumb);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
-        return true;
     }
 
+    public static Result download(JsonNode params) {
+        ObjectId id = getObjectId(params, "id");
+
+        File file = new File("/tmp/" + id);
+        if (!file.exists())
+            s3client.getObject(new GetObjectRequest(bucket, id.toString()), file);
+
+        if (params.has("size")) {
+            try {
+                int size = params.get("size").intValue();
+                File thumb = new File("/tmp/" + id + "_" + size);
+
+                if (!thumb.exists()) {
+                    BufferedImage img = ImageIO.read(file);
+                    BufferedImage resizedImg = Scalr.resize(img, Scalr.Mode.FIT_TO_WIDTH, size);
+                    ImageIO.write(resizedImg, "jpg", thumb);
+                }
+
+                return Ok(thumb);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return Ok(file);
+        }
+    }
+
+    public static Result upload(JsonNode params) {
+        User me = getMe(params);
+        ObjectNode result = mapper.createObjectNode();
+        ArrayNode files = result.putArray("files");
+
+        MultipartFormData body = request().body().asMultipartFormData();
+        if (body == null)
+            return Error(Error.MALFORMED_MULTIPART_FORM);
+
+        for (MultipartFormData.FilePart part : body.getFiles()) {
+            //TODO part.getContentType();
+            Media media = new Media(me.getId(), AttachmentType.photo);
+            ObjectId id = media.getId();
+
+            media.save();
+
+            uploadPohto(id, part, files);
+        }
+
+        return Ok(result);
+    }
+
+    private static void uploadPohto(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {
+        try {
+            BufferedImage img = ImageIO.read(part.getFile());
+            BufferedImage resizedImg = Scalr.resize(img, 1024);
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(resizedImg, "jpg", os);
+
+            byte[] buffer = os.toByteArray();
+            InputStream is = new ByteArrayInputStream(buffer);
+            ObjectMetadata meta = new ObjectMetadata();
+            meta.setContentType("image/jpg");
+            meta.setContentLength(buffer.length);
+
+            s3client.putObject(new PutObjectRequest(bucket, id.toString(), is, meta));
+
+            part.getFile().delete();
+
+            String signing = Model.md5("#" + id + resizedImg.getWidth() + resizedImg.getHeight());
+
+            files.addObject()
+                .put("name", part.getKey())
+                .put("content_type", "image/jpg")
+                .put("id", id.toString())
+                .put("width", resizedImg.getWidth())
+                .put("height", resizedImg.getHeight())
+                .put("signing", signing);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -1,7 +1,11 @@
 @Validation(name="attachments",type="array")
 @Validation(name="attachments[]",type="object")
-@Validation(name="attachments[].type",rule="(photo|url)",require=true)
-@Validation(name="attachments[].url",depend="type")
+@Validation(name="attachments[].type",rule="(photo|video|voice|url)",require=true)
+@Validation(name="attachments[].id",type="id",depend="type=(photo|video|voice)")
+@Validation(name="attachments[].width",type="integer",depend="type=photo")
+@Validation(name="attachments[].height",type="integer",depend="type=photo")
+@Validation(name="attachments[].signing",depend="type=photo")
+@Validation(name="attachments[].url",depend="type=url")
 @Macro(attachments)
 
 GET     /user                       UsersController/me
@@ -39,7 +43,7 @@ POST    /user                       UsersController/add
 @Validation(name="nationality",rule="length=2")
 @Validation(name="country",rule="length=2")
 @Validation(name="city")
-@Validation(name="avatar")
+@Validation(name="avatar",type="id")
 PUT     /user                       UsersController/update
 
 @Validation(name="skip",type="integer",rule="min=0")
@@ -118,7 +122,15 @@ DELETE  /post/@post_id/like         PostsController/unlike
 POST    /comment/@comment_id/like   PostsController/likeComment
 DELETE  /comment/@comment_id/like   PostsController/unlikeComment
 
-#POST    /media                      MediaController/upload
+@Anonymous
+@CacheControl(31536000)
+@Validation(name="id",type="id")
+@Validation(name="size",type="integer",rule="min=1,max=1024")
+GET     /media/@id                  MediaController/download
+GET     /media/:size/@id            MediaController/download
+GET     /avatar/:size/@id           MediaController/avatar
+
+POST    /media                      MediaController/upload
 
 @Validation(name="user_id",type="id")
 @Validation(name="until",type="epoch")

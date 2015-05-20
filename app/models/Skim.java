@@ -24,7 +24,7 @@ public class Skim extends Model {
     protected String nationality;
     protected String country;
     protected String city;
-    protected String avatar;
+    protected ObjectId avatar;
 
     public Skim() {
     }

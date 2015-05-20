@@ -229,6 +229,8 @@ public class HttpController extends DispatchController {
 
             return status(status);
         } else if (content instanceof File) {
+            response().setContentType("image/jpg");
+
             return ok((File) content, true);
         } else {
             try {

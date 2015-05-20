@@ -55,10 +55,10 @@ public class Model {
             }
         });
 
-    private static LoadingCache<ObjectId, String> avatars = CacheBuilder.newBuilder()
+    private static LoadingCache<ObjectId, ObjectId> avatars = CacheBuilder.newBuilder()
         .maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES)
-        .build(new CacheLoader<ObjectId, String>() {
-            public String load(ObjectId userId) {
+        .build(new CacheLoader<ObjectId, ObjectId>() {
+            public ObjectId load(ObjectId userId) {
                 User user = User.get(userId);
 
                 return user == null ? null : user.getAvatar();
@@ -402,11 +402,11 @@ public class Model {
         }
     }
 
-    public static String avatar(ObjectId userId) {
+    public static ObjectId avatar(ObjectId userId) {
         try {
             return avatars.get(userId);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 

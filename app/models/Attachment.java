@@ -6,23 +6,28 @@ import org.bson.types.ObjectId;
 @lombok.Getter
 public class Attachment extends Model {
     private AttachmentType type;
-    @JsonProperty("photo_id")
-    private ObjectId photoId;
+    private ObjectId id;
+    private Integer width;
+    private Integer height;
     private String url;
-    private String preview;
 
     public Attachment() {
     }
 
-    public Attachment(String type, String url, ObjectId photoId) {
-        this.type = AttachmentType.valueOf(type);
-        this.url = url;
-        this.photoId = photoId;
+    public Attachment(AttachmentType type, ObjectId id) {
+        this.type = type;
+        this.id = id;
     }
 
-    public Attachment(String type, String url, String preview) {
-        this.type = AttachmentType.valueOf(type);
+    public Attachment(AttachmentType type, ObjectId id, int width, int height) {
+        this.type = type;
+        this.id = id;
+        this.width = width;
+        this.height = height;
+    }
+
+    public Attachment(AttachmentType type, String url) {
+        this.type = type;
         this.url = url;
-        this.preview = preview;
     }
 }

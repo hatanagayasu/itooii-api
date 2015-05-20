@@ -24,7 +24,7 @@ public class Post extends Model {
     private String userName;
     @JsonIgnore
     @JsonProperty("user_avatar")
-    private String userAvatar;
+    private ObjectId userAvatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -53,6 +53,17 @@ public class Post extends Model {
     }
 
     public void save(User user) {
+        if (attachments != null) {
+            List<ObjectId>ids = new ArrayList<ObjectId>();
+            for (Attachment attachment : attachments) {
+                if (attachment.getType() != AttachmentType.url)
+                    ids.add(attachment.getId());
+            }
+
+            if (ids.size() > 0)
+                Media.posted(ids);
+        }
+
         MongoCollection postCol = jongo.getCollection("post");
 
         postCol.save(this);

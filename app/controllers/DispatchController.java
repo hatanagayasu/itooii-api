@@ -1,6 +1,7 @@
 package controllers;
 
 import controllers.constants.Error;
+import controllers.exceptions.InvalidSigningException;
 
 import models.User;
 
@@ -65,8 +66,16 @@ public class DispatchController extends AppController {
                 ObjectNode depend = validation.putObject("depend");
                 String[] segs = value.split("=");
                 depend.put("name", segs[0]);
-                if (segs.length == 2)
-                    depend.put("value", segs[1]);
+                if (segs.length == 2) {
+                    if (segs[1].matches("^\\(.*\\)$")) {
+                        String[] values = segs[1].substring(1, segs[1].length() - 1).split("\\|");
+                        ObjectNode node = depend.putObject("value");
+                        for (String v : values)
+                            node.put(v, false);
+                    } else {
+                        depend.put("value", segs[1]);
+                    }
+                }
             } else if (key.equals("require")) {
                 validation.put("require", Boolean.parseBoolean(value));
             } else {
@@ -150,8 +159,12 @@ public class DispatchController extends AppController {
             return Error(Error.NOT_FOUND);
         } catch (InvocationTargetException e) {
             Class<? extends Throwable> clazz = e.getCause().getClass();
-            if (clazz == DuplicateKeyException.class)
+            if (clazz == DuplicateKeyException.class) {
                 return Error(Error.MONGO_DUPLICATE_KEY, e.getCause());
+            } else if (clazz == RuntimeException.class) {
+                if (e.getCause().getCause().getClass() == InvalidSigningException.class)
+                    return Error(Error.INVALID_SIGNING_EXCEPTION);
+            }
 
             errorlog(e);
 
@@ -164,6 +177,52 @@ public class DispatchController extends AppController {
             return Error(Error.INVALID_ACCESS_TOKEN);
         } catch (ForbiddenException e) {
             return Error(Error.FORBIDDEN);
+        }
+    }
+
+    private static void validationDepend(JsonNode validation, ObjectNode params, String name)
+        throws MissingParamException {
+        JsonNode depend = validation.get("depend");
+        String field = depend.get("name").textValue();
+
+        if (depend.has("value")) {
+            JsonNode value = depend.get("value");
+            if (value.isTextual()) {
+                if (params.has(field) && value.textValue().equals(params.get(field).textValue())) {
+                    if (!params.has(name))
+                        throw new MissingParamException(validation);
+                } else {
+                    params.remove(name);
+                }
+            } else {
+                if (params.has(field) && value.has(params.get(field).textValue())) {
+                    if (!params.has(name))
+                        throw new MissingParamException(validation);
+                } else {
+                    params.remove(name);
+                }
+            }
+        } else {
+            if (field.startsWith("|")) {
+                field = field.replaceFirst("^\\|", "");
+                if (!params.has(field) && !params.has(name))
+                    throw new MissingParamException(validation);
+            } else if (field.startsWith("!")) {
+                field = field.replaceFirst("^!", "");
+                if (!params.has(field)) {
+                    if (!params.has(name))
+                        throw new MissingParamException(validation);
+                } else {
+                    params.remove(name);
+                }
+            } else {
+                if (params.has(field)) {
+                    if (!params.has(name))
+                        throw new MissingParamException(validation);
+                } else {
+                    params.remove(name);
+                }
+            }
         }
     }
 
@@ -180,41 +239,8 @@ public class DispatchController extends AppController {
             if (validation.get("require").booleanValue() && !params.has(name))
                 throw new MissingParamException(validation);
 
-            if (validation.has("depend")) {
-                JsonNode depend = validation.get("depend");
-                String field = depend.get("name").textValue();
-
-                if (depend.has("value")) {
-                    String value = depend.get("value").textValue();
-                    if (params.has(field) && value.equals(params.get(field).textValue())) {
-                        if (!params.has(name))
-                            throw new MissingParamException(validation);
-                    } else {
-                        params.remove(name);
-                    }
-                } else {
-                    if (field.startsWith("|")) {
-                        field = field.replaceFirst("^\\|", "");
-                        if (!params.has(field) && !params.has(name))
-                            throw new MissingParamException(validation);
-                    } else if (field.startsWith("!")) {
-                        field = field.replaceFirst("^!", "");
-                        if (!params.has(field)) {
-                            if (!params.has(name))
-                                throw new MissingParamException(validation);
-                        } else {
-                            params.remove(name);
-                        }
-                    } else {
-                        if (params.has(field)) {
-                            if (!params.has(name))
-                                throw new MissingParamException(validation);
-                        } else {
-                            params.remove(name);
-                        }
-                    }
-                }
-            }
+            if (validation.has("depend"))
+                validationDepend(validation, params, name);
         }
 
         fieldNames = params.fieldNames();

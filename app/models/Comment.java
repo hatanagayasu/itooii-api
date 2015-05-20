@@ -23,7 +23,7 @@ public class Comment extends Model {
     private String userName;
     @JsonIgnore
     @JsonProperty("user_avatar")
-    private String userAvatar;
+    private ObjectId userAvatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;

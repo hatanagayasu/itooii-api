@@ -6,6 +6,7 @@ public enum Error {
     MALFORMED_PARAM(40002, "Malformed Param %s"),
     MALFORMED_JSON(40003, "Malformed json"),
     MALFORMED_MULTIPART_FORM(40004, "Malformed Multipart Form"),
+    INVALID_SIGNING_EXCEPTION(40005, "Invalid Signing"),
 
     UNAUTHORIZED(40100, "Unauthorized"),
     INCORRECT_USER(40101, "Incorrect User"),

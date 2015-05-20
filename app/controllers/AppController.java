@@ -4,8 +4,10 @@ import play.*;
 import play.mvc.*;
 
 import controllers.constants.Error;
+import controllers.exceptions.InvalidSigningException;
 
 import models.Attachment;
+import models.AttachmentType;
 import models.Model;
 import models.User;
 
@@ -89,17 +91,23 @@ public class AppController extends Controller {
             Iterator<JsonNode> values = params.get("attachments").iterator();
             while (values.hasNext()) {
                 JsonNode attachment = values.next();
-                String type = attachment.get("type").textValue();
-                if (attachment.has("photo_id")) {
+                AttachmentType type = AttachmentType.valueOf(attachment.get("type").textValue());
+                if (type == AttachmentType.photo) {
+                    ObjectId id = getObjectId(attachment, "id");
+                    int width = attachment.get("width").intValue();
+                    int height = attachment.get("height").intValue();
+                    String signing = attachment.get("signing").textValue();
+
+                    if (!Model.md5("#" + id + width + height).equals(signing))
+                        throw new RuntimeException(new InvalidSigningException());
+
+                    attachments.add(new Attachment(type, id, width, height));
+                } else if (type == AttachmentType.url) {
                     String url = attachment.get("url").textValue();
-                    ObjectId photoId = getObjectId(attachment, "photo_id");
-                    attachments.add(new Attachment(type, url, photoId));
-                }
-                else if (attachment.has("url")) {
-                    String url = attachment.get("url").textValue();
-                    String preview = attachment.has("preview") ?
-                        attachment.get("preview").textValue() : null;
-                    attachments.add(new Attachment(type, url, preview));
+                    attachments.add(new Attachment(type, url));
+                } else if (type == AttachmentType.video || type == AttachmentType.voice) {
+                    ObjectId id = getObjectId(attachment, "id");
+                    attachments.add(new Attachment(type, id));
                 }
             }
         }
