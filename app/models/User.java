@@ -30,7 +30,7 @@ public class User extends Other {
     public User(String email, String password, String name, List<Integer> nativeLanguage,
         List<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
-        this.email = email;
+        this.email = email.toLowerCase();
         this.password = md5(password);
         this.name = name;
         this.nativeLanguage = nativeLanguage;
@@ -199,7 +199,8 @@ public class User extends Other {
     public static User getByEmail(String email) {
         MongoCollection userCol = jongo.getCollection("user");
 
-        User user = userCol.findOne("{email:#}", email).projection("{password:1}").as(User.class);
+        User user = userCol.findOne("{email:#}", email.toLowerCase())
+            .projection("{password:1}").as(User.class);
 
         return user;
     }
