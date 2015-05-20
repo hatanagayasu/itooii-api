@@ -128,7 +128,8 @@ public class MediaController extends AppController {
     private static void uploadPohto(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {
         try {
             BufferedImage img = ImageIO.read(part.getFile());
-            BufferedImage resizedImg = Scalr.resize(img, 1024);
+            int size = img.getWidth() > 1024 ? 1024 : img.getWidth();
+            BufferedImage resizedImg = Scalr.resize(img, size);
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(resizedImg, "jpg", os);
 
