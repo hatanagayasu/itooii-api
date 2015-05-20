@@ -2,13 +2,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Confirm Your Speakaa Account</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Confirm Your Speakaa Account</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+  <style type="text/css">
+
+  #confirm-content p {
+    font-size: 16px;
+  }
+  #confirm-content p:first-child {
+    font-size: 24px;
+  }
+  #confirm-content {
+    padding: 0 0 3em 0;
+    font-family: 'Raleway', sans-serif;    
+  }
+  #confirm-button {
+    width: 8em;
+    padding: 0.5em;
+    margin: 1em 1em 1em 0;
+    text-align: center;
+    font-size: 20px;
+    background-color: #4fc1e9;
+  }
+  a {
+    color: #FFF;
+  }
+  a:link {
+    text-decoration: none;
+  }
+  </style>
 </head>
+
 <body>
-One more step ...<br>
-Confirm your email address to complete your Speakaa account.<br>
-Just click on the link below, simple as that.<br>
-<a href="@link">Confirm now</a>
+  <div id="confirm-content">
+    <div>
+      <p>One more step ...</p>
+      <p>Confirm your email address to complete your Speakaa account.<br>Just click on the button below - simple as that.</p>
+    </div>
+    <div id="confirm-button">
+      <a href="@link">Confirm now</a>
+    </div>
+  </div>
 </body>
 </html>

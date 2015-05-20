@@ -426,7 +426,7 @@ public class DispatchController extends AppController {
             if (rule.equals("alphaNumeric")) {
                 regex = "[A-Za-z0-9]+";
             } else if (rule.equals("email")) {
-                regex = "([a-z0-9._%+-]+)@[a-z0-9.-]+\\.[a-z]{2,4}";
+                regex = "([a-zA-Z0-9._%+-]+)@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}";
             } else if (rule.equals("url")) {
                 try {
                     new URL(value);
