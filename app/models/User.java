@@ -78,6 +78,7 @@ public class User extends Other {
     public void updateAvatar(ObjectId avatar) {
         MongoCollection userCol = jongo.getCollection("user");
 
+        Media.posted(avatar);
         userCol.update(id).with("{$set:{'avatar':#}}", avatar);
 
         del("user:" + id);

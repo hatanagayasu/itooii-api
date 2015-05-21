@@ -31,8 +31,13 @@ public class Media extends Model {
         mediaCol.save(this);
     }
 
+    public static void posted(ObjectId id) {
+        MongoCollection mediacol = jongo.getCollection("media");
+        mediacol.update(id).with("{$unset:{posted:0}}");
+    }
+
     public static void posted(List<ObjectId> ids) {
-        MongoCollection mediaCol = jongo.getCollection("media");
-        mediaCol.update("{_id:{$in:#}}", ids).multi().with("{$unset:{posted:0}}");
+        MongoCollection mediacol = jongo.getCollection("media");
+        mediacol.update("{_id:{$in:#}}", ids).multi().with("{$unset:{posted:0}}");
     }
 }
