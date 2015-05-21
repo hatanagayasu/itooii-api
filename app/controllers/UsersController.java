@@ -86,12 +86,6 @@ public class UsersController extends AppController {
     public static Result updateAvatar(JsonNode params) {
         User me = getMe(params);
         ObjectId id = getObjectId(params, "id");
-        int width = params.get("width").intValue();
-        int height = params.get("height").intValue();
-        String signing = params.get("signing").textValue();
-
-        if (!Model.md5("#" + id + width + height).equals(signing))
-            throw new RuntimeException(new InvalidSigningException());
 
         me.updateAvatar(id);
 

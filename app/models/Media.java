@@ -18,6 +18,9 @@ public class Media extends Model {
     private Date created;
     private Boolean posted;
 
+    public Media() {
+    }
+
     public Media(ObjectId userId, AttachmentType type) {
         this.id = new ObjectId();
         this.type = type;
@@ -29,11 +32,6 @@ public class Media extends Model {
     public void save() {
         MongoCollection mediaCol = jongo.getCollection("media");
         mediaCol.save(this);
-    }
-
-    public static void posted(ObjectId id) {
-        MongoCollection mediacol = jongo.getCollection("media");
-        mediacol.update(id).with("{$unset:{posted:0}}");
     }
 
     public static void posted(List<ObjectId> ids) {

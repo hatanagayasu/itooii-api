@@ -1,5 +1,7 @@
 package models;
 
+import controllers.exceptions.ObjectForbiddenException;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -77,8 +79,16 @@ public class User extends Other {
 
     public void updateAvatar(ObjectId avatar) {
         MongoCollection userCol = jongo.getCollection("user");
+        MongoCollection mediacol = jongo.getCollection("media");
 
-        Media.posted(avatar);
+        Media media = mediacol.findAndModify("{_id:#,user_id:#,'type':'photo'}", avatar, id)
+            .with("{$unset:{posted:0}}")
+            .projection("{_id:1}")
+            .as(Media.class);
+
+        if (media == null)
+            throw new RuntimeException(new ObjectForbiddenException());
+
         userCol.update(id).with("{$set:{'avatar':#}}", avatar);
 
         del("user:" + id);

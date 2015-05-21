@@ -2,6 +2,7 @@ package controllers;
 
 import controllers.constants.Error;
 import controllers.exceptions.InvalidSigningException;
+import controllers.exceptions.ObjectForbiddenException;
 
 import models.User;
 
@@ -164,6 +165,8 @@ public class DispatchController extends AppController {
             } else if (clazz == RuntimeException.class) {
                 if (e.getCause().getCause().getClass() == InvalidSigningException.class)
                     return Error(Error.INVALID_SIGNING_EXCEPTION);
+                if (e.getCause().getCause().getClass() == ObjectForbiddenException.class)
+                    return Error(Error.OBJECT_FORBIDDEN);
             }
 
             errorlog(e);

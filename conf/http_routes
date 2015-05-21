@@ -46,9 +46,6 @@ POST    /user                       UsersController/add
 PUT     /user                       UsersController/update
 
 @Validation(name="id",type="id",require=true)
-@Validation(name="width",type="integer",require=true)
-@Validation(name="height",type="integer",require=true)
-@Validation(name="signing",require=true)
 PUT     /user/avatar                UsersController/updateAvatar
 
 @Validation(name="skip",type="integer",rule="min=0")
