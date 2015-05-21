@@ -90,6 +90,7 @@ public class MediaController extends AppController {
 
                 if (!thumb.exists()) {
                     BufferedImage img = ImageIO.read(file);
+                    size = img.getWidth() > size ? size : img.getWidth();
                     BufferedImage resizedImg = Scalr.resize(img, Scalr.Mode.FIT_TO_WIDTH, size);
                     ImageIO.write(resizedImg, "jpg", thumb);
                 }
