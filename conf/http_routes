@@ -43,8 +43,13 @@ POST    /user                       UsersController/add
 @Validation(name="nationality",rule="length=2")
 @Validation(name="country",rule="length=2")
 @Validation(name="city")
-@Validation(name="avatar",type="id")
 PUT     /user                       UsersController/update
+
+@Validation(name="id",type="id",require=true)
+@Validation(name="width",type="integer",require=true)
+@Validation(name="height",type="integer",require=true)
+@Validation(name="signing",require=true)
+PUT     /user/avatar                UsersController/updateAvatar
 
 @Validation(name="skip",type="integer",rule="min=0")
 @Validation(name="limit",type="integer",rule="min=1,max=25")

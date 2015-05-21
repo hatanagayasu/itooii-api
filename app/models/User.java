@@ -75,6 +75,14 @@ public class User extends Other {
         del("user:" + id);
     }
 
+    public void updateAvatar(ObjectId avatar) {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        userCol.update(id).with("{$set:{'avatar':#}}", avatar);
+
+        del("user:" + id);
+    }
+
     public void follow(ObjectId userId) {
         MongoCollection following = jongo.getCollection("following");
         MongoCollection follower = jongo.getCollection("follower");

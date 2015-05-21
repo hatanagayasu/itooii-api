@@ -1,9 +1,11 @@
 package controllers;
 
 import controllers.constants.Error;
+import controllers.exceptions.InvalidSigningException;
 
-import models.PracticeLanguage;
+import models.Model;
 import models.Other;
+import models.PracticeLanguage;
 import models.User;
 
 import java.util.ArrayList;
@@ -77,6 +79,21 @@ public class UsersController extends AppController {
     public static Result update(JsonNode params) {
         User me = getMe(params);
         me.update(params);
+
+        return Ok();
+    }
+
+    public static Result updateAvatar(JsonNode params) {
+        User me = getMe(params);
+        ObjectId id = getObjectId(params, "id");
+        int width = params.get("width").intValue();
+        int height = params.get("height").intValue();
+        String signing = params.get("signing").textValue();
+
+        if (!Model.md5("#" + id + width + height).equals(signing))
+            throw new RuntimeException(new InvalidSigningException());
+
+        me.updateAvatar(id);
 
         return Ok();
     }
@@ -193,7 +210,7 @@ public class UsersController extends AppController {
         if (user == null)
             return Error(Error.INCORRECT_USER);
 
-        if (!user.getPassword().equals(models.Model.md5(password)))
+        if (!user.getPassword().equals(Model.md5(password)))
             return Error(Error.INCORRECT_PASSWORD);
 
         ObjectNode result = mapper.createObjectNode();
