@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,6 +29,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class HttpController extends DispatchController {
     private static ObjectNode routes = mapper.createObjectNode();
     private static ObjectNode macros = mapper.createObjectNode();
+    public static final Pattern parenthesesPattern = Pattern.compile("\\(\\s*(.+)\\s*\\)"),
+        pairPattern = Pattern.compile("([^\\s=,]+)\\s*=\\s*(\"[^\"]+\"|[^\\s,\"]+)");
 
     /*
         {
@@ -62,15 +65,15 @@ public class HttpController extends DispatchController {
     */
 
     static {
-        init();
+        parseRoutes("routes");
     }
 
-    private static void init() {
+    private static void parseRoutes(String conf) {
         try {
             ObjectNode validations = null;
             int maxAge = 0;
 
-            File file = new File(Play.application().path(), "conf/http_routes");
+            File file = new File(Play.application().path(), "conf/http_routes/" + conf);
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
             boolean accumulation = false;
@@ -120,13 +123,16 @@ public class HttpController extends DispatchController {
                     }
                 } else if (line.startsWith("@Validation")) {
                     parseVlidation(line, no, validations);
+                } else if (line.startsWith("@Include")) {
+                    Matcher matcher = parenthesesPattern.matcher(line);
+                    if (matcher.find())
+                        parseRoutes(matcher.group(1));
                 } else if (line.startsWith("@")) {
                     String name = line.substring(1);
                     if (!macros.has(name)) {
-                        errorlog("No Such Macro " + name + " at line " + no);
+                        errorlog("No Such Macro " + name + " at " + conf + " line " + no);
                         break;
                     }
-
 
                     JsonNode macro = macros.get(name);
                     Iterator<String> fieldNames = macro.fieldNames();
@@ -148,6 +154,93 @@ public class HttpController extends DispatchController {
         } catch (ClassNotFoundException | NoSuchMethodException e) {
             errorlog(e);
         }
+    }
+
+    private static void parseRule(String value, ObjectNode rules) {
+        for (String rule : value.split(",")) {
+            if (rule.contains("=") && !rule.startsWith("/")) {
+                //TODO
+                String[] pair = rule.split("=");
+                rules.put(pair[0], Integer.parseInt(pair[1]));
+            } else {
+                rules.put(rule, false);
+            }
+        }
+    }
+
+    private static void parseVlidation(String line, int no, ObjectNode validations) {
+        Matcher matcher = parenthesesPattern.matcher(line);
+        if(!matcher.find()) {
+            errorlog("Malformed Vlidation at line " + no);
+            return;
+        }
+
+        ObjectNode validation = mapper.createObjectNode();
+
+        matcher = pairPattern.matcher(matcher.group(1));
+        while(matcher.find()) {
+            String key = matcher.group(1);
+            String value = matcher.group(2).replaceAll("(^\"|\"$)", "");
+
+            if (key.equals("name")) {
+                validation.put("fullName", value);
+            } else if (key.equals("type")) {
+                validation.put("type", value);
+
+                if (value.equals("object"))
+                    validation.putObject("validations");
+            } else if (key.equals("rule")) {
+                parseRule(value, validation.putObject("rules"));
+            } else if (key.equals("depend")) {
+                ObjectNode depend = validation.putObject("depend");
+                String[] segs = value.split("=");
+                depend.put("name", segs[0]);
+                if (segs.length == 2) {
+                    if (segs[1].matches("^\\(.*\\)$")) {
+                        String[] values = segs[1].substring(1, segs[1].length() - 1).split("\\|");
+                        ObjectNode node = depend.putObject("value");
+                        for (String v : values)
+                            node.put(v, false);
+                    } else {
+                        depend.put("value", segs[1]);
+                    }
+                }
+            } else if (key.equals("require")) {
+                validation.put("require", Boolean.parseBoolean(value));
+            } else {
+                errorlog("Unknown attribute " + key + " at line " + no);
+            }
+        }
+
+        if (!validation.has("fullName")) {
+            errorlog("Validation with out name at line " + no);
+            return;
+        }
+
+        if (!validation.has("type"))
+            validation.put("type", "string");
+
+        if (!validation.has("require"))
+            validation.put("require", false);
+
+        ObjectNode parent = validations;
+        String name = validation.get("fullName").textValue();
+        String[] segs = name.split("\\.");
+        if (segs.length > 1) {
+            for (int i = 0; i < segs.length - 1; i++) {
+                if (segs[i].endsWith("[]")) {
+                    parent = parent.with(segs[i].replace("[]", "")).with("validation");
+                    parent = parent.with("validations");
+                } else {
+                    parent = parent.with(segs[i]).with("validations");
+                }
+            }
+        }
+
+        if (name.endsWith("[]"))
+            parent.with(name.replace("[]", "")).set("validation", validation);
+        else
+            parent.set(segs[segs.length - 1], validation);
     }
 
     private static void parseRoute(String line, ObjectNode validations, int maxAge)
@@ -266,6 +359,18 @@ public class HttpController extends DispatchController {
             return convertResult(Error(Error.SERVICE_UNAVAILABLE));
         } catch (MethodNotAllowedException e) {
             return convertResult(Error(Error.METHOD_NOT_ALLOWED));
+        }
+    }
+
+    public static void webSocketDispath(String json) {
+        try {
+            ObjectNode params = mapper.readValue(json, ObjectNode.class);
+
+            JsonNode route = match("POST", params.get("action").textValue());
+
+            invoke(route, params);
+        } catch (Exception e) {
+            errorlog(e);
         }
     }
 

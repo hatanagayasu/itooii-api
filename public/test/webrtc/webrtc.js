@@ -5,15 +5,33 @@
 //            OfferToReceiveVideo: true
 //        }
 //    };
-var socket, user_id, video_chat_id, pair_talk;
+var socket, session, user_id, video_chat_id, pair_talk;
 var peer, offer_config, answer_config, iceServers;
 var remote_video = document.getElementById('remote_video');
 var local_video = document.getElementById('local_video');
 
-function send(data) {
-    json = JSON.stringify(data);
-    console.log(json);
-    socket.send(json);
+function post(action, data) {
+    var option = {
+        type: 'post',
+        url: 'http://' + window.location.host + '/' + action + '?access_token=' + session,
+        timeout: 30000,
+        success: function(data, status) {
+            if (data)
+                console.log(data);
+        },
+        error: function(){
+        }
+    }
+
+    if (data) {
+        console.log(data);
+
+        option.processData = false;
+        option.contentType = 'application/json';
+        option.data = JSON.stringify(data);
+    }
+
+    $.ajax(option);
 }
 
 getUserMedia({
@@ -23,8 +41,7 @@ getUserMedia({
             iceServers: iceServers,
             attachStream: stream,
             onICE : function(candidate) {
-                send({
-                    action: "video/candidate",
+                post("video/candidate", {
                     video_chat_id: video_chat_id,
                     candidate: candidate
                 });
@@ -34,8 +51,7 @@ getUserMedia({
                 remote_video.play();
 
                 if (pair_talk) {
-                    send({
-                        action: "video/connected",
+                    post("video/connected", {
                         video_chat_id: video_chat_id
                     });
                 }
@@ -43,8 +59,7 @@ getUserMedia({
             onRemoteStreamEnded: function(stream) {
             },
             onOfferSDP: function(sdp) {
-                send({
-                    action: "video/offer",
+                post("video/offer", {
                     video_chat_id: video_chat_id,
                     description: sdp
                 });
@@ -55,8 +70,7 @@ getUserMedia({
             iceServers: iceServers,
             attachStream: stream,
             onICE : function(candidate) {
-                send({
-                    action: "video/candidate",
+                post("video/candidate", {
                     video_chat_id: video_chat_id,
                     candidate: candidate
                 });
@@ -66,8 +80,7 @@ getUserMedia({
                 remote_video.play();
 
                 if (pair_talk) {
-                    send({
-                        action: "video/connected",
+                    post("video/connected", {
                         video_chat_id: video_chat_id
                     });
                 }
@@ -75,8 +88,7 @@ getUserMedia({
             onRemoteStreamEnded: function(stream) {
             },
             onAnswerSDP: function(sdp) {
-                send({
-                    action: "video/answer",
+                post("video/answer", {
                     video_chat_id: video_chat_id,
                     description: sdp
                 });
@@ -167,15 +179,14 @@ $(function() {
                 $("#user_id").val(user_id);
 
                 if (confirm("video/request from " + user_id)) {
-                    send({
-                        action: "video/response",
+                    post("video/response", {
                         video_chat_id: video_chat_id,
                         user_id: user_id,
                         confirm: true
                     });
                 } else {
-                    send({
-                        action: "video/response",
+                    post("video/response", {
+                        video_chat_id: video_chat_id,
                         user_id: user_id,
                         confirm: false
                     });
@@ -192,8 +203,7 @@ $(function() {
                 pair_talk = true;
                 user_id = params.user_id;
                 $("#user_id").val(user_id);
-                send({
-                    action: "video/pair_request",
+                post("video/pair_request", {
                     video_chat_id: params.video_chat_id
                 });
             } else if (params.action == 'video/pair_request') {
@@ -201,8 +211,7 @@ $(function() {
                 video_chat_id = params.video_chat_id;
                 user_id = params.user_id;
                 $("#user_id").val(user_id);
-                send({
-                    action: "video/pair_response",
+                post("video/pair_response", {
                     video_chat_id: video_chat_id
                 });
             } else if (params.action == 'video/pair_response') {
@@ -222,6 +231,8 @@ $(function() {
                 alert('video/leave');
             } else if (params.action == 'video/unpair') {
                 $("<p>").text(event.data).prependTo("#messages");
+            } else if (params.action == 'video/session') {
+                session = params.session;
             }
         };
 
@@ -241,14 +252,13 @@ $(function() {
     $("#request").click(function() {
         pair_talk = false;
         user_id = $("#user_id").val();
-        send({
-            action: "video/request",
+        post("video/request", {
             user_id: user_id
         });
     });
 
     $("#ready").click(function() {
-        send({action: "video/ready"});
+        post("video/ready");
     });
 
     $("#leave").click(function() {
@@ -256,7 +266,7 @@ $(function() {
             peer.peer.close();
         if (remote_video.src)
             remote_video.src = "";
-        send({action: "video/leave"});
+        post("video/leave");
     });
 
     $("#submit").click(function() {

@@ -1,0 +1,75 @@
+# DO NOT DELETE THE FOLLOWING BLANK LINE
+
+GET     /user                       UsersController/me
+
+@Anonymous
+@Validation(name="email",rule="email",require=true)
+HEAD    /user                       UsersController/exist
+
+@Anonymous
+@Validation(name="user_id",type="id")
+GET     /user/@user_id              UsersController/get
+
+@Anonymous
+@Validation(name="email",rule="email",require=true)
+@Validation(name="password",require=true)
+@Validation(name="name",require=true)
+@Validation(name="native_language",type="array",rule="minSize=1,maxSize=3",require=true)
+@Validation(name="native_language[]",type="integer",require=true)
+@Validation(name="practice_language",type="array",rule="minSize=0,maxSize=5")
+@Validation(name="practice_language[]",type="object")
+@Validation(name="practice_language[].id",type="integer",require=true)
+@Validation(name="practice_language[].level",type="integer",rule="min=0,max=5",require=true)
+POST    /user                       UsersController/add
+
+@Validation(name="password")
+@Validation(name="name")
+@Validation(name="native_language",type="array",rule="minSize=1,maxSize=3")
+@Validation(name="native_language[]",type="integer")
+@Validation(name="practice_language",type="array",rule="minSize=0,maxSize=5")
+@Validation(name="practice_language[]",type="object")
+@Validation(name="practice_language[].id",type="integer",require=true)
+@Validation(name="practice_language[].level",type="integer",rule="min=0,max=5",require=true)
+@Validation(name="birthday",type="date")
+@Validation(name="gender",type="integer",rule="min=0,max=2")
+@Validation(name="nationality",rule="length=2")
+@Validation(name="country",rule="length=2")
+@Validation(name="city")
+PUT     /user                       UsersController/update
+
+@Validation(name="id",type="id",require=true)
+PUT     /user/avatar                UsersController/updateAvatar
+
+@Validation(name="skip",type="integer",rule="min=0")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /user/followers             UsersController/getFollower
+GET     /user/followings            UsersController/getFollowing
+GET     /user/blockings             UsersController/getBlocking
+
+@Anonymous
+@Validation(name="user_id",type="id")
+@Validation(name="skip",type="integer",rule="min=0")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /user/followers/@user_id    UsersController/getFollower
+GET     /user/followings/@user_id   UsersController/getFollowing
+GET     /users                      UsersController/search
+
+@Privilege(Member)
+@Validation(name="user_id",type="id",require=true)
+POST    /user/following/@user_id    UsersController/follow
+DELETE  /user/following/@user_id    UsersController/unfollow
+POST    /user/blocking/@user_id     UsersController/blocking
+DELETE  /user/blocking/@user_id     UsersController/unblocking
+
+@Anonymous
+@Validation(name="token")
+GET     /user/verify_email/:token   UsersController/verifyEmail
+
+POST    /user/verify_email          UsersController/reverifyEmail
+
+@Anonymous
+@Validation(name="email",rule="email",require=true)
+@Validation(name="password",require=true)
+POST    /access_token               UsersController/login
+
+DELETE  /access_token               UsersController/logout

@@ -1,7 +1,6 @@
 package controllers;
 
 import controllers.constants.Error;
-import controllers.exceptions.InvalidSigningException;
 
 import models.Model;
 import models.Other;

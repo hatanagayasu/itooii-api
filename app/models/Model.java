@@ -419,7 +419,7 @@ public class Model {
             email.setSubject(subject);
             email.setHtml(body);
 
-            SendGrid.Response response = sendgrid.send(email);
+            sendgrid.send(email);
         } catch (SendGridException e) {
             throw new RuntimeException(e);
         }

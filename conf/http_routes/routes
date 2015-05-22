@@ -1,0 +1,45 @@
+@Validation(name="attachments",type="array")
+@Validation(name="attachments[]",type="object")
+@Validation(name="attachments[].type",rule="(photo|video|voice|url)",require=true)
+@Validation(name="attachments[].id",type="id",depend="type=(photo|video|voice)")
+@Validation(name="attachments[].width",type="integer",depend="type=photo")
+@Validation(name="attachments[].height",type="integer",depend="type=photo")
+@Validation(name="attachments[].signing",depend="type=photo")
+@Validation(name="attachments[].url",depend="type=url")
+@Macro(attachments)
+
+@Include(user)
+@Include(post)
+@Include(video)
+
+@Anonymous
+@CacheControl(31536000)
+@Validation(name="id",type="id")
+@Validation(name="size",type="integer",rule="min=1,max=1024")
+GET     /media/@id                  MediaController/download
+GET     /media/:size/@id            MediaController/download
+GET     /avatar/:size/@id           MediaController/avatar
+
+POST    /media                      MediaController/upload
+
+@Validation(name="user_id",type="id")
+@Validation(name="until",type="epoch")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /messages/@user_id          MessagesController/get
+
+@Privilege(Member)
+@Validation(name="user_id",type="id")
+@Validation(name="text",depend="|attachments")
+@attachments
+POST    /messages/@user_id          MessagesController/add
+
+@Anonymous
+@CacheControl
+@Validation(name="id",rule="length=2")
+GET     /app/countries              Application/getCountry
+GET     /app/country/:id/cities     Application/getCity
+GET     /app/languages              Application/getLanguage
+GET     /app/locales                Application/getLocale
+
+@Anonymous
+POST    /echo                       TestController/echo

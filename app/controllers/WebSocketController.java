@@ -1,22 +1,12 @@
 package controllers;
 
-import play.Play;
 import play.libs.F.*;
 import play.mvc.WebSocket;
-
-import controllers.constants.Error;
 
 import models.Model;
 import models.User;
 import models.VideoChat;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.ClassNotFoundException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -24,8 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import redis.clients.jedis.JedisPubSub;
 
@@ -41,29 +29,6 @@ public class WebSocketController extends DispatchController {
         }
         {
             token : WebSocket.Out<String>,
-            ...
-        }
-    */
-
-    private static ObjectNode routes = mapper.createObjectNode();
-    /*
-        {
-            action : {
-                method : Method,
-                validations : {
-                    name : {
-                        fullName : String,
-                        type : String,
-                        rules : {{}, ...},
-                        require : Boolean
-                    },
-                    // type array
-                    name : { ..., validation : {} },
-                    // type object
-                    name : { ..., validations : {{}, ...} },
-                    ...
-                }
-            },
             ...
         }
     */
@@ -85,103 +50,17 @@ public class WebSocketController extends DispatchController {
             } else if (channel.equals("pair")) {
                 String[] segs = message.split("\n");
                 if (sessionToSocket.containsKey(segs[0]))
-                    dispatch(null, segs[1]);
+                    controllers.HttpController.webSocketDispath(segs[1]);
             }
         }
     };
 
     static {
-        init();
-    }
-
-    private static void init() {
-        try {
-            ObjectNode validations = null;
-            ObjectNode access = mapper.createObjectNode();
-
-            access.put("fullName", "access_token")
-                .put("type", "access_token")
-                .put("require", true);
-
-            File file = new File(Play.application().path(), "conf/websocket_routes");
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-
-            boolean accumulation = false;
-            String line;
-            int no = 0;
-            while ((line = bufferedReader.readLine()) != null) {
-                no++;
-
-                if (!accumulation && (line.startsWith("@") || line.matches("\\s*"))) {
-                    accumulation = true;
-
-                    validations = mapper.createObjectNode();
-                    validations.set("access_token", access);
-                }
-
-                if (line.startsWith("#") || line.matches("\\s*"))
-                    continue;
-
-                if (line.startsWith("@Anonymous")) {
-                    validations.remove("access_token");
-                } else if (line.startsWith("@Validation")) {
-                    parseVlidation(line, no, validations);
-                } else {
-                    accumulation = false;
-
-                    String[] parts = line.split("\\s+");
-                    String[] pair = parts[1].split("/");
-
-                    ObjectNode route = routes.putObject(parts[0]);
-
-                    Class<?> clazz = Class.forName("controllers." + pair[0]);
-                    Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
-                    route.putPOJO("method", method);
-
-                    if (validations.size() > 0)
-                        route.set("validations", validations);
-                }
-            }
-
-            bufferedReader.close();
-        } catch (FileNotFoundException e) {
-            errorlog(e);
-        } catch (IOException e) {
-            errorlog(e);
-        } catch (ClassNotFoundException | NoSuchMethodException e) {
-            errorlog(e);
-        }
-
         new Thread(new Runnable() {
             public void run() {
                 Model.subscribe(pubsub, "all", "user", "session", "pair");
             }
         }).start();
-    }
-
-    private static Result dispatch(String token, String event) {
-        try {
-            ObjectNode params = mapper.readValue(event, ObjectNode.class);
-            if (!params.has("action"))
-                return Error(Error.SERVICE_UNAVAILABLE);
-            params.put("access_token", token);
-
-            String action = params.get("action").textValue();
-
-            JsonNode route = routes.get(action);
-            if (route == null)
-                return Error(Error.SERVICE_UNAVAILABLE);
-
-            Result result = invoke(route, params);
-
-            return result;
-        } catch (IOException e) {
-            return Error(Error.MALFORMED_JSON);
-        } catch (Exception e) {
-            errorlog(e);
-
-            return Error(Error.INTERNAL_SERVER_ERROR);
-        }
     }
 
     public static WebSocket<String> websocket() {
@@ -201,13 +80,15 @@ public class WebSocketController extends DispatchController {
                         userToSockets.put(userId, sockets);
                     }
                     sockets.add(out);
+
+                    out.write("{\"action\":\"video/session\",\"session\":\"" + session + "\"}");
                 }
 
                 sessionToSocket.put(session, out);
 
                 in.onMessage(new Callback<String>() {
                     public void invoke(String event) {
-                        out.write(dispatch(session, event).toString());
+                        out.write(event);
                     }
                 });
 

@@ -1,0 +1,49 @@
+@Anonymous
+@CacheControl
+GET     /video/ice_servers          VideoChatController/getIceServers
+
+@Privilege(Member)
+POST    /video/ready                VideoChatController/ready
+POST    /video/leave                VideoChatController/leave
+
+@Privilege(Member)
+@Validation(name="user_id",type="id",require=true)
+POST    /video/request              VideoChatController/request
+
+@Privilege(Member)
+@Validation(name="user_id",type="id",require=true)
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="confirm",type="boolean",require=true)
+POST    /video/response             VideoChatController/response
+
+@Validation(name="video_chat_id",type="id",require=true)
+POST    /video/pair_request         VideoChatController/pairRequest
+POST    /video/pair_response        VideoChatController/pairResponse
+
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="description",type="object",rule="passUnder",require=true)
+POST    /video/offer                VideoChatController/offer
+POST    /video/answer               VideoChatController/answer
+
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="candidate",type="object",rule="passUnder",require=true)
+POST    /video/candidate            VideoChatController/candidate
+
+@Anonymous
+@Validation(name="offer_id",type="id",require=true)
+@Validation(name="answer_id",type="id",require=true)
+@Validation(name="lang0",type="integer",require=true)
+@Validation(name="lang1",type="integer",require=true)
+POST    /video/pair                 VideoChatController/pair
+
+@Anonymous
+@Validation(name="offer_id",type="id",require=true)
+POST    /video/unpair               VideoChatController/unpair
+
+@Validation(name="video_chat_id",type="id",require=true)
+POST    /video/connected            VideoChatController/connected
+
+@Privilege(Member)
+@Validation(name="video_chat_id",type="id",require=true)
+@Validation(name="rate",type="integer",rule="min=0,max=5",require=true)
+POST    /video/rate/@video_chat_id  VideoChatController/rate

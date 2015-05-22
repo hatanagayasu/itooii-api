@@ -14,8 +14,6 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.Iterator;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -25,96 +23,6 @@ import org.bson.types.ObjectId;
 import com.mongodb.DuplicateKeyException;
 
 public class DispatchController extends AppController {
-    public static final Pattern parenthesesPattern = Pattern.compile("\\(\\s*(.+)\\s*\\)"),
-        pairPattern = Pattern.compile("([^\\s=,]+)\\s*=\\s*(\"[^\"]+\"|[^\\s,\"]+)");
-
-    private static void parseRule(String value, ObjectNode rules) {
-        for (String rule : value.split(",")) {
-            if (rule.contains("=") && !rule.startsWith("/")) {
-                //TODO
-                String[] pair = rule.split("=");
-                rules.put(pair[0], Integer.parseInt(pair[1]));
-            } else {
-                rules.put(rule, false);
-            }
-        }
-    }
-
-    public static void parseVlidation(String line, int no, ObjectNode validations) {
-        Matcher matcher = parenthesesPattern.matcher(line);
-        if(!matcher.find()) {
-            errorlog("Malformed Vlidation at line " + no);
-            return;
-        }
-
-        ObjectNode validation = mapper.createObjectNode();
-
-        matcher = pairPattern.matcher(matcher.group(1));
-        while(matcher.find()) {
-            String key = matcher.group(1);
-            String value = matcher.group(2).replaceAll("(^\"|\"$)", "");
-
-            if (key.equals("name")) {
-                validation.put("fullName", value);
-            } else if (key.equals("type")) {
-                validation.put("type", value);
-
-                if (value.equals("object"))
-                    validation.putObject("validations");
-            } else if (key.equals("rule")) {
-                parseRule(value, validation.putObject("rules"));
-            } else if (key.equals("depend")) {
-                ObjectNode depend = validation.putObject("depend");
-                String[] segs = value.split("=");
-                depend.put("name", segs[0]);
-                if (segs.length == 2) {
-                    if (segs[1].matches("^\\(.*\\)$")) {
-                        String[] values = segs[1].substring(1, segs[1].length() - 1).split("\\|");
-                        ObjectNode node = depend.putObject("value");
-                        for (String v : values)
-                            node.put(v, false);
-                    } else {
-                        depend.put("value", segs[1]);
-                    }
-                }
-            } else if (key.equals("require")) {
-                validation.put("require", Boolean.parseBoolean(value));
-            } else {
-                errorlog("Unknown attribute " + key + " at line " + no);
-            }
-        }
-
-        if (!validation.has("fullName")) {
-            errorlog("Validation with out name at line " + no);
-            return;
-        }
-
-        if (!validation.has("type"))
-            validation.put("type", "string");
-
-        if (!validation.has("require"))
-            validation.put("require", false);
-
-        ObjectNode parent = validations;
-        String name = validation.get("fullName").textValue();
-        String[] segs = name.split("\\.");
-        if (segs.length > 1) {
-            for (int i = 0; i < segs.length - 1; i++) {
-                if (segs[i].endsWith("[]")) {
-                    parent = parent.with(segs[i].replace("[]", "")).with("validation");
-                    parent = parent.with("validations");
-                } else {
-                    parent = parent.with(segs[i]).with("validations");
-                }
-            }
-        }
-
-        if (name.endsWith("[]"))
-            parent.with(name.replace("[]", "")).set("validation", validation);
-        else
-            parent.set(segs[segs.length - 1], validation);
-    }
-
     private static class MissingParamException extends Exception {
         private static final long serialVersionUID = -1;
 
@@ -132,11 +40,11 @@ public class DispatchController extends AppController {
     }
 
     private static class InvalidAccessTokenException extends Exception {
-        public static final long serialVersionUID = -1;
+        private static final long serialVersionUID = -1;
     }
 
     private static class ForbiddenException extends Exception {
-        public static final long serialVersionUID = -1;
+        private static final long serialVersionUID = -1;
     }
 
     public static Result invoke(JsonNode route, ObjectNode params) {
