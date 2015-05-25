@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   cache,
   javaWs,
   "com.amazonaws" % "aws-java-sdk" % "1.9.21",
+  "com.drewnoakes" % "metadata-extractor" % "2.8.1",
   "com.google.guava" % "guava" % "16.0.1",
   "com.sendgrid" % "sendgrid-java" % "2.2.0",
   "org.imgscalr" % "imgscalr-lib" % "4.2",

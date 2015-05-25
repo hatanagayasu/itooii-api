@@ -25,6 +25,12 @@ import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.exif.ExifIFD0Directory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -128,9 +134,28 @@ public class MediaController extends AppController {
 
     private static void uploadPohto(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {
         try {
+            Metadata metadata = ImageMetadataReader.readMetadata(part.getFile());
+            int orientation = 0;
+            if (metadata.containsDirectoryOfType(ExifIFD0Directory.class)) {
+                orientation = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class)
+                    .getInt(ExifIFD0Directory.TAG_ORIENTATION);
+            }
+
             BufferedImage img = ImageIO.read(part.getFile());
-            int size = img.getWidth() > 1024 ? 1024 : img.getWidth();
-            BufferedImage resizedImg = Scalr.resize(img, size);
+            int size = img.getWidth() >= img.getHeight() ?
+                (img.getWidth() > 1024 ? 1024 : img.getWidth()) :
+                (img.getHeight() > 1024 ? 1024 : img.getHeight());
+            Scalr.Mode mode = img.getWidth() >= img.getHeight() ?
+                Scalr.Mode.FIT_TO_WIDTH : Scalr.Mode.FIT_TO_HEIGHT;
+            BufferedImage resizedImg = Scalr.resize(img, mode, size);
+
+            if (orientation == 3 || orientation == 4)
+                resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_180);
+            else if (orientation == 5 || orientation == 6)
+                resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_90);
+            else if (orientation == 7 || orientation == 8)
+                resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_270);
+
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(resizedImg, "jpg", os);
 
@@ -153,7 +178,7 @@ public class MediaController extends AppController {
                 .put("width", resizedImg.getWidth())
                 .put("height", resizedImg.getHeight())
                 .put("signing", signing);
-        } catch (IOException e) {
+        } catch (IOException | ImageProcessingException | MetadataException e) {
             throw new RuntimeException(e);
         }
     }
