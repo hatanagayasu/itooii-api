@@ -50,7 +50,7 @@ public class WebSocketController extends DispatchController {
             } else if (channel.equals("pair")) {
                 String[] segs = message.split("\n");
                 if (sessionToSocket.containsKey(segs[0]))
-                    controllers.HttpController.webSocketDispath(segs[1]);
+                    HttpController.webSocketDispath(segs[1]);
             }
         }
     };
@@ -88,7 +88,7 @@ public class WebSocketController extends DispatchController {
 
                 in.onMessage(new Callback<String>() {
                     public void invoke(String event) {
-                        out.write(event);
+                        out.write(HttpController.webSocketDispath(event, session).toString());
                     }
                 });
 

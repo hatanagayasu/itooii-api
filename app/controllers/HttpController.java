@@ -362,15 +362,29 @@ public class HttpController extends DispatchController {
         }
     }
 
-    public static void webSocketDispath(String json) {
+    public static Result webSocketDispath(String json) {
+        return webSocketDispath(json, null);
+    }
+
+    public static Result webSocketDispath(String json, String session) {
         try {
             ObjectNode params = mapper.readValue(json, ObjectNode.class);
 
-            JsonNode route = match("POST", params.get("action").textValue());
+            if (session != null)
+                params.put("access_token", session);
 
-            invoke(route, params);
-        } catch (Exception e) {
-            errorlog(e);
+            String method = params.has("method") ?
+                params.get("method").textValue().toUpperCase() : "POST";
+
+            JsonNode route = match(method, params.get("action").textValue());
+
+            return invoke(route, params);
+        } catch (ServiceUnavailableException e) {
+            return Error(Error.SERVICE_UNAVAILABLE);
+        } catch (MethodNotAllowedException e) {
+            return Error(Error.METHOD_NOT_ALLOWED);
+        } catch (IOException e) {
+            return Error(Error.MALFORMED_JSON);
         }
     }
 
