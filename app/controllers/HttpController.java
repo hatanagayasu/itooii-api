@@ -65,7 +65,7 @@ public class HttpController extends DispatchController {
     */
 
     static {
-        parseRoutes("routes");
+        parseRoutes("main");
     }
 
     private static void parseRoutes(String conf) {
