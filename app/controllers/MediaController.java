@@ -27,6 +27,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
@@ -137,8 +138,9 @@ public class MediaController extends AppController {
             Metadata metadata = ImageMetadataReader.readMetadata(part.getFile());
             int orientation = 0;
             if (metadata.containsDirectoryOfType(ExifIFD0Directory.class)) {
-                orientation = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class)
-                    .getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+                if (directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION))
+                    orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
             }
 
             BufferedImage img = ImageIO.read(part.getFile());
