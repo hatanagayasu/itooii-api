@@ -46,7 +46,7 @@ public class Model {
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
     private static LoadingCache<ObjectId, String> names = CacheBuilder.newBuilder()
-        .maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES)
+        .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
         .build(new CacheLoader<ObjectId, String>() {
             public String load(ObjectId userId) {
                 User user = User.get(userId);
@@ -56,7 +56,7 @@ public class Model {
         });
 
     private static LoadingCache<ObjectId, ObjectId> avatars = CacheBuilder.newBuilder()
-        .maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES)
+        .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
         .build(new CacheLoader<ObjectId, ObjectId>() {
             public ObjectId load(ObjectId userId) {
                 User user = User.get(userId);
@@ -94,6 +94,10 @@ public class Model {
         } catch (JedisConnectionException e) {
             //TODO
         }
+    }
+
+    public static void errorlog(Object error) {
+        Logger.error(error.toString());
     }
 
     public static void errorlog(Throwable cause) {

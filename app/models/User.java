@@ -102,6 +102,14 @@ public class User extends Other {
         follower.save(new Follower(userId, id));
 
         del("user:" + id, "user:" + userId);
+
+        List<Attachment> attachments = new ArrayList<Attachment>(1);
+        attachments.add(new Attachment(AttachmentType.follow, userId));
+        Post post = new Post(id, null, attachments, true);
+        post.save();
+
+        if (follower != null)
+            new Activity(id, ActivityType.follow, post.getId(), followers).queue();
     }
 
     public void unfollow(ObjectId userId) {

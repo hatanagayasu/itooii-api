@@ -2,6 +2,7 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -30,15 +31,23 @@ public class Post extends Model {
     private Date created;
     @JsonProperty("comment_count")
     private int commentCount;
+    private Set<ObjectId> commentators;
     private List<Comment> comments;
     @JsonProperty("like_count")
     private int likeCount;
     private Set<ObjectId> likes;
+    private Boolean automatic;
+    @JsonIgnore
+    private List<Relevant> relevants;
 
     public Post() {
     }
 
     public Post(ObjectId userId, String text, List<Attachment> attachments) {
+        this(userId, text, attachments, null);
+    }
+
+    public Post(ObjectId userId, String text, List<Attachment> attachments, Boolean automatic) {
         this.id = new ObjectId();
         this.userId = userId;
         this.text = text;
@@ -47,9 +56,14 @@ public class Post extends Model {
         this.created = new Date();
         this.commentCount = 0;
         this.likeCount = 0;
+        this.automatic = automatic;
 
         this.userName = name(userId);
         this.userAvatar = avatar(userId);
+    }
+
+    public void save() {
+        save(null);
     }
 
     public void save(User user) {
@@ -68,7 +82,13 @@ public class Post extends Model {
 
         postCol.save(this);
 
-        Feed.update(user, id);
+        if (user != null) {
+            Set<ObjectId> ids = new HashSet<ObjectId>();
+            ids.add(user.getId());
+            if (user.getFollowers() != null)
+                ids.addAll(user.getFollowers());
+            new Activity(userId, ActivityType.post, id, ids).queue();
+        }
     }
 
     public void postproduct(ObjectId userId) {
@@ -77,6 +97,16 @@ public class Post extends Model {
 
         if (comments != null)
             Comment.postproduct(comments, userId);
+    }
+
+    public void postproduct(ObjectId userId, List<Relevant> relevants) {
+        postproduct(id);
+
+        if (relevants != null) {
+            this.relevants = relevants;
+            for (Relevant relevant : relevants)
+                relevant.postproduct();
+        }
     }
 
     public static Post get(ObjectId postId) {
@@ -100,27 +130,28 @@ public class Post extends Model {
         String previous = null;
 
         MongoCursor<Post> cursor = postCol
-            .find("{user_id:#,created:{$lt:#}}", userId, new Date(until))
+            .find("{user_id:#,created:{$lt:#},automatic:{$ne:true}}", userId, new Date(until))
             .sort("{created:-1}")
             .limit(limit)
             .as(Post.class);
 
         List<Post> posts = new ArrayList<Post>(limit);
+        Post post = null;
         while (cursor.hasNext()) {
-            Post post = cursor.next();
+            post = cursor.next();
             post.postproduct(userId);
             posts.add(post);
+        }
+
+        if (cursor.count() == limit) {
+            until = post.getCreated().getTime();
+            previous = String.format("until=%d&limit=%d", until, limit);
         }
 
         try {
             cursor.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-
-        if (posts.size() == limit) {
-            until = posts.get(posts.size() - 1).getCreated().getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
         }
 
         return new Page(posts, previous);
@@ -131,11 +162,22 @@ public class Post extends Model {
 
         Post post = postCol.findAndModify("{_id:#,likes:{$ne:#}}", postId, userId)
             .with("{$addToSet:{likes:#},$inc:{like_count:1}}", userId)
-            .projection("{_id:1}")
+            .projection("{_id:1,user_id:1,commentators:1,likes:1}")
             .as(Post.class);
 
-        if (post != null)
+        if (post != null) {
             del("post:" + postId);
+
+            if (!userId.equals(post.getUserId())) {
+                new Activity(userId, ActivityType.likeYourPost, postId, post.getUserId()).queue();
+            }
+            Set<ObjectId> commentators = post.getCommentators();
+            if (commentators != null) {
+                commentators.remove(userId);
+                commentators.remove(post.getUserId());
+                new Activity(userId, ActivityType.likePostYouComment, postId, commentators).queue();
+            }
+        }
     }
 
     public static void unlike(ObjectId postId, ObjectId userId) {

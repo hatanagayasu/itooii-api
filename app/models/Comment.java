@@ -55,8 +55,9 @@ public class Comment extends Model {
 
         Post post = postCol
             .findAndModify("{_id:#}", postId)
-            .with("{$inc:{comment_count:1},$push:{comments:{$each:[#],$slice:-4}}}", this)
-            .projection("{comment_count:1}")
+            .with("{$inc:{comment_count:1},$addToSet:{commentators:#}" +
+                ",$push:{comments:{$each:[#],$slice:-4}}}", userId, this)
+            .projection("{user_id:1,comment_count:1,commentators:1}")
             .as(Post.class);
 
         if (post == null)
@@ -67,6 +68,22 @@ public class Comment extends Model {
             .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
 
         del("post:" + postId);
+
+        if (!userId.equals(post.getUserId())) {
+            new Activity(userId, ActivityType.commentYoutPost, postId, post.getUserId()).queue();
+        }
+        Set<ObjectId> commentators = post.getCommentators();
+        if (commentators != null) {
+            commentators.remove(userId);
+            commentators.remove(post.getUserId());
+            new Activity(userId, ActivityType.commentPostYouComment, postId, commentators).queue();
+        }
+        Set<ObjectId> likes = post.getLikes();
+        if (userId.equals(post.getUserId()) && likes != null) {
+            likes.remove(userId);
+            likes.remove(post.getUserId());
+            new Activity(userId, ActivityType.ownerCommentPostYouLike, postId, likes).queue();
+        }
     }
 
     public static Page get(ObjectId postId, ObjectId userId, long until, int limit) {
@@ -130,15 +147,30 @@ public class Comment extends Model {
         MongoCollection commentCol = jongo.getCollection("comment");
         MongoCollection postCol = jongo.getCollection("post");
 
-        commentCol.update("{'comments._id':#}", commentId)
-            .with("{$addToSet:{'comments.$.likes':#}}", userId);
+        Comments comments = commentCol.findAndModify("{'comments._id':#}", commentId)
+            .with("{$addToSet:{'comments.$.likes':#}}", userId)
+            .projection("{comments:{$elemMatch:{_id:#}}}", commentId)
+            .as(Comments.class);
+
+        if (comments == null)
+            return;
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
-            .with("{$addToSet:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+            .with("{$addToSet:{'comments.$.likes':#}}", userId)
+            .projection("{_id:1,user_id:1}")
             .as(Post.class);
 
-        if (post != null)
+        if (post != null) {
             del("post:" + post.getId());
+
+            if (!userId.equals(post.getUserId())) {
+                ObjectId commentator = comments.getComments().get(0).getUserId();
+                if (!userId.equals(commentator)) {
+                    new Activity(userId, ActivityType.likeYourComment, post.getId(), commentator)
+                        .queue();
+                }
+            }
+        }
     }
 
     public static void unlike(ObjectId commentId, ObjectId userId) {

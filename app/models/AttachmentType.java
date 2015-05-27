@@ -1,5 +1,5 @@
 package models;
 
 public enum AttachmentType {
-    photo, video, voice, url;
+    photo, video, voice, url, follow;
 }

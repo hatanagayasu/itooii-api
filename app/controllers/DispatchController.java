@@ -211,14 +211,14 @@ public class DispatchController extends AppController {
                 int privilege = validation.get("privilege").intValue();
                 if (user.getPrivilege() < privilege)
                     throw new ForbiddenException();
-            } else if (type.equals("epoch")) {
+            } else if (type.equals("long")) {
                 if (param.isTextual()) {
                     try {
-                        long epoch = Long.parseLong(param.textValue());
-                        if (epoch < 0)
+                        long value = Long.parseLong(param.textValue());
+                        if (value < 0)
                             throw new MalformedParamException(validation);
 
-                        params.put(name, epoch);
+                        params.put(name, value);
                     } catch (NumberFormatException e) {
                         throw new MalformedParamException(validation);
                     }

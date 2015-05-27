@@ -23,7 +23,7 @@ GET     /avatar/:size/@id           MediaController/avatar
 POST    /media                      MediaController/upload
 
 @Validation(name="user_id",type="id")
-@Validation(name="until",type="epoch")
+@Validation(name="until",type="long")
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 GET     /messages/@user_id          MessagesController/get
 
