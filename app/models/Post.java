@@ -100,7 +100,7 @@ public class Post extends Model {
     }
 
     public void postproduct(ObjectId userId, List<Relevant> relevants) {
-        postproduct(id);
+        postproduct(userId);
 
         if (relevants != null) {
             this.relevants = relevants;
