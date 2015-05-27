@@ -80,7 +80,7 @@ public class Activity extends Model {
 
         actCol.update("{user_id:#,type:#,post_id:#}", userId, type, postId)
             .upsert()
-            .with("{$addToSet:{receivers:#},$setOnInsert:{created:#}}", receivers, created);
+            .with("{$addToSet:{receivers:#},$set:{created:#}}", receivers, created);
 
         Date modified = new Date();
         for (ObjectId receiver : receivers) {
