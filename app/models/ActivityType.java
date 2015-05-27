@@ -3,7 +3,7 @@ package models;
 public enum ActivityType {
     follow(1),
     post(2),
-    commentYoutPost(3),
+    commentYourPost(3),
     likeYourPost(4),
     likeYourComment(5),
     commentPostYouComment(6),

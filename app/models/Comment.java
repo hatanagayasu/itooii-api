@@ -57,7 +57,7 @@ public class Comment extends Model {
             .findAndModify("{_id:#}", postId)
             .with("{$inc:{comment_count:1},$addToSet:{commentators:#}" +
                 ",$push:{comments:{$each:[#],$slice:-4}}}", userId, this)
-            .projection("{user_id:1,comment_count:1,commentators:1}")
+            .projection("{user_id:1,comment_count:1,commentators:1,likes:1}")
             .as(Post.class);
 
         if (post == null)
@@ -70,7 +70,7 @@ public class Comment extends Model {
         del("post:" + postId);
 
         if (!userId.equals(post.getUserId())) {
-            new Activity(userId, ActivityType.commentYoutPost, postId, post.getUserId()).queue();
+            new Activity(userId, ActivityType.commentYourPost, postId, post.getUserId()).queue();
         }
         Set<ObjectId> commentators = post.getCommentators();
         if (commentators != null) {
@@ -81,7 +81,6 @@ public class Comment extends Model {
         Set<ObjectId> likes = post.getLikes();
         if (userId.equals(post.getUserId()) && likes != null) {
             likes.remove(userId);
-            likes.remove(post.getUserId());
             new Activity(userId, ActivityType.ownerCommentPostYouLike, postId, likes).queue();
         }
     }
