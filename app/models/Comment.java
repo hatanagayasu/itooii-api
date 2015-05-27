@@ -156,18 +156,16 @@ public class Comment extends Model {
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
             .with("{$addToSet:{'comments.$.likes':#}}", userId)
-            .projection("{_id:1,user_id:1}")
+            .projection("{_id:1}")
             .as(Post.class);
 
         if (post != null) {
             del("post:" + post.getId());
 
-            if (!userId.equals(post.getUserId())) {
-                ObjectId commentator = comments.getComments().get(0).getUserId();
-                if (!userId.equals(commentator)) {
-                    new Activity(userId, ActivityType.likeYourComment, post.getId(), commentator)
-                        .queue();
-                }
+            ObjectId commentator = comments.getComments().get(0).getUserId();
+            if (!userId.equals(commentator)) {
+                new Activity(userId, ActivityType.likeYourComment, post.getId(), commentator)
+                    .queue();
             }
         }
     }
