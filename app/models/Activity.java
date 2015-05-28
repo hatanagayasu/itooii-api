@@ -44,6 +44,7 @@ public class Activity extends Model {
     }
 
     private Activity(ObjectId userId, ActivityType type, ObjectId postId) {
+        this.id = new ObjectId();
         this.userId = userId;
         this.type = type.value();
         this.postId = postId;
@@ -78,9 +79,7 @@ public class Activity extends Model {
         if (receivers == null || receivers.size() == 0)
             return;
 
-        actCol.update("{user_id:#,type:#,post_id:#}", userId, type, postId)
-            .upsert()
-            .with("{$addToSet:{receivers:#},$set:{created:#}}", receivers, created);
+        actCol.save(this);
 
         Date modified = new Date();
         for (ObjectId receiver : receivers) {

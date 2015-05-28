@@ -15,15 +15,11 @@ public class Relevant extends Model {
     @JsonIgnore
     @JsonProperty("user_name")
     private String userName;
-    @JsonIgnore
-    @JsonProperty("user_avatar")
-    private ObjectId userAvatar;
 
     public Relevant() {
     }
 
     public void postproduct() {
         userName = name(this.userId);
-        userAvatar = avatar(this.userId);
     }
 }
