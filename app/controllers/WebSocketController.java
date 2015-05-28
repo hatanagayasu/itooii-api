@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bson.types.ObjectId;
 import redis.clients.jedis.JedisPubSub;
 
-public class WebSocketController extends DispatchController {
+public class WebSocketController extends AppController {
     private static Map<String, Set<WebSocket.Out<String>>> userToSockets =
         new ConcurrentHashMap<String, Set<WebSocket.Out<String>>>();
     private static Map<String, WebSocket.Out<String>> sessionToSocket =
