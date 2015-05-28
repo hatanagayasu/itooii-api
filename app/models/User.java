@@ -72,7 +72,8 @@ public class User extends Other {
             params.put("password", md5(password));
         }
 
-        userCol.update(id).with("{$set:#}", params);
+        if (params.size() > 0)
+            userCol.update(id).with("{$set:#}", params);
 
         del(id);
     }
@@ -89,9 +90,10 @@ public class User extends Other {
         if (media == null)
             throw new RuntimeException(new ObjectForbiddenException());
 
-        userCol.update(id).with("{$set:{'avatar':#}}", avatar);
+        ObjectNode params = mapper.createObjectNode();
+        params.putPOJO("avatar", avatar);
 
-        del(id);
+        update(params);
     }
 
     public void follow(ObjectId userId) {
@@ -151,11 +153,13 @@ public class User extends Other {
 
         User user = userCol.findAndModify("{email_verified_token:#}", token)
             .with("{$set:{email_verified:true},$unset:{email_verified_token:0}}")
-            .projection("{_id:1}")
+            .projection("{password:0}")
             .as(User.class);
 
-        if (user != null)
-            del(user.id);
+        if (user != null) {
+            ObjectNode params = mapper.createObjectNode();
+            user.update(params);
+        }
 
         return user;
     }
