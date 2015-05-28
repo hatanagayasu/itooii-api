@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -442,7 +443,6 @@ public class HttpController extends AppController {
     private static void validations(JsonNode validations, ObjectNode params)
         throws MissingParamException, MalformedParamException, InvalidAccessTokenException,
         ForbiddenException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         Iterator<String> fieldNames = validations.fieldNames();
         while (fieldNames.hasNext()) {
@@ -535,6 +535,8 @@ public class HttpController extends AppController {
                     throw new MalformedParamException(validation);
 
                 try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                     params.putPOJO(name, sdf.parse(param.textValue()));
                 } catch (ParseException e) {
                     throw new MalformedParamException(validation);
