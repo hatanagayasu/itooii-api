@@ -339,9 +339,7 @@ public class Model {
         Jedis jedis = jedisPool.getResource();
 
         try {
-            for (String key : keys)
-                jedis.del(key);
-
+            jedis.del(keys);
             jedisPool.returnResource(jedis);
         } catch (JedisConnectionException e) {
             jedisPool.returnBrokenResource(jedis);
