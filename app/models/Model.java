@@ -24,9 +24,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.sendgrid.SendGrid;
 import com.sendgrid.SendGridException;
 
@@ -44,26 +41,6 @@ public class Model {
     public static Configuration conf = Play.application().configuration();
     public static ObjectMapper mapper = new ObjectMapper();
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
-
-    private static LoadingCache<ObjectId, String> names = CacheBuilder.newBuilder()
-        .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
-        .build(new CacheLoader<ObjectId, String>() {
-            public String load(ObjectId userId) {
-                User user = User.get(userId);
-
-                return user == null ? null : user.getName();
-            }
-        });
-
-    private static LoadingCache<ObjectId, ObjectId> avatars = CacheBuilder.newBuilder()
-        .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES)
-        .build(new CacheLoader<ObjectId, ObjectId>() {
-            public ObjectId load(ObjectId userId) {
-                User user = User.get(userId);
-
-                return user == null ? null : user.getAvatar();
-            }
-        });
 
     public static DB mongodb;
     public static Jongo jongo;
@@ -397,19 +374,37 @@ public class Model {
     }
 
     public static String name(ObjectId userId) {
-        try {
-            return names.get(userId);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        String key = "name:" + userId;
+
+        String name = get(key);
+        if (name != null)
+            return name;
+
+        User user = User.get(userId);
+        if (user == null)
+            return null;
+
+        if (user.getName() != null)
+            set(key, user.getName());
+
+        return user.getName();
     }
 
     public static ObjectId avatar(ObjectId userId) {
-        try {
-            return avatars.get(userId);
-        } catch (Exception e) {
+        String key = "avatar:" + userId;
+
+        String avatar = get(key);
+        if (avatar != null)
+            return new ObjectId(avatar);
+
+        User user = User.get(userId);
+        if (user == null)
             return null;
-        }
+
+        if (user.getAvatar() != null)
+            set(key, user.getAvatar().toString());
+
+        return user.getAvatar();
     }
 
     public static void sendmail(String to, String subject, String body) {

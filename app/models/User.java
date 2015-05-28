@@ -74,7 +74,7 @@ public class User extends Other {
 
         userCol.update(id).with("{$set:#}", params);
 
-        del("user:" + id);
+        del(id);
     }
 
     public void updateAvatar(ObjectId avatar) {
@@ -91,7 +91,7 @@ public class User extends Other {
 
         userCol.update(id).with("{$set:{'avatar':#}}", avatar);
 
-        del("user:" + id);
+        del(id);
     }
 
     public void follow(ObjectId userId) {
@@ -101,7 +101,7 @@ public class User extends Other {
         following.save(new Following(id, userId));
         follower.save(new Follower(userId, id));
 
-        del("user:" + id, "user:" + userId);
+        del(id, userId);
 
         List<Attachment> attachments = new ArrayList<Attachment>(1);
         attachments.add(new Attachment(AttachmentType.follow, userId));
@@ -119,7 +119,7 @@ public class User extends Other {
         following.remove("{user_id:#,following_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        del("user:" + id, "user:" + userId);
+        del(id, userId);
     }
 
     public void blocking(ObjectId userId) {
@@ -135,7 +135,7 @@ public class User extends Other {
         follower.remove("{user_id:#,follower_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        del("user:" + id, "user:" + userId);
+        del(id, userId);
     }
 
     public void unblocking(ObjectId userId) {
@@ -143,7 +143,7 @@ public class User extends Other {
 
         userCol.update(id).with("{$pull:{blockings:#}}", userId);
 
-        del("user:" + id);
+        del(id);
     }
 
     public static User verifyEmail(String token) {
@@ -155,7 +155,7 @@ public class User extends Other {
             .as(User.class);
 
         if (user != null)
-            del("user:" + user.id);
+            del(user.id);
 
         return user;
     }
@@ -260,5 +260,14 @@ public class User extends Other {
 
     public static void deleteToken(String token) {
         del("token:" + token);
+    }
+
+    private static void del(ObjectId id) {
+        del("user:" + id, "name:" + id, "avatar:" + id);
+    }
+
+    private static void del(ObjectId id1, ObjectId id2) {
+        del("user:" + id1, "name:" + id1, "avatar:" + id1,
+            "user:" + id2, "name:" + id1, "avatar:" + id1);
     }
 }
