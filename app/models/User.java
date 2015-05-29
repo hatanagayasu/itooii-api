@@ -23,7 +23,6 @@ public class User extends Other {
     private boolean emailVerified;
     private String password;
     private Set<ObjectId> blockings;
-    private int privilege;
     private int tos;
 
     public User() {
@@ -185,17 +184,34 @@ public class User extends Other {
         return page(blockings, skip, limit, Skim.class);
     }
 
-    public static Page search(int skip, int limit) {
+    public static Page search(JsonNode params, long until, int limit) {
         MongoCollection userCol = jongo.getCollection("user");
-        String next = null;
+        String previous = null;
 
-        MongoCursor<Skim> cursor = userCol.find()
-            .skip(skip)
+        String query = "activity:{$lt:#}";
+
+        if (params.has("native_language"))
+            query += ",native_language:" + params.get("native_language").intValue();
+        if (params.has("practice_language"))
+            query += ",practice_language:{$elemMatch:{id:" +
+                params.get("practice_language").intValue() + "}}";
+        if (params.has("gender"))
+            query += ",gender:" + params.get("gender").intValue();
+
+        MongoCursor<Skim> cursor = userCol.find("{" + query + "}", new Date(until))
+            .sort("{activity:-1}")
             .limit(limit)
             .as(Skim.class);
         List<Skim> skims = new ArrayList<Skim>();
-        while (cursor.hasNext())
-            skims.add(cursor.next());
+        Skim skim = null;
+        while (cursor.hasNext()) {
+            skim = cursor.next();
+            if (skim.privilege > Privilege.Observer.value())
+                skims.add(skim);
+        }
+
+        if (cursor.count() == limit)
+            previous = String.format("util=%d&limit=%d", skim.activity, limit);
 
         try {
             cursor.close();
@@ -203,10 +219,7 @@ public class User extends Other {
             throw new RuntimeException(e);
         }
 
-        if (skims.size() == limit)
-            next = String.format("skip=%d&limit=%d", skip + limit, limit);
-
-        return new Page(skims, next);
+        return new Page(skims, previous);
     }
 
     public static User get(ObjectId userId) {

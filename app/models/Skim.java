@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
+import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
@@ -25,6 +26,8 @@ public class Skim extends Model {
     protected String country;
     protected String city;
     protected ObjectId avatar;
+    protected int privilege;
+    protected Date activity;
 
     public Skim() {
     }
@@ -71,5 +74,11 @@ public class Skim extends Model {
         }
 
         return new Page(list, null, next);
+    }
+
+    public void activity() {
+        MongoCollection col = jongo.getCollection("user");
+
+        col.update(id).with("{$set:{activity:#}}", new Date());
     }
 }

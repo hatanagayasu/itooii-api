@@ -263,8 +263,9 @@ public class UsersController extends AppController {
     }
 
     public static Result search(JsonNode params) {
-        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
-        return Ok(User.search(skip, limit));
+
+        return Ok(User.search(params, until, limit));
     }
 }
