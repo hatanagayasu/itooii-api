@@ -210,13 +210,15 @@ public class User extends Other {
                 skims.add(skim);
         }
 
-        if (cursor.count() == limit)
-            previous = String.format("util=%d&limit=%d", skim.activity, limit);
-
         try {
             cursor.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if (skims.size() == limit) {
+            until = skim.activity.getTime();
+            previous = String.format("until=%d&limit=%d", until, limit);
         }
 
         return new Page(skims, previous);

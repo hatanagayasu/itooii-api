@@ -143,15 +143,15 @@ public class Post extends Model {
             posts.add(post);
         }
 
-        if (cursor.count() == limit) {
-            until = post.getCreated().getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
-        }
-
         try {
             cursor.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if (posts.size() == limit) {
+            until = post.getCreated().getTime();
+            previous = String.format("until=%d&limit=%d", until, limit);
         }
 
         return new Page(posts, previous);
