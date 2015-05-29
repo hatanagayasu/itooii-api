@@ -37,6 +37,7 @@ public class User extends Other {
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
+        activity = new Date();
         privilege = Privilege.Observer.value();
         tos = 1;
     }
