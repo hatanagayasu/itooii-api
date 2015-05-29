@@ -274,6 +274,10 @@ public class User extends Other {
     }
 
     public static void newToken(String userId, String token) {
+        MongoCollection col = jongo.getCollection("user");
+
+        col.update(userId).with("{$set:{activity:#}}", new Date());
+
         set("token:" + token, 86400, userId);
     }
 

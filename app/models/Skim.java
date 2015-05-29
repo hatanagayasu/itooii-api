@@ -75,10 +75,4 @@ public class Skim extends Model {
 
         return new Page(list, null, next);
     }
-
-    public void activity() {
-        MongoCollection col = jongo.getCollection("user");
-
-        col.update(id).with("{$set:{activity:#}}", new Date());
-    }
 }
