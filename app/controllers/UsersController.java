@@ -8,6 +8,7 @@ import models.PracticeLanguage;
 import models.User;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -266,6 +267,6 @@ public class UsersController extends AppController {
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        return Ok(User.search(params, until, limit));
+        return Ok(User.search(params, new Date(until), limit));
     }
 }
