@@ -1,0 +1,18 @@
+#!/bin/sh
+
+target=itooii-api-1.0-SNAPSHOT
+
+./activator clean dist
+unzip target/universal/${target}.zip
+
+ssh ubuntu@api.itooii.com "[ -f itooii-api/RUNNING_PID ] && kill `cat itooii-api/RUNNING_PID`"
+
+rsync -av --delete --exclude .gitignore --exclude .git --exclude-from=.gitignore \
+  $target/ ubuntu@api1.ituii.com:~/itooii-api/
+
+ssh ubuntu@api1.ituii.com "sudo itooii-api/bin/itooii-api \
+  -Dconfig.file=conf/prod.conf \
+  -Dhttp.port=disabled \
+  -Dhttps.port=443 \
+  -Dhttps.keyStore=conf/speakaa.com.jks \
+  -Dhttps.keyStorePassword=$1 &"
