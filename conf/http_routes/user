@@ -19,7 +19,7 @@ GET     /user/@user_id              UsersController/get
 @Validation(name="practice_language",type="array",rule="minSize=0,maxSize=5")
 @Validation(name="practice_language[]",type="object")
 @Validation(name="practice_language[].id",type="integer",require=true)
-@Validation(name="practice_language[].level",type="integer",rule="min=0,max=5",require=true)
+@Validation(name="practice_language[].level",type="integer",rule="min=1,max=6",require=true)
 POST    /user                       UsersController/add
 
 @Validation(name="password")
@@ -29,7 +29,7 @@ POST    /user                       UsersController/add
 @Validation(name="practice_language",type="array",rule="minSize=0,maxSize=5")
 @Validation(name="practice_language[]",type="object")
 @Validation(name="practice_language[].id",type="integer",require=true)
-@Validation(name="practice_language[].level",type="integer",rule="min=0,max=5",require=true)
+@Validation(name="practice_language[].level",type="integer",rule="min=1,max=6",require=true)
 @Validation(name="birthday",type="date")
 @Validation(name="gender",type="integer",rule="min=0,max=2")
 @Validation(name="nationality",rule="length=2")
