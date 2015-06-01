@@ -24,12 +24,12 @@ public class Feed extends Model {
     public Feed() {
     }
 
-    public static Page get(ObjectId userId, long until, int limit) {
+    public static Page get(ObjectId userId, Date until, int limit) {
         MongoCollection col = jongo.getCollection("feed");
         String previous = null;
 
         MongoCursor<Feed> cursor = col
-            .find("{user_id:#,modified:{$lt:#}}", userId, new Date(until))
+            .find("{user_id:#,modified:{$lt:#}}", userId, until)
             .sort("{modified:-1}")
             .limit(limit)
             .projection("{post_id:1,modified:1,relevants:1}")
@@ -50,10 +50,8 @@ public class Feed extends Model {
             throw new RuntimeException(e);
         }
 
-        if (posts.size() == limit) {
-            until = feed.modified.getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
-        }
+        if (posts.size() == limit)
+            previous = String.format("until=%d&limit=%d", feed.modified.getTime(), limit);
 
         return new Page(posts, previous);
     }

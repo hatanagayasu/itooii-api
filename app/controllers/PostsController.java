@@ -5,6 +5,8 @@ import models.Feed;
 import models.Post;
 import models.User;
 
+import java.util.Date;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
 
@@ -14,7 +16,7 @@ public class PostsController extends AppController {
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        return Ok(Feed.get(me.getId(), until, limit));
+        return Ok(Feed.get(me.getId(), new Date(until), limit));
     }
 
     public static Result getTimeline(JsonNode params) {
@@ -31,7 +33,7 @@ public class PostsController extends AppController {
             user = getMe(params);
         }
 
-        return Ok(Post.getTimeline(user.getId(), until, limit));
+        return Ok(Post.getTimeline(user.getId(), new Date(until), limit));
     }
 
     public static Result add(JsonNode params) {
@@ -64,7 +66,7 @@ public class PostsController extends AppController {
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 50;
 
-        return Ok(Comment.get(postId, me.getId(), until, limit));
+        return Ok(Comment.get(postId, me.getId(), new Date(until), limit));
     }
 
     public static Result addComment(JsonNode params) {

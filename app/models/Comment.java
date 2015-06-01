@@ -85,12 +85,12 @@ public class Comment extends Model {
         }
     }
 
-    public static Page get(ObjectId postId, ObjectId userId, long until, int limit) {
+    public static Page get(ObjectId postId, ObjectId userId, Date until, int limit) {
         MongoCollection commentCol = jongo.getCollection("comment");
         String previous = null;
 
         MongoCursor<Comments> cursor = commentCol
-            .find("{post_id:#,created:{$lt:#}}", postId, new Date(until))
+            .find("{post_id:#,created:{$lt:#}}", postId, until)
             .sort("{created:-1}")
             .limit(2)
             .as(Comments.class);
@@ -108,7 +108,7 @@ public class Comment extends Model {
         List<Comment> comments = new ArrayList<Comment>(100);
         for (int i = commentses.size() - 1; i >= 0; i--) {
             for (Comment comment : commentses.get(i).getComments()) {
-                if (comment.created.getTime() < until)
+                if (comment.created.before(until))
                     comments.add(comment);
             }
         }
@@ -119,8 +119,8 @@ public class Comment extends Model {
         postproduct(comments, userId);
 
         if (comments.size() == limit) {
-            until = comments.get(0).getCreated().getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
+            previous = String.format("until=%d&limit=%d",
+                comments.get(0).getCreated().getTime(), limit);
         }
 
         return new Page(comments, previous);

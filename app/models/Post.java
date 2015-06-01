@@ -125,12 +125,12 @@ public class Post extends Model {
         return post;
     }
 
-    public static Page getTimeline(ObjectId userId, long until, int limit) {
+    public static Page getTimeline(ObjectId userId, Date until, int limit) {
         MongoCollection postCol = jongo.getCollection("post");
         String previous = null;
 
         MongoCursor<Post> cursor = postCol
-            .find("{user_id:#,created:{$lt:#},automatic:{$ne:true}}", userId, new Date(until))
+            .find("{user_id:#,created:{$lt:#},automatic:{$ne:true}}", userId, until)
             .sort("{created:-1}")
             .limit(limit)
             .as(Post.class);
@@ -149,10 +149,8 @@ public class Post extends Model {
             throw new RuntimeException(e);
         }
 
-        if (posts.size() == limit) {
-            until = post.getCreated().getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
-        }
+        if (posts.size() == limit)
+            previous = String.format("until=%d&limit=%d", post.getCreated().getTime(), limit);
 
         return new Page(posts, previous);
     }
