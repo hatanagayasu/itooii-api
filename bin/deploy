@@ -2,12 +2,17 @@
 
 target=itooii-api-1.0-SNAPSHOT
 
+rm -rf $target
+
 ./activator clean dist
 unzip target/universal/${target}.zip
 
-ssh ubuntu@api1.ituii.com "cd itooii-api && bin/stop"
+echo stop...
+ssh ubuntu@api1.ituii.com itooii-api/bin/stop
 
 rsync -av --delete --exclude .gitignore --exclude .git --exclude-from=.gitignore \
   $target/ ubuntu@api1.ituii.com:~/itooii-api/
+rsync -av bin/ ubuntu@api1.ituii.com:~/itooii-api/bin/
 
-ssh ubuntu@api1.ituii.com "cd itooii-api && bin/start"
+ssh ubuntu@api1.ituii.com "nohup itooii-api/bin/start 1>/dev/null &"
+echo start...
