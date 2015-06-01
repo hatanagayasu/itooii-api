@@ -185,7 +185,7 @@ public class User extends Other {
         return page(blockings, skip, limit, Skim.class);
     }
 
-    public static Page search(JsonNode params, long until, int limit) {
+    public static Page search(JsonNode params, Date until, int limit) {
         MongoCollection userCol = jongo.getCollection("user");
         String previous = null;
 
@@ -199,7 +199,7 @@ public class User extends Other {
         if (params.has("gender"))
             query += ",gender:" + params.get("gender").intValue();
 
-        MongoCursor<Skim> cursor = userCol.find("{" + query + "}", new Date(until))
+        MongoCursor<Skim> cursor = userCol.find("{" + query + "}", until)
             .sort("{activity:-1}")
             .limit(limit)
             .as(Skim.class);
@@ -217,10 +217,8 @@ public class User extends Other {
             throw new RuntimeException(e);
         }
 
-        if (skims.size() == limit) {
-            until = skim.activity.getTime();
-            previous = String.format("until=%d&limit=%d", until, limit);
-        }
+        if (skims.size() == limit)
+            previous = String.format("until=%d&limit=%d", skim.activity.getTime(), limit);
 
         return new Page(skims, previous);
     }
@@ -277,7 +275,7 @@ public class User extends Other {
     public static void newToken(String userId, String token) {
         MongoCollection col = jongo.getCollection("user");
 
-        col.update(userId).with("{$set:{activity:#}}", new Date());
+        col.update(new ObjectId(userId)).with("{$set:{activity:#}}", new Date());
 
         set("token:" + token, 86400, userId);
     }
