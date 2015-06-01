@@ -17,3 +17,4 @@ dist
 tags
 .DS_Store
 conf/application.conf
+.keyStorePassword
