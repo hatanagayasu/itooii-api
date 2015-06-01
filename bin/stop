@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if [ -f itooii-api/RUNNING_PID ]; then
+  kill `cat itooii-api/RUNNING_PID`
+  rm itooii-api/RUNNING_PID
+fi
