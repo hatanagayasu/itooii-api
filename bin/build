@@ -8,5 +8,6 @@ fi
 rm -rf $target
 ./activator clean dist
 unzip target/universal/${target}.zip
-ln -s application-example.conf $target/conf/application.conf
-$target/bin/itooii-api $* &
+cd $target
+ln -s application-example.conf conf/application.conf
+bin/itooii-api -Dconfig.file=conf/application.conf $* &
