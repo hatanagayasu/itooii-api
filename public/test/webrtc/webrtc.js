@@ -14,7 +14,7 @@ var local_video = document.getElementById('local_video');
 function send(action, data) {
     var option = {
         type: 'post',
-        url: 'http://' + window.location.host + '/' + action + '?access_token=' + session,
+        url: '//' + window.location.host + '/' + action + '?access_token=' + session,
         timeout: 30000,
         success: function(data, status) {
             if (data)
@@ -136,7 +136,7 @@ $(function() {
     var host = window.location.host;
     $.ajax({
         type: 'get',
-        url: 'http://' + host + '/video/ice_servers',
+        url: '//' + host + '/video/ice_servers',
         dataType: 'json',
         timeout: 30000,
         success: function(data, status) {
@@ -153,7 +153,7 @@ $(function() {
 
         $.ajax({
             type: 'post',
-            url: 'http://' + host + '/access_token',
+            url: '//' + host + '/access_token',
             data: {email: email, password: password},
             dataType: 'json',
             timeout: 30000,
@@ -170,7 +170,8 @@ $(function() {
 
     $("#online").click(function() {
         var access_token = $("#access_token").val(),
-            ws = 'ws://' + host + '/websocket?access_token=' + access_token;
+            protocol = window.location.protocol == 'https:' ? 'wss:' : 'ws:',
+            ws = protocol + '//' + host + '/websocket?access_token=' + access_token;
         socket = new WebSocket(ws, "itooii");
 
         socket.onopen = function() {
@@ -289,7 +290,7 @@ $(function() {
 
         $.ajax({
             type: 'post',
-            url: 'http://' + host + '/messages/' + user_id + "?access_token=" + access_token,
+            url: '//' + host + '/messages/' + user_id + "?access_token=" + access_token,
             data: {text: text},
             dataType: 'json',
             timeout: 30000,
