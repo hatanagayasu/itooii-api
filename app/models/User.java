@@ -157,6 +157,7 @@ public class User extends Other {
             .as(User.class);
 
         if (user != null) {
+            user.emailVerified = true;
             ObjectNode params = mapper.createObjectNode();
             user.update(params);
         }
