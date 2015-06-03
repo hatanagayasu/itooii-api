@@ -98,6 +98,9 @@ public class Post extends Model {
 
         if (comments != null)
             Comment.postproduct(comments, userId);
+
+        if (attachments != null)
+            Attachment.postproduct(attachments);
     }
 
     public void postproduct(ObjectId userId, List<Relevant> relevants) {
