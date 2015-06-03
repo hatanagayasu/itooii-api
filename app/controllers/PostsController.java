@@ -52,7 +52,7 @@ public class PostsController extends AppController {
 
         Post post = Post.get(postId);
 
-        if (post == null)
+        if (post == null || post.getDeleted() != null)
             return NotFound();
 
         post.postproduct(me.getId());
@@ -98,6 +98,15 @@ public class PostsController extends AppController {
         return Ok();
     }
 
+    public static Result delete(JsonNode params) {
+        User me = getMe(params);
+        ObjectId postId = getObjectId(params, "post_id");
+
+        Post.delete(postId, me.getId());
+
+        return Ok();
+    }
+
     public static Result likeComment(JsonNode params) {
         User me = getMe(params);
         ObjectId commentId = getObjectId(params, "comment_id");
@@ -112,6 +121,15 @@ public class PostsController extends AppController {
         ObjectId commentId = getObjectId(params, "comment_id");
 
         Comment.unlike(commentId, me.getId());
+
+        return Ok();
+    }
+
+    public static Result deleteComment(JsonNode params) {
+        User me = getMe(params);
+        ObjectId commentId = getObjectId(params, "comment_id");
+
+        Comment.delete(commentId, me.getId());
 
         return Ok();
     }

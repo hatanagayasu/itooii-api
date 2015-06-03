@@ -33,8 +33,10 @@ POST    /post/@post_id/comment      PostsController/addComment
 @Validation(name="post_id",type="id")
 POST    /post/@post_id/like         PostsController/like
 DELETE  /post/@post_id/like         PostsController/unlike
+DELETE  /post/@post_id              PostsController/delete
 
 @Privilege(Member)
 @Validation(name="comment_id",type="id")
 POST    /comment/@comment_id/like   PostsController/likeComment
 DELETE  /comment/@comment_id/like   PostsController/unlikeComment
+DELETE  /comment/@comment_id        PostsController/deleteComment

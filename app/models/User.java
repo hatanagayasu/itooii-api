@@ -204,10 +204,13 @@ public class User extends Other {
             .sort("{activity:-1}")
             .limit(limit)
             .as(Skim.class);
+
         List<Skim> skims = new ArrayList<Skim>();
         Skim skim = null;
+        int count = 0;
         while (cursor.hasNext()) {
             skim = cursor.next();
+            count++;
             if (skim.privilege > Privilege.Observer.value())
                 skims.add(skim);
         }
@@ -218,7 +221,7 @@ public class User extends Other {
             throw new RuntimeException(e);
         }
 
-        if (skims.size() == limit)
+        if (count == limit)
             previous = String.format("until=%d&limit=%d", skim.activity.getTime(), limit);
 
         return new Page(skims, previous);

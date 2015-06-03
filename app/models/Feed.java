@@ -37,11 +37,15 @@ public class Feed extends Model {
 
         List<Post> posts = new ArrayList<Post>(limit);
         Feed feed = null;
+        int count = 0;
         while (cursor.hasNext()) {
             feed = cursor.next();
+            count++;
             Post post = Post.get(feed.postId);
-            post.postproduct(userId, feed.relevants);
-            posts.add(post);
+            if (post.getDeleted() == null) {
+                post.postproduct(userId, feed.relevants);
+                posts.add(post);
+            }
         }
 
         try {
@@ -50,7 +54,7 @@ public class Feed extends Model {
             throw new RuntimeException(e);
         }
 
-        if (posts.size() == limit)
+        if (count == limit)
             previous = String.format("until=%d&limit=%d", feed.modified.getTime(), limit);
 
         return new Page(posts, previous);

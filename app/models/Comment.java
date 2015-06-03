@@ -33,6 +33,7 @@ public class Comment extends Model {
     private Set<ObjectId> likes;
     @JsonIgnore
     private boolean liked;
+    private Boolean deleted;
 
     public Comment() {
     }
@@ -106,9 +107,11 @@ public class Comment extends Model {
         }
 
         List<Comment> comments = new ArrayList<Comment>(100);
+        int count = 0;
         for (int i = commentses.size() - 1; i >= 0; i--) {
             for (Comment comment : commentses.get(i).getComments()) {
-                if (comment.created.before(until))
+                count++;
+                if (comment.deleted == null && comment.created.before(until))
                     comments.add(comment);
             }
         }
@@ -118,7 +121,7 @@ public class Comment extends Model {
 
         postproduct(comments, userId);
 
-        if (comments.size() == limit) {
+        if (count == limit) {
             previous = String.format("until=%d&limit=%d",
                 comments.get(0).getCreated().getTime(), limit);
         }
@@ -179,6 +182,23 @@ public class Comment extends Model {
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
             .with("{$pull:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+            .as(Post.class);
+
+        if (post != null)
+            del("post:" + post.getId());
+    }
+
+    public static void delete(ObjectId commentId, ObjectId userId) {
+        MongoCollection postCol = jongo.getCollection("post");
+        MongoCollection commentCol = jongo.getCollection("comment");
+
+        commentCol.update("{comments:{$elemMatch:{_id:#,user_id:#}}}", commentId, userId)
+            .with("{$set:{'comments.$.deleted':#}}", true);
+
+        Post post = postCol
+            .findAndModify("{comments:{$elemMatch:{_id:#,user_id:#}}}", commentId, userId)
+            .with("{$pull:{comments:{_id:#}}}", commentId)
+            .projection("{_id:1}")
             .as(Post.class);
 
         if (post != null)

@@ -39,6 +39,7 @@ public class Post extends Model {
     private Boolean automatic;
     @JsonIgnore
     private List<Relevant> relevants;
+    private Boolean deleted;
 
     public Post() {
     }
@@ -130,17 +131,20 @@ public class Post extends Model {
         String previous = null;
 
         MongoCursor<Post> cursor = postCol
-            .find("{user_id:#,created:{$lt:#},automatic:{$ne:true}}", userId, until)
+            .find("{user_id:#,created:{$lt:#}}", userId, until)
             .sort("{created:-1}")
             .limit(limit)
             .as(Post.class);
 
         List<Post> posts = new ArrayList<Post>(limit);
         Post post = null;
+        int count = 0;
         while (cursor.hasNext()) {
             post = cursor.next();
-            post.postproduct(userId);
-            posts.add(post);
+            if (post.deleted == null && post.automatic == null) {
+                post.postproduct(userId);
+                posts.add(post);
+            }
         }
 
         try {
@@ -149,7 +153,7 @@ public class Post extends Model {
             throw new RuntimeException(e);
         }
 
-        if (posts.size() == limit)
+        if (count == limit)
             previous = String.format("until=%d&limit=%d", post.getCreated().getTime(), limit);
 
         return new Page(posts, previous);
@@ -183,6 +187,18 @@ public class Post extends Model {
 
         Post post = postCol.findAndModify("{_id:#,likes:#}", postId, userId)
             .with("{$pull:{likes:#},$inc:{like_count:-1}}", userId)
+            .projection("{_id:1}")
+            .as(Post.class);
+
+        if (post != null)
+            del("post:" + postId);
+    }
+
+    public static void delete(ObjectId postId, ObjectId userId) {
+        MongoCollection postCol = jongo.getCollection("post");
+
+        Post post = postCol.findAndModify("{_id:#,user_id:#}", postId, userId)
+            .with("{$set:{deleted:#}}", true)
             .projection("{_id:1}")
             .as(Post.class);
 
