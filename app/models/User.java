@@ -151,8 +151,9 @@ public class User extends Other {
     public static User verifyEmail(String token) {
         MongoCollection userCol = jongo.getCollection("user");
 
-        User user = userCol.findAndModify("{email_verified_token:#}", token)
-            .with("{$set:{email_verified:true},$unset:{email_verified_token:0}}")
+        User user = userCol
+            .findAndModify("{tokens:{$elemMatch:{token:#,modified:{$exists:false}}}}", token)
+            .with("{$set:{email_verified:true,'tokens.$.modified':#}}", new Date())
             .projection("{password:0}")
             .as(User.class);
 
@@ -169,7 +170,8 @@ public class User extends Other {
         MongoCollection userCol = jongo.getCollection("user");
 
         String token = UUID.randomUUID().toString();
-        userCol.update(id).with("{$set:{email_verified:false,email_verified_token:#}}", token);
+        userCol.update(id)
+            .with("{$push:{tokens:{token:#,created:#}}}", token, new Date());
 
         return token;
     }

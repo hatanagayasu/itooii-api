@@ -1,6 +1,7 @@
 var indexSpec = {
     "user":[
-        {index:{email:1},option:{name:"email",unique:true,background:true}}
+        {index:{email:1},option:{name:"email",unique:true,background:true}},
+        {index:{"tokens.token":1},option:{name:"token",unique:true,background:true}}
     ],
     "following":[
         {index:{user_id:1,following_id:1},option:{name:"user_id_following_id",unique:true,background:true}}
