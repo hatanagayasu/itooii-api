@@ -410,7 +410,7 @@ public class Model {
         try {
             SendGrid.Email email = new SendGrid.Email();
 
-            email.setFrom("no-reply@ituii.com");
+            email.setFrom("no-reply@speakaa.com");
             email.addTo(to);
             email.setSubject(subject);
             email.setHtml(body);
