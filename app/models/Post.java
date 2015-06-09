@@ -33,9 +33,12 @@ public class Post extends Model {
     private int commentCount;
     private Set<ObjectId> commentators;
     private List<Comment> comments;
+    @JsonIgnore
     @JsonProperty("like_count")
     private int likeCount;
     private Set<ObjectId> likes;
+    @JsonIgnore
+    private boolean liked;
     private Boolean automatic;
     @JsonIgnore
     private List<Relevant> relevants;
@@ -56,7 +59,6 @@ public class Post extends Model {
             (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
         this.commentCount = 0;
-        this.likeCount = 0;
         this.automatic = automatic;
 
         this.userName = name(userId);
@@ -96,6 +98,16 @@ public class Post extends Model {
         userName = name(this.userId);
         userAvatar = avatar(this.userId);
 
+        if (likes == null) {
+            likeCount = 0;
+            liked = false;
+        } else {
+            errorlog(likes);
+            likeCount = likes.size();
+            liked = likes.contains(userId);
+            likes = null;
+        }
+
         if (comments != null)
             Comment.postproduct(comments, userId);
 
@@ -129,7 +141,7 @@ public class Post extends Model {
         return post;
     }
 
-    public static Page getTimeline(ObjectId userId, Date until, int limit) {
+    public static Page getTimeline(ObjectId userId, ObjectId myId, Date until, int limit) {
         MongoCollection postCol = jongo.getCollection("post");
         String previous = null;
 
@@ -145,7 +157,7 @@ public class Post extends Model {
         while (cursor.hasNext()) {
             post = cursor.next();
             if (post.deleted == null && post.automatic == null) {
-                post.postproduct(userId);
+                post.postproduct(myId);
                 posts.add(post);
             }
         }

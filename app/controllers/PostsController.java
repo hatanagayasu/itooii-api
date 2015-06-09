@@ -20,6 +20,7 @@ public class PostsController extends AppController {
     }
 
     public static Result getTimeline(JsonNode params) {
+        User me = getMe(params);
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
@@ -30,10 +31,10 @@ public class PostsController extends AppController {
             if (user == null)
                 return NotFound();
         } else {
-            user = getMe(params);
+            user = me;
         }
 
-        return Ok(Post.getTimeline(user.getId(), new Date(until), limit));
+        return Ok(Post.getTimeline(user.getId(), me.getId(), new Date(until), limit));
     }
 
     public static Result add(JsonNode params) {
