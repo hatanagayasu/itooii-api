@@ -506,7 +506,7 @@ public class HttpController extends AppController {
                 if (!token.matches(regex))
                     throw new InvalidAccessTokenException();
 
-                User user = User.getByToken(token);
+                User user = User.getByAccessToken(token);
                 if (user == null)
                     throw new InvalidAccessTokenException();
 

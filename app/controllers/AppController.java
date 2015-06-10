@@ -78,7 +78,7 @@ public class AppController extends Controller {
     public static User getMe(JsonNode params) {
         String token = params.get("access_token").textValue();
 
-        return User.getByToken(token);
+        return User.getByAccessToken(token);
     }
 
     public static ObjectId getObjectId(JsonNode params, String name) {

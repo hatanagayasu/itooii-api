@@ -69,10 +69,10 @@ public class WebSocketController extends AppController {
 
         return new WebSocket<String>() {
             public void onReady(WebSocket.In<String> in, final WebSocket.Out<String> out) {
-                final String userId = User.getUserIdByToken(token);
+                final String userId = User.getUserIdByAccessToken(token);
 
                 if (userId != null) {
-                    User.newToken(userId, session);
+                    User.newAccessToken(userId, session);
 
                     Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
                     if (sockets == null) {
@@ -102,7 +102,7 @@ public class WebSocketController extends AppController {
                             if (sockets.isEmpty())
                                 userToSockets.remove(userId);
 
-                            User.deleteToken(session);
+                            User.deleteAccessToken(session);
 
                             VideoChat videoChat = VideoChat.get(new ObjectId(userId));
                             if (videoChat != null)

@@ -172,7 +172,7 @@ public class UsersController extends AppController {
             return NotFound();
 
         ObjectNode result = mapper.createObjectNode();
-        result.put("access_token", user.newToken());
+        result.put("access_token", user.newAccessToken());
 
         return Ok(result);
     }
@@ -208,7 +208,7 @@ public class UsersController extends AppController {
             return Error(Error.INCORRECT_PASSWORD);
 
         ObjectNode result = mapper.createObjectNode();
-        result.put("access_token", user.newToken());
+        result.put("access_token", user.newAccessToken());
 
         return Ok(result);
     }
@@ -216,7 +216,7 @@ public class UsersController extends AppController {
     public static Result logout(JsonNode params) {
         String token = params.get("access_token").textValue();
 
-        User.deleteToken(token);
+        User.deleteAccessToken(token);
 
         return Ok();
     }

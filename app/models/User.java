@@ -256,7 +256,7 @@ public class User extends Other {
         return user;
     }
 
-    public static User getByToken(String token) {
+    public static User getByAccessToken(String token) {
         String id = get("token:" + token);
 
         if (id == null)
@@ -265,20 +265,20 @@ public class User extends Other {
         return get(new ObjectId(id));
     }
 
-    public static String getUserIdByToken(String token) {
+    public static String getUserIdByAccessToken(String token) {
         String id = get("token:" + token);
 
         return id;
     }
 
-    public String newToken() {
+    public String newAccessToken() {
         String token = UUID.randomUUID().toString();
         set("token:" + token, 86400, id.toString());
 
         return token;
     }
 
-    public static void newToken(String userId, String token) {
+    public static void newAccessToken(String userId, String token) {
         MongoCollection col = jongo.getCollection("user");
 
         col.update(new ObjectId(userId)).with("{$set:{activity:#}}", new Date());
@@ -286,7 +286,7 @@ public class User extends Other {
         set("token:" + token, 86400, userId);
     }
 
-    public static void deleteToken(String token) {
+    public static void deleteAccessToken(String token) {
         del("token:" + token);
     }
 
