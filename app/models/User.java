@@ -176,6 +176,31 @@ public class User extends Other {
         return token;
     }
 
+    public static User getByToken(String token) {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        User user = userCol
+            .findAndModify("{tokens:{$elemMatch:{token:#,modified:{$exists:false}}}}", token)
+            .with("{$set:{'tokens.$.modified':#}}", new Date())
+            .projection("{_id:1}")
+            .as(User.class);
+
+        return user;
+    }
+
+    public static String forgetPassword(String email) {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        String token = UUID.randomUUID().toString();
+        User user = userCol
+            .findAndModify("{email:#}", email.toLowerCase())
+            .with("{$push:{tokens:{token:#,created:#}}}", token, new Date())
+            .projection("{_id:1}")
+            .as(User.class);
+
+        return user == null ? null : token;
+    }
+
     public Page getFollower(int skip, int limit) {
         return page(followers, skip, limit, Skim.class);
     }

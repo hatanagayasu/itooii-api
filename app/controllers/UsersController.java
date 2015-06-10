@@ -195,6 +195,37 @@ public class UsersController extends AppController {
         return Ok();
     }
 
+    public static Result loginByToken(JsonNode params) {
+        String token = params.get("token").textValue();
+
+        User user = User.getByToken(token);
+
+        if (user == null)
+            return NotFound();
+
+        ObjectNode result = mapper.createObjectNode();
+        result.put("access_token", user.newAccessToken());
+
+        return Ok(result);
+    }
+
+    public static Result forgotPassword(JsonNode params) {
+        String email = params.get("email").textValue();
+        String token = User.forgetPassword(email);
+
+        if (token == null)
+            return NotFound();
+
+        String link = webServer + "account/reset-password/" + token;
+        String content = views.html.Email.forgot_password.render(link).toString();
+
+        Matcher matcher = titlePattern.matcher(content);
+        if(matcher.find())
+            sendmail(email, matcher.group(1), content);
+
+        return Ok();
+    }
+
     public static Result login(JsonNode params) {
         String email = params.get("email").textValue();
         String password = params.get("password").textValue();
