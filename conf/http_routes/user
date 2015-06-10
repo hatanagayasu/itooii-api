@@ -78,8 +78,8 @@ POST    /user/verify_email          UsersController/reverifyEmail
 POST    /user/forgot_password       UsersController/forgotPassword
 
 @Anonymous
-@Validation(name="token")
-POST    /token/:token               UsersController/loginByToken
+@Validation(name="token",require=true)
+POST    /token                      UsersController/loginByToken
 
 @Anonymous
 @Validation(name="email",rule="email",require=true)
