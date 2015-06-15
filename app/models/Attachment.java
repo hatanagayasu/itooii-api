@@ -3,7 +3,6 @@ package models;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 
 @lombok.Getter
@@ -14,11 +13,9 @@ public class Attachment extends Model {
     private Integer height;
     private String url;
     @JsonIgnore
-    @JsonProperty("user_name")
-    private String userName;
+    private String name;
     @JsonIgnore
-    @JsonProperty("user_avatar")
-    private ObjectId userAvatar;
+    private ObjectId avatar;
 
     public Attachment() {
     }
@@ -43,8 +40,11 @@ public class Attachment extends Model {
     public static void postproduct(List<Attachment> attachments) {
         for (Attachment attachment : attachments) {
             if (attachment.type.equals(AttachmentType.follow)) {
-                attachment.userName = name(attachment.id);
-                attachment.userAvatar = avatar(attachment.id);
+                attachment.name = name(attachment.id);
+                attachment.avatar = avatar(attachment.id);
+            } else if (attachment.type.equals(AttachmentType.create_event ||
+                attachment.type.equals(AttachmentType.join_event))) {
+                attachment.name = name(attachment.id);
             }
         }
     }
