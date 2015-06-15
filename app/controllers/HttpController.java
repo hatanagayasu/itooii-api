@@ -535,7 +535,9 @@ public class HttpController extends AppController {
                     throw new MalformedParamException(validation);
 
                 try {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    String format = param.textValue().matches("\\d{4}-\\d{1,2}-\\d{1,2}") ?
+                        "yyyy-MM-dd" : "yyyy-MM-dd HH:mm";
+                    SimpleDateFormat sdf = new SimpleDateFormat(format);
                     sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                     params.putPOJO(name, sdf.parse(param.textValue()));
                 } catch (ParseException e) {
