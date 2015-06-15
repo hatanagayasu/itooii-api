@@ -152,6 +152,8 @@ public class VideoChatController extends AppController {
         event.put("action", "video/pair_request");
         event.put("video_chat_id", videoChatId.toString());
         event.put("user_id", me.getId().toString());
+        event.put("lang0", videoChat.getLang0());
+        event.put("lang1", videoChat.getLang1());
 
         sendEvent(videoChat.getPeerToken(), event);
 
@@ -284,15 +286,18 @@ public class VideoChatController extends AppController {
         if (offer == null || answer == null)
             return Ok();
 
-        offer.pair(answer.getUserId(), answer.getToken());
-        answer.pair(offer.getUserId(), offer.getToken());
+        int lang0 = params.get("lang0").intValue();
+        int lang1 = params.get("lang1").intValue();
+
+        offer.pair(answer.getUserId(), answer.getToken(), lang0, lang1);
+        answer.pair(offer.getUserId(), offer.getToken(), lang0, lang1);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair");
         event.put("video_chat_id", offer.getId().toString());
         event.put("user_id", answer.getUserId().toString());
-        event.put("lang0", params.get("lang0").intValue());
-        event.put("lang1", params.get("lang1").intValue());
+        event.put("lang0", lang0);
+        event.put("lang1", lang1);
 
         sendEvent(offer.getToken(), event);
 

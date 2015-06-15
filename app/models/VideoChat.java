@@ -14,6 +14,7 @@ public class VideoChat extends Model {
     private String token;
     private ObjectId peerId;
     private String peerToken;
+    private int lang0, lang1;
     private Date created;
     private int rate;
 
@@ -52,6 +53,12 @@ public class VideoChat extends Model {
         this.peerId = userId;
         this.peerToken = token;
         set();
+    }
+
+    public void pair(ObjectId userId, String token, int lang0, int lang1) {
+        this.lang0 = lang0;
+        this.lang1 = lang1;
+        pair(userId, token);
     }
 
     public void save() {
