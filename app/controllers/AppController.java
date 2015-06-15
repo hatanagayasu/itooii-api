@@ -14,6 +14,7 @@ import models.User;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -61,6 +62,10 @@ public class AppController extends Controller {
         return new Result(error.getCode() / 100, result);
     }
 
+    public static Result ObjectForbidden() {
+        return Error(Error.OBJECT_FORBIDDEN);
+    }
+
     public static Result NotFound() {
         return new Result(404);
     }
@@ -83,6 +88,10 @@ public class AppController extends Controller {
 
     public static ObjectId getObjectId(JsonNode params, String name) {
         return (ObjectId) ((POJONode) params.get(name)).getPojo();
+    }
+
+    public static Date getDate(JsonNode params, String name) {
+        return (Date) ((POJONode) params.get(name)).getPojo();
     }
 
     public static List<Attachment> getAttachments(JsonNode params) {
