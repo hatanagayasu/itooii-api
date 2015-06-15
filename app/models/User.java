@@ -110,7 +110,7 @@ public class User extends Other {
         Post post = new Post(id, null, attachments, true);
         post.save();
 
-        if (follower != null)
+        if (followers != null)
             new Activity(id, ActivityType.follow, post.getId(), followers).queue();
     }
 
