@@ -32,6 +32,12 @@ public class Attachment extends Model {
         this.height = height;
     }
 
+    public Attachment(AttachmentType type, ObjectId id, String name) {
+        this.type = type;
+        this.id = id;
+        this.name = name;
+    }
+
     public Attachment(AttachmentType type, String url) {
         this.type = type;
         this.url = url;
@@ -42,8 +48,8 @@ public class Attachment extends Model {
             if (attachment.type.equals(AttachmentType.follow)) {
                 attachment.name = name(attachment.id);
                 attachment.avatar = avatar(attachment.id);
-            } else if (attachment.type.equals(AttachmentType.create_event ||
-                attachment.type.equals(AttachmentType.join_event))) {
+            } else if (attachment.type.equals(AttachmentType.create_event) ||
+                attachment.type.equals(AttachmentType.join_event)) {
                 attachment.name = name(attachment.id);
             }
         }
