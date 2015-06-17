@@ -21,11 +21,9 @@ public class Post extends Model {
     @JsonProperty("user_id")
     private ObjectId userId;
     @JsonIgnore
-    @JsonProperty("user_name")
-    private String userName;
+    private String name;
     @JsonIgnore
-    @JsonProperty("user_avatar")
-    private ObjectId userAvatar;
+    private ObjectId avatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -95,14 +93,13 @@ public class Post extends Model {
     }
 
     public void postproduct(ObjectId userId) {
-        userName = name(this.userId);
-        userAvatar = avatar(this.userId);
+        name = name(this.userId);
+        avatar = avatar(this.userId);
 
         if (likes == null) {
             likeCount = 0;
             liked = false;
         } else {
-            errorlog(likes);
             likeCount = likes.size();
             liked = likes.contains(userId);
             likes = null;
