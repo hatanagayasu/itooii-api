@@ -44,8 +44,8 @@ public class Comment extends Model {
             (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
 
-        this.userName = name(userId);
-        this.userAvatar = avatar(userId);
+        this.name = name(userId);
+        this.avatar = avatar(userId);
     }
 
     public void save(ObjectId postId) {
