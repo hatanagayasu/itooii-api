@@ -59,8 +59,8 @@ public class Post extends Model {
         this.commentCount = 0;
         this.automatic = automatic;
 
-        this.userName = name(userId);
-        this.userAvatar = avatar(userId);
+        this.name = name(userId);
+        this.avatar = avatar(userId);
     }
 
     public void save() {
