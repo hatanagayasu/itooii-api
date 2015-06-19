@@ -190,16 +190,18 @@ public class Comment extends Model {
         MongoCollection postCol = jongo.getCollection("post");
         MongoCollection commentCol = jongo.getCollection("comment");
 
-        commentCol.update("{comments:{$elemMatch:{_id:#,user_id:#}}}", commentId, userId)
-            .with("{$set:{'comments.$.deleted':#}}", true);
-
-        Post post = postCol
+        Comments comments = commentCol
             .findAndModify("{comments:{$elemMatch:{_id:#,user_id:#}}}", commentId, userId)
-            .with("{$pull:{comments:{_id:#}}}", commentId)
-            .projection("{_id:1}")
-            .as(Post.class);
+            .with("{$set:{'comments.$.deleted':#}}", true)
+            .projection("{post_id:1}")
+            .as(Comments.class);
 
-        if (post != null)
-            del("post:" + post.getId());
+        if (comments == null)
+            return;
+
+        postCol.update(comments.getPostId())
+            .with("{$inc:{comment_count:-1},$pull:{comments:{_id:#}}}", commentId);
+
+        del("post:" + comments.getPostId());
     }
 }
