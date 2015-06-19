@@ -117,4 +117,91 @@ public class Event extends Model {
 
         del("event:" + id);
     }
+
+    public static Page gets(ObjectId userId, Date until, int limit) {
+        MongoCollection col = jongo.getCollection("event");
+        String previous = null;
+
+        MongoCursor<Event> cursor = col
+            .find("{members:#,from:{$lt:#},deleted:{$exists:false}}", userId, until)
+            .sort("{from:-1}")
+            .limit(limit)
+            .as(Event.class);
+
+        List<Event> events = new ArrayList<Event>(limit);
+        Event event = null;
+        while (cursor.hasNext()) {
+            event = cursor.next();
+            events.add(event);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (events.size() == limit)
+            previous = String.format("until=%d&limit=%d", event.from.getTime(), limit);
+
+        return new Page(events, previous);
+    }
+
+    public static Page getHosting(ObjectId userId, Date until, int limit) {
+        MongoCollection col = jongo.getCollection("event");
+        String previous = null;
+
+        MongoCursor<Event> cursor = col
+            .find("{user_id:#,from:{$lt:#},deleted:{$exists:false}}", userId, until)
+            .sort("{from:-1}")
+            .limit(limit)
+            .as(Event.class);
+
+        List<Event> events = new ArrayList<Event>(limit);
+        Event event = null;
+        while (cursor.hasNext()) {
+            event = cursor.next();
+            events.add(event);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (events.size() == limit)
+            previous = String.format("until=%d&limit=%d", event.from.getTime(), limit);
+
+        return new Page(events, previous);
+    }
+
+    public static Page search(Date until, int limit) {
+        MongoCollection col = jongo.getCollection("event");
+        String previous = null;
+
+        MongoCursor<Event> cursor = col
+            .find("{from:{$lt:#},deleted:{$exists:false}}", until)
+            .sort("{from:-1}")
+            .limit(limit)
+            .as(Event.class);
+
+        List<Event> events = new ArrayList<Event>(limit);
+        Event event = null;
+        while (cursor.hasNext()) {
+            event = cursor.next();
+            events.add(event);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (events.size() == limit)
+            previous = String.format("until=%d&limit=%d", event.from.getTime(), limit);
+
+        return new Page(events, previous);
+    }
 }

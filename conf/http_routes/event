@@ -1,5 +1,13 @@
 @Privilege(Member)
-GET     /events                     EventController/gets
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /event                      EventController/gets
+GET     /event/hosting              EventController/getHosting
+
+@Anonymous
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /events                     EventController/search
 
 @Privilege(Member)
 @Validation(name="name",require=true)
@@ -24,3 +32,4 @@ GET     /event/@id                  EventController/get
 POST    /event/@id/join             EventController/join
 DELETE  /event/@id/join             EventController/leave
 DELETE  /event/@id                  EventController/delete
+

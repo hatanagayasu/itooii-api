@@ -13,10 +13,25 @@ import org.bson.types.ObjectId;
 public class EventController extends AppController {
     public static Result gets(JsonNode params) {
         User me = getMe(params);
-        long until = params.has("until") ? params.get("until").longValue() : now();
+        long until = params.has("until") ? params.get("until").longValue() : Long.MAX_VALUE;
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
         return Ok(Event.gets(me.getId(), new Date(until), limit));
+    }
+
+    public static Result getHosting(JsonNode params) {
+        User me = getMe(params);
+        long until = params.has("until") ? params.get("until").longValue() : Long.MAX_VALUE;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(Event.getHosting(me.getId(), new Date(until), limit));
+    }
+
+    public static Result search(JsonNode params) {
+        long until = params.has("until") ? params.get("until").longValue() : Long.MAX_VALUE;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(Event.search(new Date(until), limit));
     }
 
     public static Result get(JsonNode params) {
