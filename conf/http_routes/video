@@ -3,6 +3,7 @@
 GET     /video/ice_servers          VideoChatController/getIceServers
 
 @Privilege(Member)
+@Validation(name=event_id,type="id")
 POST    /video/ready                VideoChatController/ready
 POST    /video/leave                VideoChatController/leave
 

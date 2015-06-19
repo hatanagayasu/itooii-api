@@ -11,6 +11,7 @@
 @Include(user)
 @Include(post)
 @Include(video)
+@Include(event)
 
 @Anonymous
 @CacheControl(31536000)

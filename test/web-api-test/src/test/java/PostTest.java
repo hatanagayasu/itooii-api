@@ -28,7 +28,7 @@ public class PostTest extends CommonTest
         HttpPost httpPost = new HttpPost("http://localhost:9000/access_token");
 
         ObjectNode params = mapper.createObjectNode();
-        params.put("email", "hata@itooii.com");
+        params.put("email", "hata@isee.com.tw");
         params.put("password", "P@ssw0rd");
 
         httpPost.setEntity(JsonEntity(params));
@@ -50,7 +50,7 @@ public class PostTest extends CommonTest
         CloseableHttpResponse response = httpClient.execute(httpDelete);
     }
 
-    @Test
+//    @Test
     public void post_feed() throws Exception
     {
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -77,7 +77,7 @@ public class PostTest extends CommonTest
     public void post_comment() throws Exception
     {
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        URI uri = new URIBuilder("http://localhost:9000/post/550ba57444ae5d67d05129a4/comment")
+        URI uri = new URIBuilder("http://localhost:9000/post/5565551544ae3fae7965dcc3/comment")
             .addParameter("access_token", accessToken)
             .build();
         HttpPost httpPost = new HttpPost(uri);

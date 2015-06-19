@@ -3,7 +3,7 @@
 <suite name="Suite1" verbose="1">
   <test name="Smoke">
     <classes>
-      <class name="UserTest" />
+<!--      <class name="UserTest" />-->
       <class name="PostTest" />
     </classes>
   </test>

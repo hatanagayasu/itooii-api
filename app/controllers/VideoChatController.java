@@ -5,6 +5,7 @@ import play.Configuration;
 
 import controllers.constants.Error;
 
+import models.Event;
 import models.User;
 import models.VideoChat;
 
@@ -47,15 +48,23 @@ public class VideoChatController extends AppController {
     public static Result ready(JsonNode params) {
         User me = getMe(params);
         String token = params.get("access_token").textValue();
+        ObjectId eventId = params.has("event_id") ? getObjectId(params, "event_id") : null;
+        ObjectId myId = me.getId();
 
-        VideoChat videoChat = VideoChat.get(me.getId());
+        VideoChat videoChat = VideoChat.get(myId);
         if (videoChat != null)
             leave(videoChat, token);
 
-        videoChat = new VideoChat(me.getId(), token);
+        if (eventId != null) {
+            Event event = Event.get(eventId);
+            if (event == null || event.getDeleted() != null || !event.getMembers().contains(myId))
+                return NotFound();
+        }
+
+        videoChat = new VideoChat(myId, token);
         videoChat.set();
 
-        publish("ready", me.getId() + "\n" + token + "\n" + me);
+        publish("ready", myId + "\n" + token + "\n" + me + "\n" + eventId);
 
         return Ok();
     }

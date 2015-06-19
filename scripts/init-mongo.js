@@ -24,6 +24,9 @@ var indexSpec = {
     "chat":[
         {index:{user_ids:1},option:{name:"user_ids",background:true}}
     ],
+    "event":[
+        {index:{user_id:1,from:-1},option:{name:"user_id",background:true}}
+    ],
     "message":[
         {index:{chat_id:1,page:1},option:{name:"chat_id_page",unique:true,background:true}},
         {index:{chat_id:1,created:-1},option:{name:"chat_id_created",background:true}},

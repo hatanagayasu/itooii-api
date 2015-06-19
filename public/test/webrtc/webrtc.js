@@ -5,7 +5,7 @@
 //            OfferToReceiveVideo: true
 //        }
 //    };
-var socket, session, user_id, video_chat_id, pair_talk;
+var socket, session, user_id, video_chat_id, event_id, pair_talk;
 var peer, offer_config, answer_config, iceServers;
 var remote_video = document.getElementById('remote_video');
 var local_video = document.getElementById('local_video');
@@ -271,7 +271,14 @@ $(function() {
     });
 
     $("#ready").click(function() {
-        send("video/ready");
+        var event_id = $("#event_id").val();
+
+        if (event_id)
+            send("video/ready", {
+                event_id : event_id
+            });
+        else
+            send("video/ready");
     });
 
     $("#leave").click(function() {

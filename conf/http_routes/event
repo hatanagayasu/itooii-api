@@ -1,0 +1,26 @@
+@Privilege(Member)
+GET     /events                     EventController/gets
+
+@Privilege(Member)
+@Validation(name="name",require=true)
+@Validation(name="details")
+@Validation(name="language",type="integer",require=true)
+@Validation(name="from",type="date",require=true)
+@Validation(name="to",type="date",require=true)
+POST    /event                      EventController/add
+
+@Privilege(Member)
+@Validation(name="id",type="id")
+@Validation(name="name")
+@Validation(name="details")
+@Validation(name="language",type="integer")
+@Validation(name="from",type="date")
+@Validation(name="to",type="date")
+PUT     /event/@id                  EventController/update
+
+@Privilege(Member)
+@Validation(name="id",type="id")
+GET     /event/@id                  EventController/get
+POST    /event/@id/join             EventController/join
+DELETE  /event/@id/join             EventController/leave
+DELETE  /event/@id                  EventController/delete
