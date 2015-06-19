@@ -57,8 +57,10 @@ public class VideoChatController extends AppController {
 
         if (eventId != null) {
             Event event = Event.get(eventId);
-            if (event == null || event.getDeleted() != null || !event.getMembers().contains(myId))
+            if (event == null || event.getDeleted() != null)
                 return NotFound();
+            if (!event.getMembers().contains(myId))
+                return ObjectForbidden();
         }
 
         videoChat = new VideoChat(myId, token);
@@ -324,12 +326,14 @@ public class VideoChatController extends AppController {
     public static Result unpair(JsonNode params) {
         VideoChat videoChat = VideoChat.get(getObjectId(params, "offer_id"));
 
-        ObjectNode event = mapper.createObjectNode();
-        event.put("action", "video/unpair");
+        if (videoChat != null) {
+            ObjectNode event = mapper.createObjectNode();
+            event.put("action", "video/unpair");
 
-        sendEvent(videoChat.getToken(), event);
+            sendEvent(videoChat.getToken(), event);
 
-        leave(videoChat);
+            leave(videoChat);
+        }
 
         return Ok();
     }
