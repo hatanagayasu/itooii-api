@@ -6,8 +6,11 @@ import play.Configuration;
 import controllers.constants.Error;
 
 import models.Event;
+import models.PracticeLanguage;
 import models.User;
 import models.VideoChat;
+
+import java.util.Iterator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -61,6 +64,21 @@ public class VideoChatController extends AppController {
                 return NotFound();
             if (!event.getMembers().contains(myId))
                 return ObjectForbidden();
+
+            Iterator<Integer> nativeLanguages = me.getNativeLanguage().iterator();
+            while (nativeLanguages.hasNext()) {
+                int lang = nativeLanguages.next();
+                if (lang != event.getLang0() && (event.getLang1() == 0 || lang != event.getLang1()))
+                    nativeLanguages.remove();
+            }
+
+            Iterator<PracticeLanguage>practiceLanguages = me.getPracticeLanguage().iterator();
+            while (practiceLanguages.hasNext()) {
+                PracticeLanguage practiceLanguage = practiceLanguages.next();
+                int lang = practiceLanguage.getId();
+                if (lang != event.getLang0() && (event.getLang1() == 0 || lang != event.getLang1()))
+                    practiceLanguages.remove();
+            }
         }
 
         videoChat = new VideoChat(myId, token);
