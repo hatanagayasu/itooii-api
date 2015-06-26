@@ -2,6 +2,7 @@ package models;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
@@ -15,6 +16,8 @@ public class VideoChat extends Model {
     private ObjectId peerId;
     private String peerToken;
     private int lang0, lang1;
+    @JsonProperty("event_id")
+    private ObjectId eventId;
     private Date created;
     private int rate;
 
@@ -55,9 +58,10 @@ public class VideoChat extends Model {
         set();
     }
 
-    public void pair(ObjectId userId, String token, int lang0, int lang1) {
+    public void pair(ObjectId userId, String token, int lang0, int lang1, ObjectId eventId) {
         this.lang0 = lang0;
         this.lang1 = lang1;
+        this.eventId = eventId;
         pair(userId, token);
     }
 

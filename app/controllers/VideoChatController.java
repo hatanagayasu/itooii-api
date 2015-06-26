@@ -299,9 +299,10 @@ public class VideoChatController extends AppController {
 
         int lang0 = params.get("lang0").intValue();
         int lang1 = params.get("lang1").intValue();
+        ObjectId eventId = params.has("event_id") ? getObjectId(params, "event_id") : null;
 
-        offer.pair(answer.getUserId(), answer.getToken(), lang0, lang1);
-        answer.pair(offer.getUserId(), offer.getToken(), lang0, lang1);
+        offer.pair(answer.getUserId(), answer.getToken(), lang0, lang1, eventId);
+        answer.pair(offer.getUserId(), offer.getToken(), lang0, lang1, eventId);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair");

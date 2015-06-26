@@ -35,6 +35,7 @@ POST    /video/candidate            VideoChatController/candidate
 @Validation(name="answer_id",type="id",require=true)
 @Validation(name="lang0",type="integer",require=true)
 @Validation(name="lang1",type="integer",require=true)
+@Validation(name="event_id",type="id")
 POST    /video/pair                 VideoChatController/pair
 
 @Anonymous
