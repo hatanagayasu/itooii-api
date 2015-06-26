@@ -48,11 +48,12 @@ public class EventController extends AppController {
         User me = getMe(params);
         String name = params.get("name").textValue();
         String details = params.has("details") ? params.get("details").textValue() : null;
-        int language = params.get("language").intValue();
+        int lang0 = params.get("lang0").intValue();
+        int lang1 = params.has("lang1") ? params.get("lang1").intValue() : 0;
         Date from = getDate(params, "from");
         Date to = getDate(params, "to");
 
-        Event event = new Event(me.getId(), name, details, language, from, to);
+        Event event = new Event(me.getId(), name, details, lang0, lang1, from, to);
         event.save(me);
 
         return Ok(event);

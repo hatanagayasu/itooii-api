@@ -22,7 +22,8 @@ public class Event extends Model {
     private ObjectId userId;
     private String name;
     private String details;
-    private int language;
+    private int lang0;
+    private int lang1;
     private Date from;
     private Date to;
     private Date created;
@@ -32,12 +33,14 @@ public class Event extends Model {
     public Event() {
     }
 
-    public Event(ObjectId userId, String name, String details, int language, Date from, Date to) {
+    public Event(ObjectId userId, String name, String details, int lang0, int lang1, Date from,
+        Date to) {
         this.id = new ObjectId();
         this.userId = userId;
         this.name = name;
         this.details = details;
-        this.language = language;
+        this.lang0 = lang0;
+        this.lang1 = lang1;
         this.from = from;
         this.to = to;
         this.created = new Date();

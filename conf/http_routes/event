@@ -12,7 +12,8 @@ GET     /events                     EventController/search
 @Privilege(Member)
 @Validation(name="name",require=true)
 @Validation(name="details")
-@Validation(name="language",type="integer",require=true)
+@Validation(name="lang0",type="integer",require=true)
+@Validation(name="lang1",type="integer")
 @Validation(name="from",type="date",require=true)
 @Validation(name="to",type="date",require=true)
 POST    /event                      EventController/add
