@@ -1,13 +1,17 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
@@ -18,6 +22,10 @@ public class Activity extends Model {
     ObjectId id;
     @JsonProperty("user_id")
     private ObjectId userId;
+    @JsonIgnore
+    private String name;
+    @JsonIgnore
+    private ObjectId avatar;
     private int type;
     @JsonProperty("post_id")
     private ObjectId postId;
@@ -88,5 +96,41 @@ public class Activity extends Model {
                 .with("{$push:{'relevants':{user_id:#,type:#,created:#}},$set:{modified:#}}",
                         userId, type, created, modified);
         }
+    }
+
+    public void postproduct() {
+        name = name(userId);
+        avatar = avatar(userId);
+    }
+
+    public static Page getNotifications(ObjectId userId, Date until, int limit) {
+        MongoCollection col = jongo.getCollection("activity");
+        String previous = null;
+
+        MongoCursor<Activity> cursor = col
+            .find("{receivers:#,type:{$in:[3,4,5,6,8,9]},created:{$lt:#}}", userId, until)
+            .sort("{created:-1}")
+            .limit(limit)
+            .projection("{receivers:0}")
+            .as(Activity.class);
+
+        List<Activity> activities = new ArrayList<Activity>(limit);
+        Activity activity = null;
+        while (cursor.hasNext()) {
+            activity = cursor.next();
+            activity.postproduct();
+            activities.add(activity);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (activities.size() == limit)
+            previous = String.format("until=%d&limit=%d", activity.created.getTime(), limit);
+
+        return new Page(activities, previous);
     }
 }
