@@ -39,7 +39,7 @@ public class WebSocketController extends AppController {
                 sessionToSocket.forEach((session, out) -> out.write(message));
             } else if (channel.equals("user")) {
                 String[] segs = message.split("\n");
-                for (String userId : segs[0].split(",")) {
+                for (String userId : segs[0].replaceAll("[\\[\\] ]", "").split(",")) {
                     Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
                     if (sockets != null)
                         sockets.forEach(out -> out.write(segs[1]));

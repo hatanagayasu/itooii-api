@@ -102,10 +102,10 @@ public class Activity extends Model {
                         userId, type, created, modified);
         }
 
-        String ids = joinObjectId(receivers);
-        receivers = null;
+        Set<ObjectId> receivers = this.receivers;
+        this.receivers = null;
 
-        publish("user", ids + "\n" + this);
+        publish("user", receivers + "\n" + this);
     }
 
     public void postproduct() {
