@@ -128,15 +128,15 @@ public class AppController extends Controller {
         Model.publish(channel, event.toString());
     }
 
-    public static void sendEvent(String session, JsonNode event) {
+    public static void sendEvent(String session, Object event) {
         Model.publish("session", session + "\n" + event);
     }
 
-    public static void sendEvent(ObjectId userId, JsonNode event) {
+    public static void sendEvent(ObjectId userId, Object event) {
         Model.publish("user", userId + "\n" + event);
     }
 
-    public static void sendEvent(JsonNode event) {
+    public static void sendEvent(Object event) {
         Model.publish("all", event.toString());
     }
 
