@@ -75,9 +75,9 @@ public class VideoChat extends Model {
         videoChatCol.save(this);
     }
 
-    public static void rate(ObjectId id, int rate) {
+    public static void rate(ObjectId userId, ObjectId id, int rate) {
         MongoCollection videoChatCol = jongo.getCollection("videochat");
 
-        videoChatCol.update(id).with("{$set:{rate:#}}", rate);
+        videoChatCol.update("{_id:#,user_id:#}", id, userId).with("{$set:{rate:#}}", rate);
     }
 }

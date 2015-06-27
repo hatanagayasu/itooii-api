@@ -301,10 +301,11 @@ public class VideoChatController extends AppController {
     }
 
     public static Result rate(JsonNode params) {
+        User me = getMe(params);
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
         int rate = params.get("rate").intValue();
 
-        VideoChat.rate(videoChatId, rate);
+        VideoChat.rate(me.getId(), videoChatId, rate);
 
         return Ok();
     }
