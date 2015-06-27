@@ -85,7 +85,8 @@ public class VideoChatController extends AppController {
         videoChat = new VideoChat(myId, token);
         videoChat.set();
 
-        publish("ready", myId + "\n" + token + "\n" + me + "\n" + eventId);
+        publish("ready", myId + "\n" + token + "\n" + me + "\n" + eventId + "\n" +
+            videoChat.recentPeers());
 
         return Ok();
     }
