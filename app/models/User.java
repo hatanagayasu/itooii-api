@@ -122,6 +122,8 @@ public class User extends Other {
 
         if (followers != null)
             new Activity(id, ActivityType.follow, post.getId(), followers).queue();
+
+        new Activity(id, ActivityType.followYou, post.getId(), userId).queue();
     }
 
     public void unfollow(ObjectId userId) {

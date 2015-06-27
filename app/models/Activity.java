@@ -118,7 +118,7 @@ public class Activity extends Model {
         ObjectId lastReadNotification = user.getLastReadNotification() != null ?
             user.getLastReadNotification() : new ObjectId(new Date(0));
 
-        return col.count("{receivers:#,type:{$in:[3,4,5,6,8,9]},_id:{$gt:#}}",
+        return col.count("{receivers:#,type:{$in:[3,4,5,6,8,9,12]},_id:{$gt:#}}",
             user.getId(), lastReadNotification);
     }
 
@@ -127,7 +127,7 @@ public class Activity extends Model {
         String previous = null;
 
         MongoCursor<Activity> cursor = col
-            .find("{receivers:#,type:{$in:[3,4,5,6,8,9]},created:{$lt:#}}", user.getId(), until)
+            .find("{receivers:#,type:{$in:[3,4,5,6,8,9,12]},created:{$lt:#}}", user.getId(), until)
             .sort("{created:-1}")
             .limit(limit)
             .projection("{receivers:0}")

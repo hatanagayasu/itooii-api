@@ -11,7 +11,8 @@ public enum ActivityType {
     ownerCommentPostYouLike(8),
     mention(9),
     createEvent(10),
-    joinEvent(11);
+    joinEvent(11),
+    followYou(12);
 
     private int type;
 
