@@ -6,6 +6,7 @@ import play.Configuration;
 import controllers.constants.Error;
 
 import models.Event;
+import models.Pair;
 import models.PracticeLanguage;
 import models.User;
 import models.VideoChat;
@@ -331,13 +332,10 @@ public class VideoChatController extends AppController {
 
         sendEvent(offer.getToken(), event);
 
-        event.removeAll();
-        event.put("action", "event");
-        event.put("type", "pair");
-        event.put("offer_id", offer.getUserId().toString());
-        event.put("answer_id", answer.getUserId().toString());
+        Pair pair = new Pair(offer.getUserId(), answer.getUserId(), lang0, lang1, eventId);
+        pair.save();
 
-        sendEvent(event);
+        sendEvent(pair);
 
         return Ok();
     }
