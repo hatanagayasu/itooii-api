@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -14,6 +15,8 @@ import org.jongo.marshall.jackson.oid.Id;
 public class Message extends Model {
     @Id
     private ObjectId id;
+    @JsonIgnore
+    private String action;
     @JsonProperty("user_id")
     private ObjectId userId;
     private String text;
@@ -25,6 +28,7 @@ public class Message extends Model {
 
     public Message(ObjectId userId, String text, List<Attachment> attachments) {
         this.id = new ObjectId();
+        this.action = "message";
         this.userId = userId;
         this.text = text;
         this.attachments = attachments == null ? null :

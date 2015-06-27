@@ -38,13 +38,8 @@ public class MessagesController extends AppController {
         Message message = new Message(me.getId(), text, getAttachments(params));
         message.save(chatId);
 
-        ObjectNode event = mapper.createObjectNode();
-        event.put("action", "event");
-        event.put("type", "message");
-        event.putPOJO("data", message);
-
-        sendEvent(userId, event);
-        sendEvent(me.getId(), event);
+        sendEvent(userId, message);
+        sendEvent(me.getId(), message);
 
         return Ok(message);
     }
