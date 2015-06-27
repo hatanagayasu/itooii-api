@@ -372,6 +372,15 @@ public class Model {
         }
     }
 
+    public String joinObjectId(Collection<ObjectId> ids) {
+        StringBuilder out = new StringBuilder();
+        for (ObjectId id : ids)
+            out.append(id + ",");
+        out.delete(out.length() - 1, out.length());
+
+        return out.toString();
+    }
+
     public static String name(ObjectId userId) {
         String key = "name:" + userId;
 
