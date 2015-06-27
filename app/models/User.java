@@ -24,6 +24,8 @@ public class User extends Other {
     private String password;
     private Set<ObjectId> blockings;
     private int tos;
+    @JsonProperty("last_read_notification")
+    private ObjectId lastReadNotification;
 
     public User() {
     }
@@ -94,6 +96,14 @@ public class User extends Other {
         params.putPOJO("avatar", avatar);
 
         update(params);
+    }
+
+    public void updateLastReadNotificaotion(ObjectId id) {
+        MongoCollection userCol = jongo.getCollection("user");
+
+        userCol.update(this.id).with("{$set:{last_read_notification:#}}", id);
+
+        del(this.id);
     }
 
     public void follow(ObjectId userId) {

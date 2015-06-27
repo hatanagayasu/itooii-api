@@ -20,6 +20,8 @@ public class Activity extends Model {
 
     @Id
     ObjectId id;
+    @JsonIgnore
+    private String action;
     @JsonProperty("user_id")
     private ObjectId userId;
     @JsonIgnore
@@ -53,10 +55,13 @@ public class Activity extends Model {
 
     private Activity(ObjectId userId, ActivityType type, ObjectId postId) {
         this.id = new ObjectId();
+        this.action = "activity";
         this.userId = userId;
         this.type = type.value();
         this.postId = postId;
         this.created = new Date();
+
+        postproduct();
     }
 
     public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId receiver) {
@@ -96,6 +101,11 @@ public class Activity extends Model {
                 .with("{$push:{'relevants':{user_id:#,type:#,created:#}},$set:{modified:#}}",
                         userId, type, created, modified);
         }
+
+        String ids = joinObjectId(receivers);
+        receivers = null;
+
+        publish("user", ids + "\n" + this);
     }
 
     public void postproduct() {
@@ -103,12 +113,21 @@ public class Activity extends Model {
         avatar = avatar(userId);
     }
 
-    public static Page getNotifications(ObjectId userId, Date until, int limit) {
+    public static long getUnreadNotificationCount(User user) {
+        MongoCollection col = jongo.getCollection("activity");
+        ObjectId lastReadNotification = user.getLastReadNotification() != null ?
+            user.getLastReadNotification() : new ObjectId(new Date(0));
+
+        return col.count("{receivers:#,type:{$in:[3,4,5,6,8,9]},_id:{$gt:#}}",
+            user.getId(), lastReadNotification);
+    }
+
+    public static Page getNotifications(User user, Date until, int limit) {
         MongoCollection col = jongo.getCollection("activity");
         String previous = null;
 
         MongoCursor<Activity> cursor = col
-            .find("{receivers:#,type:{$in:[3,4,5,6,8,9]},created:{$lt:#}}", userId, until)
+            .find("{receivers:#,type:{$in:[3,4,5,6,8,9]},created:{$lt:#}}", user.getId(), until)
             .sort("{created:-1}")
             .limit(limit)
             .projection("{receivers:0}")
@@ -126,6 +145,13 @@ public class Activity extends Model {
             cursor.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if (activities.size() > 0) {
+            ObjectId id = activities.get(0).getId();
+            if (user.getLastReadNotification() == null ||
+                id.compareTo(user.getLastReadNotification()) > 0)
+                user.updateLastReadNotificaotion(id);
         }
 
         if (activities.size() == limit)
