@@ -23,7 +23,8 @@ public class ActivitiesController extends AppController {
         User me = getMe(params);
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+        String type = params.get("type").textValue();
 
-        return Ok(Activity.getNotifications(me, new Date(until), limit));
+        return Ok(Activity.getNotifications(me, new Date(until), limit, type));
     }
 }

@@ -12,12 +12,7 @@
 @Include(post)
 @Include(video)
 @Include(event)
-
-GET     /badges                     ActivitiesController/getBadges
-
-@Validation(name="until",type="long")
-@Validation(name="limit",type="integer",rule="min=1,max=25")
-GET     /notifications              ActivitiesController/getNotifications
+@Include(activity)
 
 @Anonymous
 @CacheControl(31536000)

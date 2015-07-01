@@ -2,13 +2,16 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
@@ -17,6 +20,7 @@ import org.jongo.marshall.jackson.oid.Id;
 @lombok.Getter
 public class Activity extends Model {
     private static LinkedBlockingQueue<Activity> queue = new LinkedBlockingQueue<Activity>();
+    private static Map<String, Integer[]> types = new HashMap<String, Integer[]>();
 
     @Id
     ObjectId id;
@@ -35,6 +39,9 @@ public class Activity extends Model {
     private Date created;
 
     static {
+        types.put("notifications", new Integer[] {3, 4, 5, 6, 8, 9});
+        types.put("followings", new Integer[] {12});
+
         new Thread(new Runnable() {
             public void run() {
                 while (true) {
@@ -118,16 +125,17 @@ public class Activity extends Model {
         ObjectId lastReadNotification = user.getLastReadNotification() != null ?
             user.getLastReadNotification() : new ObjectId(new Date(0));
 
-        return col.count("{receivers:#,type:{$in:[3,4,5,6,8,9,12]},_id:{$gt:#}}",
+        return col.count("{receivers:#,type:{$in:},_id:{$gt:#}}",
             user.getId(), lastReadNotification);
     }
 
-    public static Page getNotifications(User user, Date until, int limit) {
+    public static Page getNotifications(User user, Date until, int limit, String type) {
         MongoCollection col = jongo.getCollection("activity");
         String previous = null;
 
         MongoCursor<Activity> cursor = col
-            .find("{receivers:#,type:{$in:[3,4,5,6,8,9,12]},created:{$lt:#}}", user.getId(), until)
+            .find("{receivers:#,type:{$in:#},created:{$lt:#}}",
+                user.getId(), types.get(type), until)
             .sort("{created:-1}")
             .limit(limit)
             .projection("{receivers:0}")
@@ -152,6 +160,12 @@ public class Activity extends Model {
             if (user.getLastReadNotification() == null ||
                 id.compareTo(user.getLastReadNotification()) > 0)
                 user.updateLastReadNotificaotion(id);
+
+            ObjectNode event = mapper.createObjectNode();
+            event.put("action", "badge/update")
+                .put(type, 0);
+
+            publish("user", user.getId() + "\n" + event);
         }
 
         if (activities.size() == limit)
