@@ -71,16 +71,18 @@ public class Comment extends Model {
         if (!userId.equals(post.getUserId())) {
             new Activity(userId, ActivityType.commentYourPost, postId, post.getUserId()).queue();
         }
-        Set<ObjectId> commentators = post.getCommentators();
-        if (commentators != null) {
-            commentators.remove(userId);
-            commentators.remove(post.getUserId());
-            new Activity(userId, ActivityType.commentPostYouComment, postId, commentators).queue();
-        }
         Set<ObjectId> likes = post.getLikes();
         if (userId.equals(post.getUserId()) && likes != null) {
             likes.remove(userId);
             new Activity(userId, ActivityType.ownerCommentPostYouLike, postId, likes).queue();
+        } else {
+            Set<ObjectId> commentators = post.getCommentators();
+            if (commentators != null) {
+                commentators.remove(userId);
+                commentators.remove(post.getUserId());
+                new Activity(userId, ActivityType.commentPostYouComment, postId, commentators)
+                    .queue();
+            }
         }
     }
 
