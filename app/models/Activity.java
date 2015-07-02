@@ -1,6 +1,7 @@
 package models;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +21,7 @@ import org.jongo.marshall.jackson.oid.Id;
 @lombok.Getter
 public class Activity extends Model {
     private static LinkedBlockingQueue<Activity> queue = new LinkedBlockingQueue<Activity>();
-    private static Map<String, Integer[]> types = new HashMap<String, Integer[]>();
+    private static Map<String, Set<Integer>> types = new HashMap<String, Set<Integer>>();
 
     @Id
     ObjectId id;
@@ -39,8 +40,8 @@ public class Activity extends Model {
     private Date created;
 
     static {
-        types.put("notifications", new Integer[] {3, 4, 5, 6, 8, 9});
-        types.put("followings", new Integer[] {12});
+        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9})));
+        types.put("followings", new HashSet<Integer>(Arrays.asList(new Integer[] {12})));
 
         new Thread(new Runnable() {
             public void run() {
@@ -62,7 +63,8 @@ public class Activity extends Model {
 
     private Activity(ObjectId userId, ActivityType type, ObjectId postId) {
         this.id = new ObjectId();
-        this.action = "activity";
+        this.action = types.get("notifications").contains(type) ? "activity/notifications" :
+            (types.get("followings").contains(type) ? "activity/followings" : "activity");
         this.userId = userId;
         this.type = type.value();
         this.postId = postId;
