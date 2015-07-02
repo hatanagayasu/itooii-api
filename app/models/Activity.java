@@ -120,13 +120,13 @@ public class Activity extends Model {
         avatar = avatar(userId);
     }
 
-    public static long getUnreadNotificationCount(User user) {
+    public static long getUnreadNotificationCount(User user, String type) {
         MongoCollection col = jongo.getCollection("activity");
         ObjectId lastReadNotification = user.getLastReadNotification() != null ?
             user.getLastReadNotification() : new ObjectId(new Date(0));
 
-        return col.count("{receivers:#,type:{$in:},_id:{$gt:#}}",
-            user.getId(), lastReadNotification);
+        return col.count("{receivers:#,type:{$in:#},_id:{$gt:#}}",
+            user.getId(), types.get(type), lastReadNotification);
     }
 
     public static Page getNotifications(User user, Date until, int limit, String type) {

@@ -14,7 +14,8 @@ public class ActivitiesController extends AppController {
 
         ObjectNode result = mapper.createObjectNode();
 
-        result.put("notifications", Activity.getUnreadNotificationCount(me));
+        result.put("notifications", Activity.getUnreadNotificationCount(me, "notifications"));
+        result.put("followings", Activity.getUnreadNotificationCount(me, "followings"));
 
         return Ok(result);
     }
