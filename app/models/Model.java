@@ -157,6 +157,16 @@ public class Model {
                     objectToJson(value, result);
                 } else {
                     result.append("\"").append(name).append("\":\"").append(value).append("\"");
+
+                    Postproduct postproduct = field.getAnnotation(Postproduct.class);
+                    if (postproduct != null) {
+                        result.append(",\"").append((postproduct.value().length() > 0 ?
+                                postproduct.value() + "_name" : "name")).append("\":\"")
+                            .append(name((ObjectId)value)).append("\"")
+                            .append(",\"").append((postproduct.value().length() > 0 ?
+                                postproduct.value() + "_avatar" : "avatar")).append("\":\"")
+                            .append(avatar((ObjectId)value)).append("\"");
+                    }
                 }
 
                 if (iterator.hasNext())

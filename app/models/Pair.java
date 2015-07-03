@@ -18,20 +18,12 @@ public class Pair extends Model {
     private ObjectId id;
     @JsonIgnore
     private String action;
+    @JsonProperty("offer_id")
+    @Postproduct("offer")
     private ObjectId offerId;
-    @JsonIgnore
-    @JsonProperty("offer_name")
-    private String offerName;
-    @JsonIgnore
-    @JsonProperty("offer_avatar")
-    private ObjectId offerAvatar;
+    @JsonProperty("answer_id")
+    @Postproduct("answer")
     private ObjectId answerId;
-    @JsonIgnore
-    @JsonProperty("answer_name")
-    private String answerName;
-    @JsonIgnore
-    @JsonProperty("answer_avatar")
-    private ObjectId answerAvatar;
     private int lang0, lang1;
     @JsonProperty("event_id")
     private ObjectId eventId;
@@ -49,18 +41,15 @@ public class Pair extends Model {
         this.lang1 = lang1;
         this.eventId = eventId;
         this.created = new Date();
-
-        postproduct();
     }
 
     public static Page get(ObjectId eventId, Date until, int limit) {
         MongoCollection col = jongo.getCollection("pair");
         String previous = null;
 
-        Date boundary = new Date(now() - 10 * 60 * 1000);
         Find find = eventId == null ?
-            col.find("{created:{$lt:#,$gt:#}}", until, boundary) :
-            col.find("{event_id:#,created:{$lt:#,$gt:#}}", eventId, until, boundary);
+            col.find("{created:{$lt:#}}", until) :
+            col.find("{event_id:#,created:{$lt:#}}", eventId, until);
         MongoCursor<Pair> cursor = find
             .sort("{created:-1}")
             .limit(limit)
@@ -83,13 +72,6 @@ public class Pair extends Model {
             previous = String.format("until=%d&limit=%d", pair.created.getTime(), limit);
 
         return new Page(pairs, previous);
-    }
-
-    public void postproduct() {
-        offerName = name(offerId);
-        offerAvatar = avatar(offerId);
-        answerName = name(answerId);
-        answerAvatar = avatar(answerId);
     }
 
     public void save() {
