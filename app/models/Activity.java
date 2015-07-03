@@ -63,8 +63,8 @@ public class Activity extends Model {
 
     private Activity(ObjectId userId, ActivityType type, ObjectId postId) {
         this.id = new ObjectId();
-        this.action = types.get("notifications").contains(type) ? "activity/notifications" :
-            (types.get("followings").contains(type) ? "activity/followings" : "activity");
+        this.action = types.get("notifications").contains(type.value()) ? "activity/notifications" :
+            (types.get("followings").contains(type.value()) ? "activity/followings" : "activity");
         this.userId = userId;
         this.type = type.value();
         this.postId = postId;
