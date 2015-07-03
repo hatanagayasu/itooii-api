@@ -11,6 +11,7 @@ import models.PracticeLanguage;
 import models.User;
 import models.VideoChat;
 
+import java.util.Date;
 import java.util.Iterator;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +31,14 @@ public class VideoChatController extends AppController {
                 m.forEach((k, v) -> node.put(k, v.toString()));
             }
         );
+    }
+
+    public static Result getPaired(JsonNode params) {
+        ObjectId eventId = params.has("event_id") ? getObjectId(params, "event_id") : null;
+        long until = params.has("until") ? params.get("until").longValue() : now();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(Pair.get(eventId, new Date(until), limit));
     }
 
     private static void leave(VideoChat videoChat) {
