@@ -421,6 +421,10 @@ public class Model {
         }
     }
 
+    public static long now() {
+        return System.currentTimeMillis();
+    }
+
     public String toString() {
         return toJson(this).toString();
     }
