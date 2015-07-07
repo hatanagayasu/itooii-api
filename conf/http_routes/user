@@ -53,6 +53,7 @@ GET     /user/blockings             UsersController/getBlocking
 GET     /user/followers/@user_id    UsersController/getFollower
 GET     /user/followings/@user_id   UsersController/getFollowing
 
+@Anonymous
 @Validation(name="until",type="long")
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 @Validation(name="native_language",type="integer")
