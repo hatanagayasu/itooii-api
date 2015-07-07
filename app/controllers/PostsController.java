@@ -20,21 +20,16 @@ public class PostsController extends AppController {
     }
 
     public static Result getTimeline(JsonNode params) {
-        User me = getMe(params);
+        ObjectId myId = params.has("access_token") ? getMe(params).getId() : null;
+        ObjectId userId = getObjectId(params, "user_id");
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        User user;
-        if (params.has("user_id")) {
-            ObjectId userId = getObjectId(params, "user_id");
-            user = User.get(userId);
-            if (user == null)
-                return NotFound();
-        } else {
-            user = me;
-        }
+        User user = User.get(userId);
+        if (user == null)
+            return NotFound();
 
-        return Ok(Post.getTimeline(user.getId(), me.getId(), new Date(until), limit));
+        return Ok(Post.getTimeline(user.getId(), myId, new Date(until), limit));
     }
 
     public static Result add(JsonNode params) {
