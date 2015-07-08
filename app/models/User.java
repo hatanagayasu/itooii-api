@@ -110,11 +110,6 @@ public class User extends Other {
         MongoCollection following = jongo.getCollection("following");
         MongoCollection follower = jongo.getCollection("follower");
 
-        following.save(new Following(id, userId));
-        follower.save(new Follower(userId, id));
-
-        del(id, userId);
-
         List<Attachment> attachments = new ArrayList<Attachment>(1);
         attachments.add(new Attachment(AttachmentType.follow, userId));
         Post post = new Post(id, null, attachments, true);
@@ -124,6 +119,11 @@ public class User extends Other {
             new Activity(id, ActivityType.follow, post.getId(), followers).queue();
 
         new Activity(id, ActivityType.followYou, post.getId(), userId).queue();
+
+        following.save(new Following(id, userId));
+        follower.save(new Follower(userId, id));
+
+        del(id, userId);
     }
 
     public void unfollow(ObjectId userId) {
