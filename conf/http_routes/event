@@ -27,10 +27,12 @@ POST    /event                      EventController/add
 @Validation(name="to",type="date")
 PUT     /event/@id                  EventController/update
 
-@Privilege(Member)
+@Anonymous
 @Validation(name="id",type="id")
 GET     /event/@id                  EventController/get
+
+@Privilege(Member)
+@Validation(name="id",type="id")
 POST    /event/@id/join             EventController/join
 DELETE  /event/@id/join             EventController/leave
 DELETE  /event/@id                  EventController/delete
-
