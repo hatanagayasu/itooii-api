@@ -20,6 +20,7 @@ public class VideoChat extends Model {
     private ObjectId userId;
     private String token;
     @JsonProperty("peer_id")
+    @Postproduct("peer")
     private ObjectId peerId;
     private String peerToken;
     private int lang0, lang1;
