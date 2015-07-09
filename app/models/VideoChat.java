@@ -1,7 +1,9 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,7 +26,7 @@ public class VideoChat extends Model {
     @JsonProperty("event_id")
     private ObjectId eventId;
     private Date created;
-    private int rate;
+    private Integer rate;
 
     public VideoChat() {
     }
@@ -110,5 +112,34 @@ public class VideoChat extends Model {
         MongoCollection videoChatCol = jongo.getCollection("videochat");
 
         videoChatCol.update("{_id:#,user_id:#}", id, userId).with("{$set:{rate:#}}", rate);
+    }
+
+    public static Page getHistory(ObjectId userId, Date until, int limit) {
+        MongoCollection col = jongo.getCollection("videochat");
+        String previous = null;
+
+        MongoCursor<VideoChat> cursor = col
+            .find("{user_id:#,created:{$lt:#}}", userId, until)
+            .sort("{created:-1}")
+            .limit(limit)
+            .as(VideoChat.class);
+
+        List<VideoChat> videoChats = new ArrayList<VideoChat>(limit);
+        VideoChat videoChat = null;
+        while (cursor.hasNext()) {
+            videoChat = cursor.next();
+            videoChats.add(videoChat);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (videoChats.size() == limit)
+            previous = String.format("until=%d&limit=%d", videoChat.created.getTime(), limit);
+
+        return new Page(videoChats, previous);
     }
 }
