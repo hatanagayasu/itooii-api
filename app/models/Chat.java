@@ -1,12 +1,15 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
@@ -18,6 +21,8 @@ public class Chat extends Model {
     @JsonProperty("message_count")
     private int messageCount;
     private Date created;
+    @JsonProperty("last_message")
+    private Message lastMessage;
 
     public Chat() {
     }
@@ -42,5 +47,36 @@ public class Chat extends Model {
         });
 
         return chat.id;
+    }
+
+    public static Page list(ObjectId userId, Date until, int limit) {
+        MongoCollection col = jongo.getCollection("chat");
+        String previous = null;
+
+        MongoCursor<Chat> cursor = col
+            .find("{user_ids:#,'last_message.created':{$lt:#}}", userId, until)
+            .sort("{'last_message.created':-1}")
+            .limit(limit)
+            .as(Chat.class);
+
+        List<Chat> chats = new ArrayList<Chat>(limit);
+        Chat chat = null;
+        while (cursor.hasNext()) {
+            chat = cursor.next();
+            chats.add(chat);
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (chats.size() == limit) {
+            previous = String.format("until=%d&limit=%d",
+                chat.lastMessage.getCreated().getTime(), limit);
+        }
+
+        return new Page(chats, previous);
     }
 }

@@ -6,6 +6,8 @@ import models.Chat;
 import models.Message;
 import models.User;
 
+import java.util.Date;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
@@ -42,5 +44,13 @@ public class MessagesController extends AppController {
         sendEvent(me.getId(), message);
 
         return Ok(message);
+    }
+
+    public static Result list(JsonNode params) {
+        User me = getMe(params);
+        long until = params.has("until") ? params.get("until").longValue() : now();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(Chat.list(me.getId(), new Date(until), limit));
     }
 }
