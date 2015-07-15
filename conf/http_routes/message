@@ -1,0 +1,14 @@
+@Validation(name="user_id",type="id")
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /messages/@user_id          MessagesController/get
+
+@Privilege(Member)
+@Validation(name="user_id",type="id")
+@Validation(name="text",depend="|attachments")
+@attachments
+POST    /messages/@user_id          MessagesController/add
+
+@Privilege(Member)
+GET     /messages                   MessagesController/list
+

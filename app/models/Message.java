@@ -42,7 +42,7 @@ public class Message extends Model {
 
         Chat chat = chatCol
             .findAndModify("{_id:#}", chatId)
-            .with("{$inc:{message_count:1}}")
+            .with("{$set:{last_message:#},$inc:{message_count:1}}", this)
             .projection("{message_count:1}")
             .as(Chat.class);
 

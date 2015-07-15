@@ -96,6 +96,15 @@ public class User extends Other {
         params.putPOJO("avatar", avatar);
 
         update(params);
+
+        if (followers != null) {
+            List<Attachment> attachments = new ArrayList<Attachment>(1);
+            attachments.add(new Attachment(AttachmentType.change_profile_photo, avatar));
+            Post post = new Post(id, null, attachments, true);
+            post.save();
+
+            new Activity(id, ActivityType.changeProfilePhoto, post.getId(), followers).queue();
+        }
     }
 
     public void updateLastReadNotificaotion(ObjectId id) {

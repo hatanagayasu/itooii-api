@@ -103,12 +103,14 @@ public class Activity extends Model {
 
         actCol.save(this);
 
-        Date modified = new Date();
-        for (ObjectId receiver : receivers) {
-            feedCol.update("{user_id:#,post_id:#}", receiver, postId)
-                .upsert()
-                .with("{$push:{'relevants':{user_id:#,type:#,created:#}},$set:{modified:#}}",
-                        userId, type, created, modified);
+        if (type != ActivityType.followYou.value()) {
+            Date modified = new Date();
+            for (ObjectId receiver : receivers) {
+                feedCol.update("{user_id:#,post_id:#}", receiver, postId)
+                    .upsert()
+                    .with("{$push:{'relevants':{user_id:#,type:#,created:#}},$set:{modified:#}}",
+                            userId, type, created, modified);
+            }
         }
 
         Set<ObjectId> receivers = this.receivers;
