@@ -124,8 +124,10 @@ public class User extends Other {
         Post post = new Post(id, null, attachments, true);
         post.save();
 
-        if (followers != null)
+        if (followers != null) {
+            followers.remove(userId);
             new Activity(id, ActivityType.follow, post.getId(), followers).queue();
+        }
 
         new Activity(id, ActivityType.followYou, post.getId(), userId).queue();
 
