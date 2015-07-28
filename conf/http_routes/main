@@ -14,6 +14,7 @@
 @Include(message)
 @Include(event)
 @Include(activity)
+@Include(push_notification)
 
 @Anonymous
 @CacheControl(31536000)
@@ -35,3 +36,5 @@ GET     /app/locales                Application/getLocale
 
 @Anonymous
 POST    /echo                       TestController/echo
+
+POST    /push_notification          TestController/pushNotification

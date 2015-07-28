@@ -2,6 +2,8 @@ package models;
 
 import controllers.exceptions.ObjectForbiddenException;
 
+import play.libs.ws.*;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -26,6 +29,7 @@ public class User extends Other {
     private int tos;
     @JsonProperty("last_read_notification")
     private ObjectId lastReadNotification;
+    private Set<String> gcms;
 
     public User() {
     }
@@ -345,5 +349,36 @@ public class User extends Other {
     private static void del(ObjectId id1, ObjectId id2) {
         del("user:" + id1, "name:" + id1, "avatar:" + id1,
             "user:" + id2, "name:" + id1, "avatar:" + id1);
+    }
+
+    public void addGCM(String id) {
+        MongoCollection col = jongo.getCollection("user");
+
+        col.update(this.id).with("{$push:{gcms:#}}", id);
+
+        del(this.id);
+    }
+
+    public void removeGCM(String id) {
+        MongoCollection col = jongo.getCollection("user");
+
+        col.update(this.id).with("{$pull:{gcms:#}}", id);
+
+        del(this.id);
+    }
+
+    public void pushNotification() {
+        ObjectNode json = mapper.createObjectNode();
+        ArrayNode ids = json.putArray("registration_ids");
+        for (String gcm : gcms)
+            ids.add(gcm);
+        ObjectNode data = json.putObject("data");
+        data.put("message", "something new?");
+        errorlog(json);
+
+        WS.url("https://android.googleapis.com/gcm/send")
+            .setHeader("Authorization", "key=AIzaSyCm1b2WpHdcWf49ese9Bf8ZMnGqyTG1Bsw")
+            .setHeader("Content-Type", "application/json")
+            .post(json);
     }
 }

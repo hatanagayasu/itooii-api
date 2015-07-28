@@ -1,0 +1,5 @@
+@Validation(name="id",require=true)
+POST    /gcm                        PushNotificationController/addGCM
+
+@Validation(name="id",require=true)
+DELETE  /gcm                        PushNotificationController/removeGCM
