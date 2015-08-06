@@ -29,7 +29,7 @@ public class User extends Other {
     private int tos;
     @JsonProperty("last_read_notification")
     private ObjectId lastReadNotification;
-    private Set<String> gcms;
+    private Set<Gcm> gcms;
 
     public User() {
     }
@@ -351,10 +351,19 @@ public class User extends Other {
             "user:" + id2, "name:" + id1, "avatar:" + id1);
     }
 
-    public void addGCM(String id) {
+    public void addGCM(String id, String lang) {
         MongoCollection col = jongo.getCollection("user");
 
-        col.update(this.id).with("{$push:{gcms:#}}", id);
+        col.update(this.id).with("{$push:{gcms:{id:#,lang:#}}}", id, lang);
+
+        del(this.id);
+    }
+
+    public void updateGCM(String id, String lang) {
+        MongoCollection col = jongo.getCollection("user");
+
+        col.update("{_id:#,gcms:{$elemMatch:{id:#}}}", this.id, id)
+            .with("{$set:{'gcms.$.lang':#}}", lang);
 
         del(this.id);
     }
@@ -362,7 +371,7 @@ public class User extends Other {
     public void removeGCM(String id) {
         MongoCollection col = jongo.getCollection("user");
 
-        col.update(this.id).with("{$pull:{gcms:#}}", id);
+        col.update(this.id).with("{$pull:{gcms:{id:#}}}", id);
 
         del(this.id);
     }
@@ -370,11 +379,10 @@ public class User extends Other {
     public void pushNotification() {
         ObjectNode json = mapper.createObjectNode();
         ArrayNode ids = json.putArray("registration_ids");
-        for (String gcm : gcms)
-            ids.add(gcm);
+        for (Gcm gcm : gcms)
+            ids.add(gcm.getId());
         ObjectNode data = json.putObject("data");
         data.put("message", "something new?");
-        errorlog(json);
 
         WS.url("https://android.googleapis.com/gcm/send")
             .setHeader("Authorization", "key=AIzaSyCm1b2WpHdcWf49ese9Bf8ZMnGqyTG1Bsw")
