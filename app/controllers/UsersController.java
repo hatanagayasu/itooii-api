@@ -53,6 +53,8 @@ public class UsersController extends AppController {
 
         String password = params.get("password").textValue();
         String name = params.get("name").textValue();
+        String nationality = params.get("nationality").textValue();
+        int gender = Integer.parseInt(params.get("gender").textValue());
 
         Iterator<JsonNode> values = params.get("native_language").iterator();
         List<Integer> nativeLanguage = new ArrayList<Integer>();
@@ -68,7 +70,8 @@ public class UsersController extends AppController {
             practiceLanguage.add(new PracticeLanguage(id, level));
         }
 
-        User user = new User(email, password, name, nativeLanguage, practiceLanguage);
+        User user = new User(email, password, name, nationality, gender, nativeLanguage,
+                        practiceLanguage);
         user.save();
 
         reverifyEmail(user);

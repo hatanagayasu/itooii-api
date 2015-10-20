@@ -34,12 +34,14 @@ public class User extends Other {
     public User() {
     }
 
-    public User(String email, String password, String name, List<Integer> nativeLanguage,
+    public User(String email, String password, String name, String nationality, int gender, List<Integer> nativeLanguage,
         List<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email.toLowerCase();
         this.password = md5(password);
         this.name = name;
+        this.nationality = nationality;
+        this.gender = gender;
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
@@ -63,14 +65,7 @@ public class User extends Other {
 
         params.remove("access_token");
 
-        if (privilege == Privilege.Observer.value() &&
-            emailVerified == true &&
-            (birthday != null || params.has("birthday")) &&
-            (gender != 0 || params.has("gender")) &&
-            (nationality != null || params.has("nationality")) &&
-            (country != null || params.has("country")) &&
-            (city != null || params.has("city")) &&
-            (avatar != null || params.has("avatar")))
+        if (privilege == Privilege.Observer.value() && emailVerified == true)
             params.put("privilege", Privilege.Member.value());
 
         if (params.has("password")) {
