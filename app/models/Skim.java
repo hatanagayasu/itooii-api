@@ -20,7 +20,7 @@ public class Skim extends Model {
     protected List<Integer> nativeLanguage;
     @JsonProperty("practice_language")
     protected List<PracticeLanguage> practiceLanguage;
-    protected Date birthday;
+    protected String birthday;
     protected int gender;
     protected String nationality;
     protected String country;

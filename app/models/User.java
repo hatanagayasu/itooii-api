@@ -34,7 +34,8 @@ public class User extends Other {
     public User() {
     }
 
-    public User(String email, String password, String name, String nationality, int gender, List<Integer> nativeLanguage,
+    public User(String email, String password, String name, String nationality, int gender,
+                    String birthday, List<Integer> nativeLanguage,
         List<PracticeLanguage> practiceLanguage) {
         id = new ObjectId();
         this.email = email.toLowerCase();
@@ -42,6 +43,7 @@ public class User extends Other {
         this.name = name;
         this.nationality = nationality;
         this.gender = gender;
+        this.birthday = birthday;
         this.nativeLanguage = nativeLanguage;
         this.practiceLanguage = practiceLanguage;
         created = new Date();
