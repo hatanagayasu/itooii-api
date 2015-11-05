@@ -543,6 +543,11 @@ public class HttpController extends AppController {
                 } catch (ParseException e) {
                     throw new MalformedParamException(validation);
                 }
+            } else if (type.equals("json")) {
+                if (!param.isObject())
+                    throw new MalformedParamException(validation);
+
+                params.put(name, param.toString());
             } else {
                 if (type.equals("integer") && param.isTextual()) {
                     try {

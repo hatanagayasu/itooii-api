@@ -38,6 +38,7 @@ POST    /user                       UsersController/add
 @Validation(name="nationality",rule="length=2")
 @Validation(name="country",rule="length=2")
 @Validation(name="city")
+@Validation(name="metadata",type="json")
 PUT     /user                       UsersController/update
 
 @Validation(name="id",type="id",require=true)

@@ -131,6 +131,14 @@ public class Model {
                     continue;
                 }
 
+                if (field.getAnnotation(Json.class) != null) {
+                    result.append("\"").append(name).append("\":").append(value);
+                    if (iterator.hasNext())
+                        result.append(",");
+
+                    continue;
+                }
+
                 JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
                 if (jsonProperty != null)
                     name = jsonProperty.value();
