@@ -184,7 +184,7 @@ public class UsersController extends AppController {
 
     private static void reverifyEmail(User me) {
         String token = me.reverifyEmail();
-        String link = webServer + "account/verify-email/" + token;
+        String link = webServer + "dashboard/verify-email/" + token;
         String content = views.html.Email.verify_email.render(link).toString();
 
         Matcher matcher = titlePattern.matcher(content);
@@ -221,7 +221,7 @@ public class UsersController extends AppController {
         if (token == null)
             return NotFound();
 
-        String link = webServer + "account/reset-password/" + token;
+        String link = webServer + "dashboard/reset-password/" + token;
         String content = views.html.Email.forgot_password.render(link).toString();
 
         Matcher matcher = titlePattern.matcher(content);
