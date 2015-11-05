@@ -15,7 +15,7 @@ GET     /user/@user_id              UsersController/get
 @Validation(name="password",require=true)
 @Validation(name="name",require=true)
 @Validation(name="nationality",require=true)
-@Validation(name="gender",require=true)
+@Validation(name="gender",type="integer",rule="min=0,max=2",require=true)
 @Validation(name="birthday",require=true)
 @Validation(name="native_language",type="array",rule="minSize=1,maxSize=3",require=true)
 @Validation(name="native_language[]",type="integer",require=true)

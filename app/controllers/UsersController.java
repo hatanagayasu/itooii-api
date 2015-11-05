@@ -54,7 +54,7 @@ public class UsersController extends AppController {
         String password = params.get("password").textValue();
         String name = params.get("name").textValue();
         String nationality = params.get("nationality").textValue();
-        int gender = Integer.parseInt(params.get("gender").textValue());
+        int gender = params.get("gender").intValue();
         String birthday = params.get("birthday").textValue();
 
         Iterator<JsonNode> values = params.get("native_language").iterator();
