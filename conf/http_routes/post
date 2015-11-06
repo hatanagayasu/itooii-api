@@ -12,6 +12,7 @@ GET     /user/timeline/@user_id     PostsController/getTimeline
 @attachments
 POST    /user/feed                  PostsController/add
 
+@Anonymous
 @Validation(name="post_id",type="id")
 GET     /post/@post_id              PostsController/get
 

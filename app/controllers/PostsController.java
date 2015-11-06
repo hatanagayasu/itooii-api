@@ -43,7 +43,7 @@ public class PostsController extends AppController {
     }
 
     public static Result get(JsonNode params) {
-        User me = getMe(params);
+        ObjectId myId = params.has("access_token") ? getMe(params).getId() : null;
         ObjectId postId = getObjectId(params, "post_id");
 
         Post post = Post.get(postId);
@@ -51,7 +51,7 @@ public class PostsController extends AppController {
         if (post == null || post.getDeleted() != null)
             return NotFound();
 
-        post.postproduct(me.getId());
+        post.postproduct(myId);
 
         return Ok(post);
     }

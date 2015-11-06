@@ -386,6 +386,9 @@ public class Model {
     }
 
     public static String name(ObjectId userId) {
+        if (userId == null)
+            return null;
+
         String key = "name:" + userId;
 
         String name = get(key);
@@ -403,6 +406,9 @@ public class Model {
     }
 
     public static ObjectId avatar(ObjectId userId) {
+        if (userId == null)
+            return null;
+
         String key = "avatar:" + userId;
 
         String avatar = get(key);
