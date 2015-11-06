@@ -30,8 +30,6 @@ public class User extends Other {
     @JsonProperty("last_read_notification")
     private ObjectId lastReadNotification;
     private Set<Gcm> gcms;
-    @Json
-    private String metadata;
 
     public User() {
     }

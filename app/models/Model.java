@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
@@ -131,14 +132,6 @@ public class Model {
                     continue;
                 }
 
-                if (field.getAnnotation(Json.class) != null) {
-                    result.append("\"").append(name).append("\":").append(value);
-                    if (iterator.hasNext())
-                        result.append(",");
-
-                    continue;
-                }
-
                 JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
                 if (jsonProperty != null)
                     name = jsonProperty.value();
@@ -163,6 +156,8 @@ public class Model {
                 } else if (value instanceof Model) {
                     result.append("\"").append(name).append("\":");
                     objectToJson(value, result);
+                } else if (value instanceof JsonNode) {
+                    result.append("\"").append(name).append("\":").append(value);
                 } else {
                     result.append("\"").append(name).append("\":\"").append(value).append("\"");
 
