@@ -27,7 +27,7 @@ GET     /post/@post_id/comment      PostsController/getComment
 @attachments
 POST    /post/@post_id/comment      PostsController/addComment
 
-@Privilege(Member)
+@Privilege(Observer)
 @Validation(name="post_id",type="id")
 POST    /post/@post_id/like         PostsController/like
 DELETE  /post/@post_id/like         PostsController/unlike
