@@ -64,7 +64,8 @@ public class Comment extends Model {
 
         int page = post.getCommentCount() / 50;
         commentCol.update("{post_id:#,page:#}", postId, page).upsert()
-            .with("{$push:{comments:#},$setOnInsert:{created:#}}", this, this.created);
+            .with("{$push:{comments:#},$setOnInsert:{user_id:#,created:#}}",
+                this, post.getUserId(), this.created);
 
         del("post:" + postId);
 
@@ -198,8 +199,17 @@ public class Comment extends Model {
             .projection("{post_id:1}")
             .as(Comments.class);
 
-        if (comments == null)
-            return;
+        if (comments == null) {
+            // a post owner can delete a another's comments
+            comments = commentCol
+                .findAndModify("{user_id:#,comments:{$elemMatch:{_id:#}}}", userId, commentId)
+                .with("{$set:{'comments.$.deleted':#}}", true)
+                .projection("{post_id:1}")
+                .as(Comments.class);
+
+            if (comments == null)
+                return;
+        }
 
         postCol.update(comments.getPostId())
             .with("{$inc:{comment_count:-1},$pull:{comments:{_id:#}}}", commentId);
