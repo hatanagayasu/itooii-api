@@ -28,7 +28,7 @@ form.onsubmit = function(event) {
       var file = files[i];
 
       // Check the file type.
-      if (!file.type.match('image.*')) {
+      if (!file.type.match('image.*') && !file.type.match('audio.*')) {
         continue;
       }
 

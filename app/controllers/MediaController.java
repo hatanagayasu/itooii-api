@@ -36,6 +36,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import net.bramp.ffmpeg.FFprobe;
+import net.bramp.ffmpeg.probe.FFmpegFormat;
+import net.bramp.ffmpeg.probe.FFmpegProbeResult;
+
 import org.bson.types.ObjectId;
 
 import org.imgscalr.Scalr;
@@ -122,15 +126,48 @@ public class MediaController extends AppController {
 
         for (MultipartFormData.FilePart part : body.getFiles()) {
             //TODO part.getContentType();
-            Media media = new Media(me.getId(), AttachmentType.photo);
-            ObjectId id = media.getId();
+            if (part.getContentType().startsWith("audio")) {
+                Media media = new Media(me.getId(), AttachmentType.audio);
+                ObjectId id = media.getId();
 
-            media.save();
+                media.save();
 
-            uploadPohto(id, part, files);
+                upload(id, part, files);
+            } else {
+                Media media = new Media(me.getId(), AttachmentType.photo);
+                ObjectId id = media.getId();
+
+                media.save();
+
+                uploadPohto(id, part, files);
+            }
         }
 
         return Ok(result);
+    }
+
+    private static void upload(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {
+        try {
+            FFprobe ffprobe = new FFprobe("/usr/bin/ffprobe");
+            FFmpegProbeResult result = ffprobe.probe(part.getFile().getAbsolutePath());
+            FFmpegFormat format = result.getFormat();
+
+            s3client.putObject(new PutObjectRequest(bucket, id.toString(), part.getFile()));
+
+            part.getFile().delete();
+
+            String signing = Model.md5("#" + id + format.bit_rate + format.duration);
+
+            files.addObject()
+                .put("name", part.getKey())
+                .put("content_type", part.getContentType())
+                .put("id", id.toString())
+                .put("bit_rate", format.bit_rate)
+                .put("duration", format.duration)
+                .put("signing", signing);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void uploadPohto(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {

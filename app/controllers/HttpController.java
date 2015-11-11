@@ -595,6 +595,9 @@ public class HttpController extends AppController {
 
             if (rules != null && !validation(rules, param.intValue()))
                 throw new MalformedParamException(validation);
+        } else if (type.equals("double")) {
+            if (!param.isDouble())
+                throw new MalformedParamException(validation);
         } else if (type.equals("object")) {
             if (!param.isObject())
                 throw new MalformedParamException(validation);

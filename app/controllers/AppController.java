@@ -114,7 +114,17 @@ public class AppController extends Controller {
                 } else if (type == AttachmentType.url) {
                     String url = attachment.get("url").textValue();
                     attachments.add(new Attachment(type, url));
-                } else if (type == AttachmentType.video || type == AttachmentType.voice) {
+                } else if (type == AttachmentType.audio) {
+                    ObjectId id = getObjectId(attachment, "id");
+                    int bit_rate = attachment.get("bit_rate").intValue();
+                    double duration = attachment.get("duration").doubleValue();
+                    String signing = attachment.get("signing").textValue();
+
+                    if (!Model.md5("#" + id + bit_rate + duration).equals(signing))
+                        throw new RuntimeException(new InvalidSigningException());
+
+                    attachments.add(new Attachment(type, id, bit_rate, duration));
+                } else if (type == AttachmentType.video) {
                     ObjectId id = getObjectId(attachment, "id");
                     attachments.add(new Attachment(type, id));
                 }

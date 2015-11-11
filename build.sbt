@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.9.21",
   "com.drewnoakes" % "metadata-extractor" % "2.8.1",
   "com.sendgrid" % "sendgrid-java" % "2.2.0",
+  "net.bramp.ffmpeg" % "ffmpeg" % "0.2",
   "org.imgscalr" % "imgscalr-lib" % "4.2",
   "org.jongo" % "jongo" % "1.1",
   "org.mongodb" % "mongo-java-driver" % "2.13.0",

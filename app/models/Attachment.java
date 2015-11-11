@@ -11,6 +11,8 @@ public class Attachment extends Model {
     private ObjectId id;
     private Integer width;
     private Integer height;
+    private Integer bit_rate;
+    private Double duration;
     private String url;
     @JsonIgnore
     private String name;
@@ -30,6 +32,13 @@ public class Attachment extends Model {
         this.id = id;
         this.width = width;
         this.height = height;
+    }
+
+    public Attachment(AttachmentType type, ObjectId id, int bit_rate, double duration) {
+        this.type = type;
+        this.id = id;
+        this.bit_rate = bit_rate;
+        this.duration = duration;
     }
 
     public Attachment(AttachmentType type, ObjectId id, String name) {
