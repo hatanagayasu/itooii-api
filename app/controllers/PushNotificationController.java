@@ -2,8 +2,6 @@ package controllers;
 
 import models.User;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class PushNotificationController extends AppController {

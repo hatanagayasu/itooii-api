@@ -82,7 +82,6 @@ public class User extends Other {
     }
 
     public void updateAvatar(ObjectId avatar) {
-        MongoCollection userCol = jongo.getCollection("user");
         MongoCollection mediacol = jongo.getCollection("media");
 
         Media media = mediacol.findAndModify("{_id:#,user_id:#,'type':'photo'}", avatar, id)

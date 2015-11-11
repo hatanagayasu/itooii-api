@@ -8,7 +8,6 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
-import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
