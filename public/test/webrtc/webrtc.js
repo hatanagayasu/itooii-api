@@ -204,6 +204,8 @@ $(function() {
                         confirm: false
                     });
                 }
+            } else if (params.action == 'video/cancel') {
+                alert('video/cancel');
             } else if (params.action == 'video/response') {
                 if (params.confirm) {
                     video_chat_id = params.video_chat_id;
@@ -266,6 +268,13 @@ $(function() {
         pair_talk = false;
         user_id = $("#user_id").val();
         send("video/request", {
+            user_id: user_id
+        });
+    });
+
+    $("#cancel").click(function() {
+        user_id = $("#user_id").val();
+        send("video/cancel", {
             user_id: user_id
         });
     });

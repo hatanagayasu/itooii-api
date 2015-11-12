@@ -13,6 +13,10 @@ POST    /video/request              VideoChatController/request
 
 @Privilege(Member)
 @Validation(name="user_id",type="id",require=true)
+POST    /video/cancel               VideoChatController/cancel
+
+@Privilege(Member)
+@Validation(name="user_id",type="id",require=true)
 @Validation(name="video_chat_id",type="id",require=true)
 @Validation(name="confirm",type="boolean",require=true)
 POST    /video/response             VideoChatController/response
