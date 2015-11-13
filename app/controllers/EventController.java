@@ -35,7 +35,7 @@ public class EventController extends AppController {
     }
 
     public static Result get(JsonNode params) {
-        ObjectId eventId = getObjectId(params, "id");
+        ObjectId eventId = getObjectId(params, "event_id");
 
         Event event = Event.get(eventId);
         if (event == null || event.getDeleted() != null)
@@ -61,7 +61,7 @@ public class EventController extends AppController {
 
     public static Result update(JsonNode params) {
         User me = getMe(params);
-        ObjectId eventId = getObjectId(params, "id");
+        ObjectId eventId = getObjectId(params, "event_id");
 
         Event event = Event.get(eventId);
         if (event == null || event.getDeleted() != null)
@@ -77,7 +77,7 @@ public class EventController extends AppController {
 
     public static Result join(JsonNode params) {
         User me = getMe(params);
-        ObjectId eventId = getObjectId(params, "id");
+        ObjectId eventId = getObjectId(params, "event_id");
 
         Event event = Event.get(eventId);
         if (event == null || event.getDeleted() != null)
@@ -91,7 +91,7 @@ public class EventController extends AppController {
 
     public static Result leave(JsonNode params) {
         User me = getMe(params);
-        ObjectId eventId = getObjectId(params, "id");
+        ObjectId eventId = getObjectId(params, "event_id");
 
         Event event = Event.get(eventId);
         if (event == null || event.getDeleted() != null)
@@ -108,7 +108,7 @@ public class EventController extends AppController {
 
     public static Result delete(JsonNode params) {
         User me = getMe(params);
-        ObjectId eventId = getObjectId(params, "id");
+        ObjectId eventId = getObjectId(params, "event_id");
 
         Event event = Event.get(eventId);
         if (event == null || event.getDeleted() != null)

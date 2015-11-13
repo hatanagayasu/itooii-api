@@ -19,20 +19,20 @@ GET     /events                     EventController/search
 POST    /event                      EventController/add
 
 @Privilege(Member)
-@Validation(name="id",type="id")
+@Validation(name="event_id",type="id")
 @Validation(name="name")
 @Validation(name="details")
 @Validation(name="language",type="integer")
 @Validation(name="from",type="date")
 @Validation(name="to",type="date")
-PUT     /event/@id                  EventController/update
+PUT     /event/@event_id            EventController/update
 
 @Anonymous
-@Validation(name="id",type="id")
-GET     /event/@id                  EventController/get
+@Validation(name="event_id",type="id")
+GET     /event/@event_id            EventController/get
 
 @Privilege(Member)
-@Validation(name="id",type="id")
-POST    /event/@id/join             EventController/join
-DELETE  /event/@id/join             EventController/leave
-DELETE  /event/@id                  EventController/delete
+@Validation(name="event_id",type="id")
+POST    /event/@event_id/join       EventController/join
+DELETE  /event/@event_id/join       EventController/leave
+DELETE  /event/@event_id            EventController/delete
