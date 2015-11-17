@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,6 +36,7 @@ import org.jongo.marshall.jackson.oid.Id;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.Tuple;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class Model {
@@ -45,7 +47,7 @@ public class Model {
     public static DB mongodb;
     public static Jongo jongo;
 
-    private static JedisPool jedisPool;
+    public static JedisPool jedisPool;
 
     private static SendGrid sendgrid;
 
@@ -334,6 +336,22 @@ public class Model {
             jedisPool.returnBrokenResource(jedis);
             errorlog(e);
         }
+    }
+
+    public static Set<Tuple> zrevrangeByScoreWithScores(String key, double min, double max,
+        int offset, int count) {
+        Jedis jedis = jedisPool.getResource();
+        Set<Tuple> result = null;
+
+        try {
+            result = jedis.zrevrangeByScoreWithScores(key, min, max, offset, count);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
     }
 
     public static <T extends Model> T cache(String key, Class<T> clazz, Callable<T> callback) {
