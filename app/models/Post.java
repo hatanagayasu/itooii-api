@@ -153,6 +153,7 @@ public class Post extends Model {
         int count = 0;
         while (cursor.hasNext()) {
             post = cursor.next();
+            count++;
             if (post.deleted == null && post.automatic == null) {
                 post.postproduct(myId);
                 posts.add(post);
