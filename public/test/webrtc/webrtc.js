@@ -317,4 +317,11 @@ $(function() {
             }
         });
     });
+
+    $("#action").click(function() {
+        var access_token = $("#access_token").val(),
+            text = $("#message").val();
+
+        socket.send(text);
+    });
 });
