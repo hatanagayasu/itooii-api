@@ -36,3 +36,14 @@ GET     /event/@event_id            EventController/get
 POST    /event/@event_id/join       EventController/join
 DELETE  /event/@event_id/join       EventController/leave
 DELETE  /event/@event_id            EventController/delete
+
+@Privilege(Member)
+@Validation(name="event_id",type="id",require=true)
+POST    /event/enter                EventController/enter
+POST    /event/exit                 EventController/exit
+
+@Privilege(Member)
+@Validation(name="event_id",type="id")
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /event/@event_id/users      EventController/getOnlineUser

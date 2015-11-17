@@ -3,6 +3,7 @@ package controllers;
 import play.libs.F.*;
 import play.mvc.WebSocket;
 
+import models.Event;
 import models.Model;
 import models.User;
 import models.VideoChat;
@@ -46,9 +47,11 @@ public class WebSocketController extends AppController {
                 }
             } else if (channel.equals("session")) {
                 String[] segs = message.split("\n");
-                WebSocket.Out<String>out = sessionToSocket.get(segs[0]);
-                if (out != null)
-                    out.write(segs[1]);
+                for (String session : segs[0].replaceAll("[\\[\\] ]", "").split(",")) {
+                    WebSocket.Out<String>out = sessionToSocket.get(session);
+                    if (out != null)
+                        out.write(segs[1]);
+                }
             } else if (channel.equals("pair")) {
                 String[] segs = message.split("\n");
                 if (sessionToSocket.containsKey(segs[0]))
@@ -109,6 +112,8 @@ public class WebSocketController extends AppController {
                             VideoChat videoChat = VideoChat.get(new ObjectId(userId));
                             if (videoChat != null)
                                 videoChat.leave();
+
+                            Event.exit(userId, session);
                         }
                     }
                 });

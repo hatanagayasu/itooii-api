@@ -9,10 +9,15 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Tuple;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 
 @lombok.Getter
 public class Event extends Model {
@@ -119,6 +124,131 @@ public class Event extends Model {
         col.update(id).with("{$set:{deleted:true}}");
 
         del("event:" + id);
+    }
+
+    public Page getOnlineUser(ObjectId eventId, long until, int limit) {
+        String previous = null;
+
+        Set<Tuple> tuple = zrevrangeByScoreWithScores("event:online_user_id:" + eventId,
+            until - 1, 0, 0, limit);
+
+        List<Skim> skims = new ArrayList<Skim>();
+
+        if (tuple != null && tuple.size() > 0) {
+            for (Tuple t : tuple) {
+                Skim skim = Skim.get(new ObjectId(t.getElement()));
+                if (skim != null) {
+                    until = (long)t.getScore();
+                    skim.activity = new Date(until);
+                    skims.add(skim);
+                }
+            }
+        }
+
+        if (tuple.size() == limit)
+            previous = String.format("until=%d&limit=%d", until, limit);
+
+        return new Page(skims, previous);
+    }
+
+    public void enter(ObjectId userId, String token) {
+        ObjectId eventId = id;
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            while (jedis.setnx("lock:" + eventId, "") == 0) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            jedis.expire("lock:" + eventId, 3);
+
+            Set<String> sessions = null;
+            if (jedis.sadd("event:token:" + eventId, token) != 0) {
+                jedis.hset("token:event", token, eventId.toString());
+                if (jedis.hincrBy("event:user_id:" + eventId, userId.toString(), 1) == 1) {
+                    sessions = jedis.smembers("event:token:" + eventId);
+                }
+                jedis.zadd("event:online_user_id:" + eventId, now(), userId.toString());
+            }
+
+            jedis.del("lock:" + eventId);
+
+            jedisPool.returnResource(jedis);
+
+            if (sessions != null && sessions.size() > 0) {
+                ObjectNode result = mapper.createObjectNode();
+                result.put("action", "event/enter")
+                    .put("event_id", eventId.toString())
+                    .put("user_id", userId.toString());
+
+                publish("session", sessions + "\n" + result);
+            }
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+    }
+
+    static public void exit(String userId, String token) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            String eventId = jedis.hget("token:event", token);
+
+            jedisPool.returnResource(jedis);
+
+            if (eventId != null)
+                exit(new ObjectId(eventId), new ObjectId(userId), token);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+    }
+
+    public void exit(ObjectId userId, String token) {
+        exit(id, userId, token);
+    }
+
+    public static void exit(ObjectId eventId, ObjectId userId, String token) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            while (jedis.setnx("lock:" + eventId, "") == 0) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            jedis.expire("lock:" + eventId, 3);
+
+            Set<String> sessions = null;
+            if (jedis.srem("event:token:" + eventId, token) != 0) {
+                jedis.hdel("token:event", token);
+                if (jedis.hincrBy("event:user_id:" + eventId, userId.toString(), -1) == 0) {
+                    jedis.hdel("event:user_id:" + eventId, userId.toString());
+                    jedis.zrem("event:online_user_id:" + eventId, userId.toString());
+                    sessions = jedis.smembers("event:token:" + eventId);
+                }
+            }
+
+            jedis.del("lock:" + eventId);
+
+            jedisPool.returnResource(jedis);
+
+            if (sessions != null && sessions.size() > 0) {
+                ObjectNode result = mapper.createObjectNode();
+                result.put("action", "event/exit")
+                    .put("event_id", eventId.toString())
+                    .put("user_id", userId.toString());
+
+                publish("session", sessions + "\n" + result);
+            }
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
     }
 
     public static Page gets(ObjectId userId, Date until, int limit) {

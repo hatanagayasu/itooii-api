@@ -106,6 +106,46 @@ public class EventController extends AppController {
         return Ok();
     }
 
+    public static Result enter(JsonNode params) {
+        User me = getMe(params);
+        String token = params.get("access_token").textValue();
+        ObjectId eventId = getObjectId(params, "event_id");
+
+        Event event = Event.get(eventId);
+        if (event == null || event.getDeleted() != null)
+            return NotFound();
+
+        event.enter(me.getId(), token);
+
+        return Ok();
+    }
+
+    public static Result exit(JsonNode params) {
+        User me = getMe(params);
+        String token = params.get("access_token").textValue();
+        ObjectId eventId = getObjectId(params, "event_id");
+
+        Event event = Event.get(eventId);
+        if (event == null || event.getDeleted() != null)
+            return NotFound();
+
+        event.exit(me.getId(), token);
+
+        return Ok();
+    }
+
+    public static Result getOnlineUser(JsonNode params) {
+        ObjectId eventId = getObjectId(params, "event_id");
+        long until = params.has("until") ? params.get("until").longValue() : now();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 50;
+
+        Event event = Event.get(eventId);
+        if (event == null || event.getDeleted() != null)
+            return NotFound();
+
+        return Ok(event.getOnlineUser(eventId, until, limit));
+    }
+
     public static Result delete(JsonNode params) {
         User me = getMe(params);
         ObjectId eventId = getObjectId(params, "event_id");
