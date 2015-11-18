@@ -61,6 +61,14 @@ public class WebSocketController extends AppController {
     };
 
     static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                System.out.println("Inside Add Shutdown Hook");
+                sessionToSocket.forEach((session, out) -> out.close());
+            }
+        });
+
         new Thread(new Runnable() {
             public void run() {
                 Model.subscribe(pubsub, "all", "user", "session", "pair");
