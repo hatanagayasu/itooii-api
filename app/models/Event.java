@@ -177,6 +177,7 @@ public class Event extends Model {
 
             jedisPool.returnResource(jedis);
 
+            sessions.remove(token);
             if (sessions != null && sessions.size() > 0) {
                 ObjectNode result = mapper.createObjectNode();
                 result.put("action", "event/enter")
