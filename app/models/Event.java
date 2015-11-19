@@ -169,6 +169,7 @@ public class Event extends Model {
                 jedis.hset("token:event", token, eventId.toString());
                 if (jedis.hincrBy("event:user_id:" + eventId, userId.toString(), 1) == 1) {
                     sessions = jedis.smembers("event:token:" + eventId);
+                    sessions.remove(token);
                 }
                 jedis.zadd("event:online_user_id:" + eventId, now(), userId.toString());
             }
@@ -177,7 +178,6 @@ public class Event extends Model {
 
             jedisPool.returnResource(jedis);
 
-            sessions.remove(token);
             if (sessions != null && sessions.size() > 0) {
                 ObjectNode result = mapper.createObjectNode();
                 result.put("action", "event/enter")
