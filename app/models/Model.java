@@ -8,13 +8,18 @@ import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -47,7 +52,9 @@ public class Model {
     public static DB mongodb;
     public static Jongo jongo;
 
-    public static JedisPool jedisPool;
+    private static JedisPool jedisPool;
+    private static Map<String, String> luasha1 =
+        Collections.synchronizedMap(new HashMap<String, String>());
 
     private static SendGrid sendgrid;
 
@@ -258,6 +265,31 @@ public class Model {
         }
     }
 
+    public static Object evalScript(String name, String... params) {
+        Jedis jedis = jedisPool.getResource();
+        Object result = null;
+
+        try {
+            String sha1 = luasha1.get(name);
+            if (sha1 == null || !jedis.scriptExists(sha1)) {
+                String path = Play.application().path() + "/scripts/lua/";
+                String script = new String(Files.readAllBytes(Paths.get(path + name + ".lua")));
+
+                sha1 = jedis.scriptLoad(script);
+                luasha1.put(name, sha1);
+            }
+
+            result = jedis.evalsha(sha1, 0, params);
+
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException | IOException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
     public static String get(String key) {
         Jedis jedis = jedisPool.getResource();
         String result = null;
@@ -336,6 +368,21 @@ public class Model {
             jedisPool.returnBrokenResource(jedis);
             errorlog(e);
         }
+    }
+
+    public static String hget(String key, String field) {
+        Jedis jedis = jedisPool.getResource();
+        String result = null;
+
+        try {
+            result = jedis.hget(key, field);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
     }
 
     public static Set<Tuple> zrevrangeByScoreWithScores(String key, double min, double max,
