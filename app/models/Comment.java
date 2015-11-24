@@ -108,10 +108,8 @@ public class Comment extends Model {
         }
 
         List<Comment> comments = new ArrayList<Comment>(100);
-        int count = 0;
         for (int i = commentses.size() - 1; i >= 0; i--) {
             for (Comment comment : commentses.get(i).getComments()) {
-                count++;
                 if (comment.deleted == null && comment.created.before(until))
                     comments.add(comment);
             }
@@ -122,7 +120,7 @@ public class Comment extends Model {
 
         postproduct(comments, userId);
 
-        if (count == limit) {
+        if (comments.size() == limit) {
             previous = String.format("until=%d&limit=%d",
                 comments.get(0).getCreated().getTime(), limit);
         }
