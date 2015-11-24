@@ -37,7 +37,8 @@ POST    /event/@event_id/join       EventController/join
 DELETE  /event/@event_id/join       EventController/leave
 DELETE  /event/@event_id            EventController/delete
 
-@Privilege(Member)
+@Anonymous
+@Validation(name="access_token",rule="uuid")
 @Validation(name="event_id",type="id",require=true)
 POST    /event/enter                EventController/enter
 POST    /event/exit                 EventController/exit

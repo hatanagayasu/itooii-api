@@ -120,9 +120,9 @@ public class WebSocketController extends AppController {
                             VideoChat videoChat = VideoChat.get(new ObjectId(userId));
                             if (videoChat != null)
                                 videoChat.leave();
-
-                            Event.exit(userId, session);
                         }
+
+                        Event.exit(userId, session);
                     }
                 });
             }

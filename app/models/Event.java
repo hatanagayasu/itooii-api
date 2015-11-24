@@ -153,10 +153,10 @@ public class Event extends Model {
         ObjectId eventId = id;
 
         @SuppressWarnings("unchecked")
-        List<String> sessions = (List<String>)evalScript("enter_event",
-            eventId.toString(), userId.toString(), token, Long.toString(now()));
+        List<String> sessions = (List<String>)evalScript("enter_event", eventId.toString(),
+            userId == null ? "" : userId.toString(), token, Long.toString(now()));
         sessions.remove(token);
-        if (sessions != null && sessions.size() > 0) {
+        if (userId != null && sessions != null && sessions.size() > 0) {
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "event/enter")
                 .put("event_id", eventId.toString())
@@ -174,13 +174,13 @@ public class Event extends Model {
     }
 
     public void exit(ObjectId userId, String token) {
-        exit(id.toString(), userId.toString(), token);
+        exit(id.toString(), userId == null ? "" : userId.toString(), token);
     }
 
     private static void exit(String eventId, String userId, String token) {
         @SuppressWarnings("unchecked")
         List<String> sessions = (List<String>)evalScript("exit_event", eventId, userId, token);
-        if (sessions != null && sessions.size() > 0) {
+        if (userId != null && sessions != null && sessions.size() > 0) {
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "event/exit")
                 .put("event_id", eventId)

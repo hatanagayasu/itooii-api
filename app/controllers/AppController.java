@@ -87,7 +87,8 @@ public class AppController extends Controller {
     }
 
     public static ObjectId getObjectId(JsonNode params, String name) {
-        return (ObjectId) ((POJONode) params.get(name)).getPojo();
+        POJONode pojo = (POJONode)params.get(name);
+        return pojo == null ? null : (ObjectId) pojo.getPojo();
     }
 
     public static Date getDate(JsonNode params, String name) {

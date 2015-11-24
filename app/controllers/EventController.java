@@ -115,7 +115,7 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        event.enter(me.getId(), token);
+        event.enter(me == null ? null : me.getId(), token);
 
         return Ok();
     }
@@ -129,7 +129,7 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        event.exit(me.getId(), token);
+        event.exit(me == null ? null : me.getId(), token);
 
         return Ok();
     }
