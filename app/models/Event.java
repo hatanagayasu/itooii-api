@@ -149,6 +149,10 @@ public class Event extends Model {
         return new Page(skims, previous);
     }
 
+    public boolean isOnline(ObjectId userId) {
+        return zrank("event:online_user_id:" + id, userId.toString()) != null;
+    }
+
     public void enter(ObjectId userId, String token) {
         ObjectId eventId = id;
 

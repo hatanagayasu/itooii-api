@@ -9,6 +9,7 @@ POST    /video/leave                VideoChatController/leave
 
 @Privilege(Member)
 @Validation(name="user_id",type="id",require=true)
+@Validation(name="event_id",type="id")
 POST    /video/request              VideoChatController/request
 
 @Privilege(Member)

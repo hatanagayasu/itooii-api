@@ -385,6 +385,21 @@ public class Model {
         return result;
     }
 
+    public static Long zrank(String key, String member) {
+        Jedis jedis = jedisPool.getResource();
+        Long result = null;
+
+        try {
+            result = jedis.zrank(key, member);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
     public static Set<Tuple> zrevrangeByScoreWithScores(String key, double min, double max,
         int offset, int count) {
         Jedis jedis = jedisPool.getResource();
