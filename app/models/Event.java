@@ -162,10 +162,13 @@ public class Event extends Model {
             userId == null ? "" : userId.toString(), token, Long.toString(now()));
         sessions.remove(token);
         if (userId != null && sessions != null && sessions.size() > 0) {
+            Skim skim = Skim.get(userId);
+            skim.setTalking(sismember("event:talking:" + eventId, userId.toString()));
+
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "event/enter")
                 .put("event_id", eventId.toString())
-                .put("user_id", userId.toString());
+                .putPOJO("data", skim);
 
             publish("session", sessions + "\n" + result);
         }
