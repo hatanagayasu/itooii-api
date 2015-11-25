@@ -385,6 +385,95 @@ public class Model {
         return result;
     }
 
+    public static long sadd(String key, String... members) {
+        Jedis jedis = jedisPool.getResource();
+        long result = 0;
+
+        try {
+            result = jedis.sadd(key, members);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
+    public static long srem(String key, String... members) {
+        Jedis jedis = jedisPool.getResource();
+        long result = 0;
+
+        try {
+            result = jedis.srem(key, members);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
+    public static boolean sismember(String key, String member) {
+        Jedis jedis = jedisPool.getResource();
+        boolean result = false;
+
+        try {
+            result = jedis.sismember(key, member);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+    public static Set<String> smembers(String key) {
+        Jedis jedis = jedisPool.getResource();
+        Set<String> result = null;
+
+        try {
+            result = jedis.smembers(key);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
+    public static long zadd(String key, double score, String member) {
+        Jedis jedis = jedisPool.getResource();
+        long result = 0;
+
+        try {
+            result = jedis.zadd(key, score, member);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
+    public static long zrem(String key, String... members) {
+        Jedis jedis = jedisPool.getResource();
+        long result = 0;
+
+        try {
+            result = jedis.zrem(key, members);
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
     public static Long zrank(String key, String member) {
         Jedis jedis = jedisPool.getResource();
         Long result = null;
