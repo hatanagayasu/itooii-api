@@ -138,6 +138,7 @@ public class Event extends Model {
                 if (skim != null) {
                     until = (long)t.getScore();
                     skim.activity = new Date(until);
+                    skim.setTalking(sismember("event:talking:" + eventId, skim.getId().toString()));
                     skims.add(skim);
                 }
             }

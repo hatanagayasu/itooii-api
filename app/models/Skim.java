@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.Id;
@@ -27,6 +28,9 @@ public class Skim extends Model {
     protected ObjectId avatar;
     protected int privilege;
     protected Date activity;
+    @JsonIgnore
+    @lombok.Setter
+    private Boolean talking;
 
     public Skim() {
     }

@@ -62,11 +62,9 @@ getUserMedia({
                 remote_video.src = URL.createObjectURL(stream);
                 remote_video.play();
 
-                if (pair_talk) {
-                    send("video/connected", {
-                        video_chat_id: video_chat_id
-                    });
-                }
+                send("video/connected", {
+                    video_chat_id: video_chat_id
+                });
             },
             onRemoteStreamEnded: function(stream) {
             },
@@ -91,11 +89,9 @@ getUserMedia({
                 remote_video.src = URL.createObjectURL(stream);
                 remote_video.play();
 
-                if (pair_talk) {
-                    send("video/connected", {
-                        video_chat_id: video_chat_id
-                    });
-                }
+                send("video/connected", {
+                    video_chat_id: video_chat_id
+                });
             },
             onRemoteStreamEnded: function(stream) {
             },
@@ -244,7 +240,7 @@ $(function() {
                 remote_video.src = "";
 
                 alert('video/leave');
-            } else if (params.action == 'video/unpair') {
+            } else if (params.action == 'video/unpair' || params.action == 'event/talking') {
                 $("<p>").text(event.data).prependTo("#messages");
             } else if (params.action == 'video/session') {
                 session = params.session;
@@ -267,9 +263,13 @@ $(function() {
     $("#request").click(function() {
         pair_talk = false;
         user_id = $("#user_id").val();
-        send("video/request", {
-            user_id: user_id
-        });
+        event_id = $("#event_id").val();
+
+        var data = { user_id: user_id };
+        if (event_id)
+            data.event_id = event_id;
+
+        send("video/request", data);
     });
 
     $("#cancel").click(function() {
