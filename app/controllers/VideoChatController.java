@@ -168,15 +168,25 @@ public class VideoChatController extends AppController {
     public static Result cancel(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
+        ObjectId eventId = getObjectId(params, "event_id");
         User user = User.get(userId);
         String token = params.get("access_token").textValue();
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
 
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
-            user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
-            return Error(Error.NOT_FRIEND);
+        if (eventId != null) {
+            Event event = Event.get(eventId);
+            if (event == null)
+                return Error(Error.EVENT_NOT_FOUND);
+        } else {
+            if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
+                user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
+                return Error(Error.NOT_FRIEND);
+        }
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat != null)
