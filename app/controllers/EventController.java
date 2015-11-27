@@ -44,6 +44,16 @@ public class EventController extends AppController {
         return Ok(event);
     }
 
+    public static Result getByAlias(JsonNode params) {
+        String alias = params.get("alias").textValue();
+
+        Event event = Event.getByAlias(alias);
+        if (event == null || event.getDeleted() != null)
+            return NotFound();
+
+        return Ok(event);
+    }
+
     public static Result add(JsonNode params) {
         User me = getMe(params);
         String name = params.get("name").textValue();

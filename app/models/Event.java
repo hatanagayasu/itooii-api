@@ -21,6 +21,7 @@ import redis.clients.jedis.Tuple;
 public class Event extends Model {
     @Id
     private ObjectId id;
+    private String alias;
     @JsonProperty("user_id")
     private ObjectId userId;
     private String name;
@@ -84,6 +85,19 @@ public class Event extends Model {
             public Event call() {
                 MongoCollection col = jongo.getCollection("event");
                 Event event = col.findOne(eventId).as(Event.class);
+
+                return event;
+            }
+        });
+    }
+
+    public static Event getByAlias(String alias) {
+        String key = "event:" + alias;
+
+        return cache(key, Event.class, new Callable<Event>() {
+            public Event call() {
+                MongoCollection col = jongo.getCollection("event");
+                Event event = col.findOne("{alias:#}", alias).as(Event.class);
 
                 return event;
             }

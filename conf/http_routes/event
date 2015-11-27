@@ -20,6 +20,7 @@ POST    /event                      EventController/add
 
 @Privilege(Member)
 @Validation(name="event_id",type="id")
+@Validation(name="alias")
 @Validation(name="name")
 @Validation(name="details")
 @Validation(name="language",type="integer")
@@ -29,7 +30,9 @@ PUT     /event/@event_id            EventController/update
 
 @Anonymous
 @Validation(name="event_id",type="id")
+@Validation(name="alias")
 GET     /event/@event_id            EventController/get
+GET     /event/:alias               EventController/getByAlias
 
 @Privilege(Member)
 @Validation(name="event_id",type="id")
