@@ -719,10 +719,8 @@ public class HttpController extends AppController {
     }
 
     public static play.mvc.Result dispatch(String path) {
-        errorlog("dispatch");
         try {
             String method = request().method();
-            errorlog(method);
             JsonNode route = match(method, path);
 
             ObjectNode params = parseParams(route, path);
@@ -776,7 +774,6 @@ public class HttpController extends AppController {
         while (fieldNames.hasNext()) {
             String regex = fieldNames.next();
             if (path.matches(regex)) {
-                errorlog(regexes.get(regex));
                 if (!regexes.get(regex).has(method))
                     throw new MethodNotAllowedException();
 
