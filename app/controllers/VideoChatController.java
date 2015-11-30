@@ -44,10 +44,12 @@ public class VideoChatController extends AppController {
 
     public static Result getHistory(JsonNode params) {
         User me = getMe(params);
+        VideoChatType type = params.has("type") ?
+            VideoChatType.valueOf(params.get("type").textValue()) : null;
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        return Ok(VideoChat.getHistory(me.getId(), new Date(until), limit));
+        return Ok(VideoChat.getHistory(me.getId(), type, new Date(until), limit));
     }
 
     private static void leave(VideoChat videoChat) {

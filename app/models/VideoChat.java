@@ -10,6 +10,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
+import org.jongo.Find;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
@@ -154,12 +155,14 @@ public class VideoChat extends Model {
         videoChatCol.update("{_id:#,user_id:#}", id, userId).with("{$set:{rate:#}}", rate);
     }
 
-    public static Page getHistory(ObjectId userId, Date until, int limit) {
+    public static Page getHistory(ObjectId userId, VideoChatType type, Date until, int limit) {
         MongoCollection col = jongo.getCollection("videochat");
         String previous = null;
 
-        MongoCursor<VideoChat> cursor = col
-            .find("{user_id:#,created:{$lt:#}}", userId, until)
+        Find find = type == null ? col.find("{user_id:#,created:{$lt:#}}", userId, until) :
+            col.find("{user_id:#,type:#,created:{$lt:#}}", userId, type, until);
+
+        MongoCursor<VideoChat> cursor = find
             .sort("{created:-1}")
             .limit(limit)
             .as(VideoChat.class);
