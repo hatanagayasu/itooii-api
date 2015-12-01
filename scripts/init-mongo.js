@@ -11,6 +11,7 @@ var indexSpec = {
     ],
     "post":[
         {index:{user_id:1,created:-1},option:{name:"user_id",background:true}},
+        {index:{event_id:1,created:-1},option:{name:"event_id",background:true}},
         {index:{"comments._id":1},option:{name:"comment_id",sparse:true,unique:true,background:true}}
     ],
     "comment":[

@@ -18,6 +18,8 @@ import org.jongo.marshall.jackson.oid.Id;
 public class Post extends Model {
     @Id
     private ObjectId id;
+    @JsonProperty("event_id")
+    private ObjectId eventId;
     @JsonProperty("user_id")
     private ObjectId userId;
     @JsonIgnore
@@ -46,11 +48,21 @@ public class Post extends Model {
     }
 
     public Post(ObjectId userId, String text, List<Attachment> attachments) {
-        this(userId, text, attachments, null);
+        this(null, userId, text, attachments, null);
     }
 
     public Post(ObjectId userId, String text, List<Attachment> attachments, Boolean automatic) {
+        this(null, userId, text, attachments, automatic);
+    }
+
+    public Post(ObjectId eventId, ObjectId userId, String text, List<Attachment> attachments) {
+        this(eventId, userId, text, attachments, null);
+    }
+
+    public Post(ObjectId eventId, ObjectId userId, String text, List<Attachment> attachments,
+        Boolean automatic) {
         this.id = new ObjectId();
+        this.eventId = eventId;
         this.userId = userId;
         this.text = text;
         this.attachments = attachments == null ? null :
@@ -146,6 +158,41 @@ public class Post extends Model {
             .find("{user_id:#,created:{$lt:#}}", userId, until)
             .sort("{created:-1}")
             .limit(limit)
+            .as(Post.class);
+
+        List<Post> posts = new ArrayList<Post>(limit);
+        Post post = null;
+        int count = 0;
+        while (cursor.hasNext()) {
+            post = cursor.next();
+            count++;
+            if (post.deleted == null && post.automatic == null) {
+                post.postproduct(myId);
+                posts.add(post);
+            }
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (count == limit)
+            previous = String.format("until=%d&limit=%d", post.getCreated().getTime(), limit);
+
+        return new Page(posts, previous);
+    }
+
+    public static Page getEventTimeline(ObjectId eventId, ObjectId myId, Date until, int limit) {
+        MongoCollection postCol = jongo.getCollection("post");
+        String previous = null;
+
+        MongoCursor<Post> cursor = postCol
+            .find("{event_id:#,created:{$lt:#}}", eventId, until)
+            .sort("{created:-1}")
+            .limit(limit)
+            .projection("{event_id:0}")
             .as(Post.class);
 
         List<Post> posts = new ArrayList<Post>(limit);
