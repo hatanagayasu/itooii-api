@@ -69,6 +69,8 @@ public class MediaController extends AppController {
             File thumb = new File("/tmp/" + id + "_avatar_" + size);
 
             BufferedImage img = ImageIO.read(file);
+            String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                "png" : "jpg";
             BufferedImage resizedImg;
             int width = img.getWidth();
             int height = img.getHeight();
@@ -79,7 +81,7 @@ public class MediaController extends AppController {
                 resizedImg = Scalr.crop(img, 0, (height - width) / 2, width, width);
 
             resizedImg = Scalr.resize(resizedImg, size);
-            ImageIO.write(resizedImg, "jpg", thumb);
+            ImageIO.write(resizedImg, type, thumb);
 
             return Ok(thumb);
         } catch (IOException e) {
@@ -101,9 +103,11 @@ public class MediaController extends AppController {
 
                 if (!thumb.exists()) {
                     BufferedImage img = ImageIO.read(file);
+                    String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                        "png" : "jpg";
                     size = img.getWidth() > size ? size : img.getWidth();
                     BufferedImage resizedImg = Scalr.resize(img, Scalr.Mode.FIT_TO_WIDTH, size);
-                    ImageIO.write(resizedImg, "jpg", thumb);
+                    ImageIO.write(resizedImg, type, thumb);
                 }
 
                 return Ok(thumb);
@@ -181,6 +185,8 @@ public class MediaController extends AppController {
             }
 
             BufferedImage img = ImageIO.read(part.getFile());
+            String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                "png" : "jpg";
             int size = img.getWidth() >= img.getHeight() ?
                 (img.getWidth() > 1024 ? 1024 : img.getWidth()) :
                 (img.getHeight() > 1024 ? 1024 : img.getHeight());
@@ -194,8 +200,6 @@ public class MediaController extends AppController {
                 resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_90);
             else if (orientation == 7 || orientation == 8)
                 resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_270);
-
-            String type = part.getContentType().indexOf("png") != -1 ? "png" : "jpg";
 
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(resizedImg, type, os);
