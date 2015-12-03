@@ -195,13 +195,15 @@ public class MediaController extends AppController {
             else if (orientation == 7 || orientation == 8)
                 resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_270);
 
+            String type = part.getContentType().indexOf("png") != -1 ? "png" : "jpg";
+
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(resizedImg, "jpg", os);
+            ImageIO.write(resizedImg, type, os);
 
             byte[] buffer = os.toByteArray();
             InputStream is = new ByteArrayInputStream(buffer);
             ObjectMetadata meta = new ObjectMetadata();
-            meta.setContentType("image/jpg");
+            meta.setContentType("image/" + type);
             meta.setContentLength(buffer.length);
 
             s3client.putObject(new PutObjectRequest(bucket, id.toString(), is, meta));
@@ -212,7 +214,7 @@ public class MediaController extends AppController {
 
             files.addObject()
                 .put("name", part.getKey())
-                .put("content_type", "image/jpg")
+                .put("content_type", "image/" + type)
                 .put("id", id.toString())
                 .put("width", resizedImg.getWidth())
                 .put("height", resizedImg.getHeight())
