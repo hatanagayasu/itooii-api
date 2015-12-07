@@ -13,7 +13,8 @@ public enum ActivityType {
     createEvent(10),
     joinEvent(11),
     followYou(12),
-    changeProfilePhoto(13);
+    changeProfilePhoto(13),
+    hi(14);
 
     private int type;
 

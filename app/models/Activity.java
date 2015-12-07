@@ -37,7 +37,7 @@ public class Activity extends Model {
     private Date created;
 
     static {
-        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9})));
+        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 14})));
         types.put("followings", new HashSet<Integer>(Arrays.asList(new Integer[] {12})));
 
         new Thread(new Runnable() {
@@ -98,7 +98,7 @@ public class Activity extends Model {
 
         actCol.save(this);
 
-        if (type != ActivityType.followYou.value()) {
+        if (postId != null && type != ActivityType.followYou.value()) {
             Date modified = new Date();
             for (ObjectId receiver : receivers) {
                 feedCol.update("{user_id:#,post_id:#}", receiver, postId)

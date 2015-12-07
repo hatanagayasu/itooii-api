@@ -305,4 +305,23 @@ public class UsersController extends AppController {
 
         return Ok(User.search(params, new Date(until), limit));
     }
+
+    public static Result hi(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
+        if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+            return Error(Error.FORBIDDEN);
+
+        user.hi(me.getId());
+
+        return Ok();
+    }
 }

@@ -385,4 +385,8 @@ public class User extends Other {
             .setHeader("Content-Type", "application/json")
             .post(json);
     }
+
+    public void hi(ObjectId userId) {
+        new Activity(userId, ActivityType.hi, null, id).queue();
+    }
 }
