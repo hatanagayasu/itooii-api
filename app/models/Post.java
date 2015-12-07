@@ -30,7 +30,6 @@ public class Post extends Model {
     private int commentCount;
     private Set<ObjectId> commentators;
     private List<Comment> comments;
-    @JsonIgnore
     @JsonProperty("like_count")
     private int likeCount;
     private Set<ObjectId> likes;
