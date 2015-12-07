@@ -220,6 +220,7 @@ public class Event extends Model {
             .find("{members:#,from:{$lt:#},deleted:{$exists:false}}", userId, until)
             .sort("{from:-1}")
             .limit(limit)
+            .projection("{members:-1}")
             .as(Event.class);
 
         List<Event> events = new ArrayList<Event>(limit);
@@ -278,6 +279,7 @@ public class Event extends Model {
             .find("{from:{$lt:#},deleted:{$exists:false}}", until)
             .sort("{from:-1}")
             .limit(limit)
+            .projection("{members:-1}")
             .as(Event.class);
 
         List<Event> events = new ArrayList<Event>(limit);
