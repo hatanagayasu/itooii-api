@@ -93,7 +93,18 @@ public class Post extends Model {
             ids.add(user.getId());
             if (user.getFollowers() != null)
                 ids.addAll(user.getFollowers());
-            new Activity(userId, ActivityType.post, id, ids).queue();
+
+            if (eventId == null) {
+                new Activity(userId, ActivityType.post, id, ids).queue();
+            } else {
+                new Activity(userId, ActivityType.postOnEvent, id, ids).queue();
+
+                Event event = Event.get(eventId);
+                ids = event.getMembers();
+                ids.remove(userId);
+
+                new Activity(userId, ActivityType.postOnEventYouJoin, id, eventId, ids);
+            }
         }
     }
 

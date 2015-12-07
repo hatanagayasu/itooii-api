@@ -33,11 +33,13 @@ public class Activity extends Model {
     private int type;
     @JsonProperty("post_id")
     private ObjectId postId;
+    @JsonProperty("event_id")
+    private ObjectId eventId;
     private Set<ObjectId> receivers;
     private Date created;
 
     static {
-        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 14})));
+        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 14, 15, 16})));
         types.put("followings", new HashSet<Integer>(Arrays.asList(new Integer[] {12})));
 
         new Thread(new Runnable() {
@@ -69,15 +71,27 @@ public class Activity extends Model {
     }
 
     public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId receiver) {
+        this(userId, type, postId, null, receiver);
+    }
+
+    public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId eventId,
+        ObjectId receiver) {
         this(userId, type, postId);
 
+        this.eventId = eventId;
         this.receivers = new HashSet<ObjectId>(1);
         this.receivers.add(receiver);
     }
 
     public Activity(ObjectId userId, ActivityType type, ObjectId postId, Set<ObjectId> receivers) {
+        this(userId, type, postId, null, receivers);
+    }
+
+    public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId eventId,
+        Set<ObjectId> receivers) {
         this(userId, type, postId);
 
+        this.eventId = eventId;
         this.receivers = receivers;
     }
 
