@@ -28,11 +28,8 @@ public class Activity extends Model {
     @JsonIgnore
     private String action;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
-    @JsonIgnore
-    private String name;
-    @JsonIgnore
-    private ObjectId avatar;
     private int type;
     @JsonProperty("post_id")
     private ObjectId postId;
@@ -69,8 +66,6 @@ public class Activity extends Model {
         this.type = type.value();
         this.postId = postId;
         this.created = new Date();
-
-        postproduct();
     }
 
     public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId receiver) {
@@ -119,11 +114,6 @@ public class Activity extends Model {
         publish("user", receivers + "\n" + this);
     }
 
-    public void postproduct() {
-        name = name(userId);
-        avatar = avatar(userId);
-    }
-
     public static long getUnreadNotificationCount(User user, String type) {
         MongoCollection col = jongo.getCollection("activity");
         ObjectId lastReadNotification = user.getLastReadNotification() != null ?
@@ -149,7 +139,6 @@ public class Activity extends Model {
         Activity activity = null;
         while (cursor.hasNext()) {
             activity = cursor.next();
-            activity.postproduct();
             activities.add(activity);
         }
 

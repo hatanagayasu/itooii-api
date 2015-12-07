@@ -17,11 +17,8 @@ public class Comment extends Model {
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
-    @JsonIgnore
-    private String name;
-    @JsonIgnore
-    private ObjectId avatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -43,9 +40,6 @@ public class Comment extends Model {
         this.attachments = attachments == null ? null :
             (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
-
-        this.name = name(userId);
-        this.avatar = avatar(userId);
     }
 
     public void save(ObjectId postId) {
@@ -132,9 +126,6 @@ public class Comment extends Model {
 
     public static void postproduct(List<Comment> comments, ObjectId userId) {
         for (Comment comment : comments) {
-            comment.name = name(comment.userId);
-            comment.avatar = avatar(comment.userId);
-
             if (comment.likes == null) {
                 comment.likeCount = 0;
                 comment.liked = false;

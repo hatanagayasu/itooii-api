@@ -21,11 +21,8 @@ public class Post extends Model {
     @JsonProperty("event_id")
     private ObjectId eventId;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
-    @JsonIgnore
-    private String name;
-    @JsonIgnore
-    private ObjectId avatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -70,9 +67,6 @@ public class Post extends Model {
         this.created = new Date();
         this.commentCount = 0;
         this.automatic = automatic;
-
-        this.name = name(userId);
-        this.avatar = avatar(userId);
     }
 
     public void save() {
@@ -105,9 +99,6 @@ public class Post extends Model {
     }
 
     public void postproduct(ObjectId userId) {
-        name = name(this.userId);
-        avatar = avatar(this.userId);
-
         if (likes == null) {
             likeCount = 0;
             liked = false;
@@ -126,12 +117,7 @@ public class Post extends Model {
 
     public void postproduct(ObjectId userId, List<Relevant> relevants) {
         postproduct(userId);
-
-        if (relevants != null) {
-            this.relevants = relevants;
-            for (Relevant relevant : relevants)
-                relevant.postproduct();
-        }
+        this.relevants = relevants;
     }
 
     public static Post get(ObjectId postId) {
