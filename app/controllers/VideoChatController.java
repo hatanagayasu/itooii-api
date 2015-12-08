@@ -209,31 +209,35 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
         String token = params.get("access_token").textValue();
 
-        VideoChat videoChat = VideoChat.get(userId);
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        VideoChat offer = VideoChat.get(userId);
+        if (offer == null || !videoChatId.equals(offer.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         if (params.get("confirm").booleanValue()) {
-            videoChat.pair(me.getId(), token);
+            VideoChat answer = VideoChat.get(me.getId());
+            if (answer != null)
+                leave(answer, token);
 
-            videoChat = new VideoChat(VideoChatType.request, me.getId(), token,
-                userId, videoChat.getToken(), videoChat.getEventId());
-            videoChat.set();
+            offer.pair(me.getId(), token);
+
+            answer = new VideoChat(VideoChatType.request, me.getId(), token,
+                userId, offer.getToken(), offer.getEventId());
+            answer.set();
 
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
-            event.put("video_chat_id", videoChat.getId().toString());
+            event.put("video_chat_id", offer.getId().toString());
             event.put("confirm", true);
 
-            sendEvent(videoChat.getPeerToken(), event);
+            sendEvent(offer.getToken(), event);
         } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
             event.put("confirm", false);
 
-            sendEvent(videoChat.getToken(), event);
+            sendEvent(offer.getToken(), event);
 
-            leave(videoChat);
+            leave(offer);
         }
 
         return Ok();
