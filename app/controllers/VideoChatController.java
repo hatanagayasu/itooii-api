@@ -226,7 +226,7 @@ public class VideoChatController extends AppController {
 
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
-            event.put("video_chat_id", offer.getId().toString());
+            event.put("video_chat_id", answer.getId().toString());
             event.put("confirm", true);
 
             sendEvent(offer.getToken(), event);
