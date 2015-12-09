@@ -174,10 +174,14 @@ public class Model {
                     if (postproduct != null) {
                         result.append(",\"").append((postproduct.value().length() > 0 ?
                                 postproduct.value() + "_name" : "name")).append("\":\"")
-                            .append(name((ObjectId)value)).append("\"")
-                            .append(",\"").append((postproduct.value().length() > 0 ?
-                                postproduct.value() + "_avatar" : "avatar")).append("\":\"")
-                            .append(avatar((ObjectId)value)).append("\"");
+                            .append(name((ObjectId)value)).append("\"");
+
+                        ObjectId avatar = avatar((ObjectId)value);
+                        if (avatar != null) {
+                            result.append(",\"").append((postproduct.value().length() > 0 ?
+                                    postproduct.value() + "_avatar" : "avatar")).append("\":\"")
+                                .append(avatar).append("\"");
+                        }
                     }
                 }
 
