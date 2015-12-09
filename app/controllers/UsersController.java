@@ -320,7 +320,7 @@ public class UsersController extends AppController {
         if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
             return Error(Error.FORBIDDEN);
 
-        user.hi(me.getId());
+        me.hi(userId);
 
         return Ok();
     }
