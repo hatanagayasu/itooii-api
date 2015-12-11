@@ -20,6 +20,7 @@ public class Chat extends Model {
     private boolean oneOnOne = true;
     @JsonProperty("user_ids")
     private Set<ObjectId> userIds;
+    @JsonProperty("user_id")
     private ObjectId userId;
     private String name;
     private ObjectId avatar;
