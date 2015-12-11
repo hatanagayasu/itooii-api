@@ -38,7 +38,7 @@ public class MessagesController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (user.getBlockings().contains(me.getId()))
+        if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
             return Error(Error.OBJECT_FORBIDDEN);
 
         ObjectId chatId = Chat.getChatId(me.getId(), userId);
