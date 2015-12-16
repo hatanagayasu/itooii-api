@@ -18,12 +18,11 @@ import org.jongo.marshall.jackson.oid.Id;
 public class Post extends Model {
     @Id
     private ObjectId id;
+    @JsonProperty("event_id")
+    private ObjectId eventId;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
-    @JsonIgnore
-    private String name;
-    @JsonIgnore
-    private ObjectId avatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;
@@ -31,7 +30,6 @@ public class Post extends Model {
     private int commentCount;
     private Set<ObjectId> commentators;
     private List<Comment> comments;
-    @JsonIgnore
     @JsonProperty("like_count")
     private int likeCount;
     private Set<ObjectId> likes;
@@ -46,11 +44,21 @@ public class Post extends Model {
     }
 
     public Post(ObjectId userId, String text, List<Attachment> attachments) {
-        this(userId, text, attachments, null);
+        this(null, userId, text, attachments, null);
     }
 
     public Post(ObjectId userId, String text, List<Attachment> attachments, Boolean automatic) {
+        this(null, userId, text, attachments, automatic);
+    }
+
+    public Post(ObjectId eventId, ObjectId userId, String text, List<Attachment> attachments) {
+        this(eventId, userId, text, attachments, null);
+    }
+
+    public Post(ObjectId eventId, ObjectId userId, String text, List<Attachment> attachments,
+        Boolean automatic) {
         this.id = new ObjectId();
+        this.eventId = eventId;
         this.userId = userId;
         this.text = text;
         this.attachments = attachments == null ? null :
@@ -58,9 +66,6 @@ public class Post extends Model {
         this.created = new Date();
         this.commentCount = 0;
         this.automatic = automatic;
-
-        this.name = name(userId);
-        this.avatar = avatar(userId);
     }
 
     public void save() {
@@ -88,14 +93,22 @@ public class Post extends Model {
             ids.add(user.getId());
             if (user.getFollowers() != null)
                 ids.addAll(user.getFollowers());
-            new Activity(userId, ActivityType.post, id, ids).queue();
+
+            if (eventId == null) {
+                new Activity(userId, ActivityType.post, id, ids).queue();
+            } else {
+                new Activity(userId, ActivityType.postOnEvent, id, ids).queue();
+
+                Event event = Event.get(eventId);
+                ids = event.getMembers();
+                ids.remove(userId);
+
+                new Activity(userId, ActivityType.postOnEventYouJoin, id, eventId, ids);
+            }
         }
     }
 
     public void postproduct(ObjectId userId) {
-        name = name(this.userId);
-        avatar = avatar(this.userId);
-
         if (likes == null) {
             likeCount = 0;
             liked = false;
@@ -114,12 +127,7 @@ public class Post extends Model {
 
     public void postproduct(ObjectId userId, List<Relevant> relevants) {
         postproduct(userId);
-
-        if (relevants != null) {
-            this.relevants = relevants;
-            for (Relevant relevant : relevants)
-                relevant.postproduct();
-        }
+        this.relevants = relevants;
     }
 
     public static Post get(ObjectId postId) {
@@ -146,6 +154,41 @@ public class Post extends Model {
             .find("{user_id:#,created:{$lt:#}}", userId, until)
             .sort("{created:-1}")
             .limit(limit)
+            .as(Post.class);
+
+        List<Post> posts = new ArrayList<Post>(limit);
+        Post post = null;
+        int count = 0;
+        while (cursor.hasNext()) {
+            post = cursor.next();
+            count++;
+            if (post.deleted == null && post.automatic == null) {
+                post.postproduct(myId);
+                posts.add(post);
+            }
+        }
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (count == limit)
+            previous = String.format("until=%d&limit=%d", post.getCreated().getTime(), limit);
+
+        return new Page(posts, previous);
+    }
+
+    public static Page getEventTimeline(ObjectId eventId, ObjectId myId, Date until, int limit) {
+        MongoCollection postCol = jongo.getCollection("post");
+        String previous = null;
+
+        MongoCursor<Post> cursor = postCol
+            .find("{event_id:#,created:{$lt:#}}", eventId, until)
+            .sort("{created:-1}")
+            .limit(limit)
+            .projection("{event_id:0}")
             .as(Post.class);
 
         List<Post> posts = new ArrayList<Post>(limit);

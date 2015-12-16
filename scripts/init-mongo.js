@@ -11,6 +11,7 @@ var indexSpec = {
     ],
     "post":[
         {index:{user_id:1,created:-1},option:{name:"user_id",background:true}},
+        {index:{event_id:1,created:-1},option:{name:"event_id",background:true}},
         {index:{"comments._id":1},option:{name:"comment_id",sparse:true,unique:true,background:true}}
     ],
     "comment":[
@@ -25,7 +26,8 @@ var indexSpec = {
         {index:{user_ids:1},option:{name:"user_ids",background:true}}
     ],
     "event":[
-        {index:{user_id:1,from:-1},option:{name:"user_id",background:true}}
+        {index:{user_id:1,from:-1},option:{name:"user_id",background:true}},
+        {index:{alias:1},option:{name:"alias",sparse:true,unique:true,background:true}}
     ],
     "message":[
         {index:{chat_id:1,page:1},option:{name:"chat_id_page",unique:true,background:true}},

@@ -9,17 +9,11 @@ import org.bson.types.ObjectId;
 @lombok.Getter
 public class Relevant extends Model {
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
     private int type;
     private Date created;
-    @JsonIgnore
-    @JsonProperty("user_name")
-    private String userName;
 
     public Relevant() {
-    }
-
-    public void postproduct() {
-        userName = name(this.userId);
     }
 }

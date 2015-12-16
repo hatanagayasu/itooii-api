@@ -16,8 +16,14 @@ import org.jongo.marshall.jackson.oid.Id;
 public class Chat extends Model {
     @Id
     private ObjectId id;
+    @JsonProperty("one_on_one")
+    private boolean oneOnOne = true;
     @JsonProperty("user_ids")
-    private Set<ObjectId> userId;
+    private Set<ObjectId> userIds;
+    @JsonProperty("user_id")
+    private ObjectId userId;
+    private String name;
+    private ObjectId avatar;
     @JsonProperty("message_count")
     private int messageCount;
     private Date created;
@@ -36,7 +42,7 @@ public class Chat extends Model {
                 MongoCollection chatCol = jongo.getCollection("chat");
 
                 Chat chat = chatCol
-                    .findAndModify("{user_ids:{$in:[#,#],$size:2}}", userId0, userId1)
+                    .findAndModify("{user_ids:[#,#]}", userId0, userId1)
                     .with("{$setOnInsert:{user_ids:[#,#],created:#}}", userId0, userId1, new Date())
                     .upsert()
                     .returnNew()
@@ -64,6 +70,15 @@ public class Chat extends Model {
         while (cursor.hasNext()) {
             chat = cursor.next();
             chats.add(chat);
+
+            if (chat.oneOnOne) {
+                chat.userIds.remove(userId);
+                chat.userId = chat.userIds.iterator().next();
+                chat.name = name(chat.userId);
+                chat.avatar = avatar(chat.userId);
+            }
+
+            chat.userIds = null;
         }
 
         try {

@@ -71,6 +71,7 @@ POST    /user/following/@user_id    UsersController/follow
 DELETE  /user/following/@user_id    UsersController/unfollow
 POST    /user/blocking/@user_id     UsersController/blocking
 DELETE  /user/blocking/@user_id     UsersController/unblocking
+POST    /user/@user_id/hi           UsersController/hi
 
 @Anonymous
 @Validation(name="token")

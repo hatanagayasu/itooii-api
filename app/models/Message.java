@@ -18,6 +18,7 @@ public class Message extends Model {
     @JsonIgnore
     private String action;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
     private String text;
     private List<Attachment> attachments;

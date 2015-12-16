@@ -3,6 +3,7 @@ package controllers;
 import controllers.constants.Error;
 
 import models.Event;
+import models.Post;
 import models.User;
 
 import java.util.Date;
@@ -38,6 +39,16 @@ public class EventController extends AppController {
         ObjectId eventId = getObjectId(params, "event_id");
 
         Event event = Event.get(eventId);
+        if (event == null || event.getDeleted() != null)
+            return NotFound();
+
+        return Ok(event);
+    }
+
+    public static Result getByAlias(JsonNode params) {
+        String alias = params.get("alias").textValue();
+
+        Event event = Event.getByAlias(alias);
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
@@ -115,7 +126,7 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        event.enter(me.getId(), token);
+        event.enter(me == null ? null : me.getId(), token);
 
         return Ok();
     }
@@ -129,7 +140,7 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        event.exit(me.getId(), token);
+        event.exit(me == null ? null : me.getId(), token);
 
         return Ok();
     }
@@ -160,5 +171,29 @@ public class EventController extends AppController {
         event.delete();
 
         return Ok();
+    }
+
+    public static Result addPost(JsonNode params) {
+        User me = getMe(params);
+        ObjectId eventId = getObjectId(params, "event_id");
+        String text = params.has("text") ? params.get("text").textValue() : null;
+
+        Post post = new Post(eventId, me.getId(), text, getAttachments(params));
+        post.save(me);
+
+        return Ok(post);
+    }
+
+    public static Result getTimeline(JsonNode params) {
+        ObjectId myId = params.has("access_token") ? getMe(params).getId() : null;
+        ObjectId eventId = getObjectId(params, "event_id");
+        long until = params.has("until") ? params.get("until").longValue() : now();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        Event event = Event.get(eventId);
+        if (event == null)
+            return NotFound();
+
+        return Ok(Post.getEventTimeline(eventId, myId, new Date(until), limit));
     }
 }

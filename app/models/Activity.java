@@ -28,19 +28,18 @@ public class Activity extends Model {
     @JsonIgnore
     private String action;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
-    @JsonIgnore
-    private String name;
-    @JsonIgnore
-    private ObjectId avatar;
     private int type;
     @JsonProperty("post_id")
     private ObjectId postId;
+    @JsonProperty("event_id")
+    private ObjectId eventId;
     private Set<ObjectId> receivers;
     private Date created;
 
     static {
-        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9})));
+        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 14, 15, 16})));
         types.put("followings", new HashSet<Integer>(Arrays.asList(new Integer[] {12})));
 
         new Thread(new Runnable() {
@@ -69,20 +68,30 @@ public class Activity extends Model {
         this.type = type.value();
         this.postId = postId;
         this.created = new Date();
-
-        postproduct();
     }
 
     public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId receiver) {
+        this(userId, type, postId, null, receiver);
+    }
+
+    public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId eventId,
+        ObjectId receiver) {
         this(userId, type, postId);
 
+        this.eventId = eventId;
         this.receivers = new HashSet<ObjectId>(1);
         this.receivers.add(receiver);
     }
 
     public Activity(ObjectId userId, ActivityType type, ObjectId postId, Set<ObjectId> receivers) {
+        this(userId, type, postId, null, receivers);
+    }
+
+    public Activity(ObjectId userId, ActivityType type, ObjectId postId, ObjectId eventId,
+        Set<ObjectId> receivers) {
         this(userId, type, postId);
 
+        this.eventId = eventId;
         this.receivers = receivers;
     }
 
@@ -103,7 +112,7 @@ public class Activity extends Model {
 
         actCol.save(this);
 
-        if (type != ActivityType.followYou.value()) {
+        if (postId != null && type != ActivityType.followYou.value()) {
             Date modified = new Date();
             for (ObjectId receiver : receivers) {
                 feedCol.update("{user_id:#,post_id:#}", receiver, postId)
@@ -117,11 +126,6 @@ public class Activity extends Model {
         this.receivers = null;
 
         publish("user", receivers + "\n" + this);
-    }
-
-    public void postproduct() {
-        name = name(userId);
-        avatar = avatar(userId);
     }
 
     public static long getUnreadNotificationCount(User user, String type) {
@@ -149,7 +153,6 @@ public class Activity extends Model {
         Activity activity = null;
         while (cursor.hasNext()) {
             activity = cursor.next();
-            activity.postproduct();
             activities.add(activity);
         }
 

@@ -17,15 +17,11 @@ public class Comment extends Model {
     @Id
     private ObjectId id;
     @JsonProperty("user_id")
+    @Postproduct
     private ObjectId userId;
-    @JsonIgnore
-    private String name;
-    @JsonIgnore
-    private ObjectId avatar;
     private String text;
     private List<Attachment> attachments;
     private Date created;
-    @JsonIgnore
     @JsonProperty("like_count")
     private int likeCount;
     private Set<ObjectId> likes;
@@ -43,9 +39,6 @@ public class Comment extends Model {
         this.attachments = attachments == null ? null :
             (attachments.isEmpty() ? null : attachments);
         this.created = new Date();
-
-        this.name = name(userId);
-        this.avatar = avatar(userId);
     }
 
     public void save(ObjectId postId) {
@@ -130,9 +123,6 @@ public class Comment extends Model {
 
     public static void postproduct(List<Comment> comments, ObjectId userId) {
         for (Comment comment : comments) {
-            comment.name = name(comment.userId);
-            comment.avatar = avatar(comment.userId);
-
             if (comment.likes == null) {
                 comment.likeCount = 0;
                 comment.liked = false;
@@ -149,7 +139,7 @@ public class Comment extends Model {
         MongoCollection postCol = jongo.getCollection("post");
 
         Comments comments = commentCol.findAndModify("{'comments._id':#}", commentId)
-            .with("{$addToSet:{'comments.$.likes':#}}", userId)
+            .with("{$addToSet:{'comments.$.likes':#},$inc:{'comments.$.like_count':1}}", userId)
             .projection("{comments:{$elemMatch:{_id:#}}}", commentId)
             .as(Comments.class);
 
@@ -157,7 +147,7 @@ public class Comment extends Model {
             return;
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
-            .with("{$addToSet:{'comments.$.likes':#}}", userId)
+            .with("{$addToSet:{'comments.$.likes':#},$inc:{'comments.$.like_count':1}}", userId)
             .projection("{_id:1}")
             .as(Post.class);
 
@@ -180,7 +170,8 @@ public class Comment extends Model {
             .with("{$pull:{'comments.$.likes':#}}", userId);
 
         Post post = postCol.findAndModify("{'comments._id':#}", commentId)
-            .with("{$pull:{'comments.$.likes':#}}", userId).projection("{_id:1}")
+            .with("{$pull:{'comments.$.likes':#},$inc:{'comments.$.like_count':-1}}", userId)
+            .projection("{_id:1}")
             .as(Post.class);
 
         if (post != null)

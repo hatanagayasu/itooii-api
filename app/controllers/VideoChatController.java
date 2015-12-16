@@ -10,6 +10,7 @@ import models.Pair;
 import models.PracticeLanguage;
 import models.User;
 import models.VideoChat;
+import models.VideoChatType;
 
 import java.util.Date;
 import java.util.Iterator;
@@ -43,10 +44,12 @@ public class VideoChatController extends AppController {
 
     public static Result getHistory(JsonNode params) {
         User me = getMe(params);
+        VideoChatType type = params.has("type") ?
+            VideoChatType.valueOf(params.get("type").textValue()) : null;
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        return Ok(VideoChat.getHistory(me.getId(), new Date(until), limit));
+        return Ok(VideoChat.getHistory(me.getId(), type, new Date(until), limit));
     }
 
     private static void leave(VideoChat videoChat) {
@@ -69,7 +72,7 @@ public class VideoChatController extends AppController {
     public static Result ready(JsonNode params) {
         User me = getMe(params);
         String token = params.get("access_token").textValue();
-        ObjectId eventId = params.has("event_id") ? getObjectId(params, "event_id") : null;
+        ObjectId eventId = getObjectId(params, "event_id");
         ObjectId myId = me.getId();
 
         VideoChat videoChat = VideoChat.get(myId);
@@ -80,8 +83,9 @@ public class VideoChatController extends AppController {
             Event event = Event.get(eventId);
             if (event == null || event.getDeleted() != null)
                 return NotFound();
-            if (!event.getMembers().contains(myId))
-                return ObjectForbidden();
+
+//            if (!event.getMembers().contains(myId))
+//                return ObjectForbidden();
 
             Iterator<Integer> nativeLanguages = me.getNativeLanguage().iterator();
             while (nativeLanguages.hasNext()) {
@@ -99,7 +103,7 @@ public class VideoChatController extends AppController {
             }
         }
 
-        videoChat = new VideoChat(myId, token);
+        videoChat = new VideoChat(VideoChatType.pair, myId, token, eventId);
         videoChat.set();
 
         publish("ready", myId + "\n" + token + "\n" + me + "\n" + eventId + "\n" +
@@ -124,21 +128,36 @@ public class VideoChatController extends AppController {
     public static Result request(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
+        ObjectId eventId = getObjectId(params, "event_id");
         User user = User.get(userId);
         String token = params.get("access_token").textValue();
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
 
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
-            user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
-            return Error(Error.NOT_FRIEND);
+        if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+            return Error(Error.OBJECT_FORBIDDEN);
+
+        if (eventId != null) {
+            Event event = Event.get(eventId);
+            if (event == null)
+                return Error(Error.EVENT_NOT_FOUND);
+            if (!event.isOnline(me.getId()) || !event.isOnline(userId))
+                return Error(Error.OBJECT_FORBIDDEN);
+        } else {
+            if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
+                user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
+                return Error(Error.NOT_FRIEND);
+        }
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat != null)
             leave(videoChat, token);
 
-        videoChat = new VideoChat(me.getId(), token);
+        videoChat = new VideoChat(VideoChatType.request, me.getId(), token, eventId);
         videoChat.set();
 
         ObjectNode event = mapper.createObjectNode();
@@ -154,15 +173,25 @@ public class VideoChatController extends AppController {
     public static Result cancel(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
+        ObjectId eventId = getObjectId(params, "event_id");
         User user = User.get(userId);
         String token = params.get("access_token").textValue();
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
 
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
-            user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
-            return Error(Error.NOT_FRIEND);
+        if (eventId != null) {
+            Event event = Event.get(eventId);
+            if (event == null)
+                return Error(Error.EVENT_NOT_FOUND);
+        } else {
+            if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
+                user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
+                return Error(Error.NOT_FRIEND);
+        }
 
         VideoChat videoChat = VideoChat.get(me.getId());
         if (videoChat != null)
@@ -183,30 +212,35 @@ public class VideoChatController extends AppController {
         ObjectId videoChatId = getObjectId(params, "video_chat_id");
         String token = params.get("access_token").textValue();
 
-        VideoChat videoChat = VideoChat.get(userId);
-        if (videoChat == null || !videoChatId.equals(videoChat.getId()))
+        VideoChat offer = VideoChat.get(userId);
+        if (offer == null || !videoChatId.equals(offer.getId()))
             return Error(Error.INVALID_VIDEO_CHAT_ID);
 
         if (params.get("confirm").booleanValue()) {
-            videoChat.pair(me.getId(), token);
+            VideoChat answer = VideoChat.get(me.getId());
+            if (answer != null)
+                leave(answer, token);
 
-            videoChat = new VideoChat(me.getId(), token, userId, videoChat.getToken());
-            videoChat.set();
+            offer.pair(me.getId(), token);
+
+            answer = new VideoChat(VideoChatType.request, me.getId(), token,
+                userId, offer.getToken(), offer.getEventId());
+            answer.set();
 
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
-            event.put("video_chat_id", videoChat.getId().toString());
+            event.put("video_chat_id", answer.getId().toString());
             event.put("confirm", true);
 
-            sendEvent(videoChat.getPeerToken(), event);
+            sendEvent(offer.getToken(), event);
         } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
             event.put("confirm", false);
 
-            sendEvent(videoChat.getToken(), event);
+            sendEvent(offer.getToken(), event);
 
-            leave(videoChat);
+            leave(offer);
         }
 
         return Ok();
@@ -363,10 +397,9 @@ public class VideoChatController extends AppController {
 
         int lang0 = params.get("lang0").intValue();
         int lang1 = params.get("lang1").intValue();
-        ObjectId eventId = params.has("event_id") ? getObjectId(params, "event_id") : null;
 
-        offer.pair(answer.getUserId(), answer.getToken(), lang0, lang1, eventId);
-        answer.pair(offer.getUserId(), offer.getToken(), lang0, lang1, eventId);
+        offer.pair(answer.getUserId(), answer.getToken(), lang0, lang1);
+        answer.pair(offer.getUserId(), offer.getToken(), lang0, lang1);
 
         ObjectNode event = mapper.createObjectNode();
         event.put("action", "video/pair");
@@ -377,7 +410,8 @@ public class VideoChatController extends AppController {
 
         sendEvent(offer.getToken(), event);
 
-        Pair pair = new Pair(offer.getUserId(), answer.getUserId(), lang0, lang1, eventId);
+        Pair pair = new Pair(offer.getUserId(), answer.getUserId(), lang0, lang1,
+            offer.getEventId());
         pair.save();
 
         sendEvent(pair);

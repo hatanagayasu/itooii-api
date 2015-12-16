@@ -69,6 +69,8 @@ public class MediaController extends AppController {
             File thumb = new File("/tmp/" + id + "_avatar_" + size);
 
             BufferedImage img = ImageIO.read(file);
+            String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                "png" : "jpg";
             BufferedImage resizedImg;
             int width = img.getWidth();
             int height = img.getHeight();
@@ -79,7 +81,7 @@ public class MediaController extends AppController {
                 resizedImg = Scalr.crop(img, 0, (height - width) / 2, width, width);
 
             resizedImg = Scalr.resize(resizedImg, size);
-            ImageIO.write(resizedImg, "jpg", thumb);
+            ImageIO.write(resizedImg, type, thumb);
 
             return Ok(thumb);
         } catch (IOException e) {
@@ -101,9 +103,11 @@ public class MediaController extends AppController {
 
                 if (!thumb.exists()) {
                     BufferedImage img = ImageIO.read(file);
+                    String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                        "png" : "jpg";
                     size = img.getWidth() > size ? size : img.getWidth();
                     BufferedImage resizedImg = Scalr.resize(img, Scalr.Mode.FIT_TO_WIDTH, size);
-                    ImageIO.write(resizedImg, "jpg", thumb);
+                    ImageIO.write(resizedImg, type, thumb);
                 }
 
                 return Ok(thumb);
@@ -181,6 +185,8 @@ public class MediaController extends AppController {
             }
 
             BufferedImage img = ImageIO.read(part.getFile());
+            String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                "png" : "jpg";
             int size = img.getWidth() >= img.getHeight() ?
                 (img.getWidth() > 1024 ? 1024 : img.getWidth()) :
                 (img.getHeight() > 1024 ? 1024 : img.getHeight());
@@ -196,12 +202,12 @@ public class MediaController extends AppController {
                 resizedImg = Scalr.rotate(resizedImg, Scalr.Rotation.CW_270);
 
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(resizedImg, "jpg", os);
+            ImageIO.write(resizedImg, type, os);
 
             byte[] buffer = os.toByteArray();
             InputStream is = new ByteArrayInputStream(buffer);
             ObjectMetadata meta = new ObjectMetadata();
-            meta.setContentType("image/jpg");
+            meta.setContentType("image/" + type);
             meta.setContentLength(buffer.length);
 
             s3client.putObject(new PutObjectRequest(bucket, id.toString(), is, meta));
@@ -212,7 +218,7 @@ public class MediaController extends AppController {
 
             files.addObject()
                 .put("name", part.getKey())
-                .put("content_type", "image/jpg")
+                .put("content_type", "image/" + type)
                 .put("id", id.toString())
                 .put("width", resizedImg.getWidth())
                 .put("height", resizedImg.getHeight())

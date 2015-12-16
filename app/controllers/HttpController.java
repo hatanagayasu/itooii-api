@@ -647,6 +647,8 @@ public class HttpController extends AppController {
                 regex = "[A-Za-z0-9]+";
             } else if (rule.equals("email")) {
                 regex = "([a-zA-Z0-9._%+-]+)@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}";
+            } else if (rule.equals("uuid")) {
+                regex = "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}";
             } else if (rule.equals("url")) {
                 try {
                     new URL(value);

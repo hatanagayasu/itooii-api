@@ -385,4 +385,17 @@ public class User extends Other {
             .setHeader("Content-Type", "application/json")
             .post(json);
     }
+
+    public void hi(ObjectId userId) {
+        MongoCollection col = jongo.getCollection("activity");
+
+        Activity activity = col
+            .findOne("{type:#,user_id:#,receivers:#,created:{$gt:#}}",
+                ActivityType.hi.value(), id, userId, new Date(now() - 86400000L))
+            .projection("{_id:1}")
+            .as(Activity.class);
+
+        if (activity == null)
+            new Activity(id, ActivityType.hi, null, userId).queue();
+    }
 }
