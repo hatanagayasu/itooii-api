@@ -97,6 +97,64 @@ public class UsersController extends AppController {
         return Ok();
     }
 
+    public static Result sendFriendRequest(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
+        if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+            return Error(Error.FORBIDDEN);
+
+        me.sendFriendRequest(userId);
+
+        return Ok();
+    }
+
+    public static Result cancelFriendRequest(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        me.cancelFriendRequest(userId);
+
+        return Ok();
+    }
+
+    public static Result acceptFriendRequest(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        me.acceptFriendRequest(user);
+
+        return Ok();
+    }
+
+    public static Result ignoreFriendRequest(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        me.ignoreFriendRequest(userId);
+
+        return Ok();
+    }
+
     public static Result follow(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -255,6 +313,30 @@ public class UsersController extends AppController {
         User.deleteAccessToken(token);
 
         return Ok();
+    }
+
+    public static Result getFriendRequest(JsonNode params) {
+        User me = getMe(params);
+        int type = params.get("type").textValue().equals("send") ? 0 : 1;
+
+        return Ok(me.getFriendRequest(type));
+    }
+
+    public static Result getFriend(JsonNode params) {
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        User user;
+        if (params.has("user_id")) {
+            ObjectId userId = getObjectId(params, "user_id");
+            user = User.get(userId);
+            if (user == null)
+                return NotFound();
+        } else {
+            user = getMe(params);
+        }
+
+        return Ok(user.getFriend(skip, limit));
     }
 
     public static Result getFollower(JsonNode params) {

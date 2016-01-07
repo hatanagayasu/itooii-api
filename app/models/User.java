@@ -115,6 +115,80 @@ public class User extends Other {
         del(this.id);
     }
 
+    // 0: send, 1: receive, 2: accept, 3: ignore 4: cancel
+    public List<Friend> getFriendRequest(int status) {
+        MongoCollection col = jongo.getCollection("friend");
+
+        MongoCursor<Friend> cursor = col.find("{user_id:#,status:#}", id, status)
+            .projection("{friend_id:-1}")
+            .as(Friend.class);
+
+        List<Friend> friends = new ArrayList<Friend>();
+        while (cursor.hasNext())
+                friends.add(cursor.next());
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return friends;
+    }
+
+    public void sendFriendRequest(ObjectId userId) {
+        MongoCollection col = jongo.getCollection("friend");
+        Date date = new Date();
+
+        Friend friend = col.findAndModify("{user_id:#,friend_id:#,status:#}", id, userId, 0)
+            .with("{$setOnInsert:{created:#}}", date)
+            .upsert()
+            .projection("{_id:1}")
+            .as(Friend.class);
+
+        if (friend == null) {
+            col.update("{user_id:#,friend_id:#,status:#}", userId, id, 1)
+                .upsert()
+                .with("{$setOnInsert:{created:#}}", date);
+        }
+    }
+
+    public void acceptFriendRequest(User user) {
+        MongoCollection col = jongo.getCollection("friend");
+        Date date = new Date();
+
+        Friend friend = col.findAndModify("{user_id:#,friend_id:#,status:#}", id, user.getId(), 1)
+            .with("{$set:{status:#,modified':#}}", 2, date)
+            .projection("{_id:1}")
+            .as(Friend.class);
+
+        if (friend != null) {
+            col.update("{user_id:#,friend_id:#,status:#}", user.getId(), id, 0)
+                .with("{$set:{status:#,modified':#}}", 2, date);
+
+            unfollow(user.getId());
+            user.unfollow(id);
+        }
+    }
+
+    public void ignoreFriendRequest(ObjectId userId) {
+        MongoCollection col = jongo.getCollection("friend");
+        Date date = new Date();
+
+        col.update("{user_id:#,friend_id:#,status:#}", id, userId, 1)
+            .with("{$set:{status:#,modified':#}}", 3, date);
+    }
+
+    public void cancelFriendRequest(ObjectId userId) {
+        MongoCollection col = jongo.getCollection("friend");
+        Date date = new Date();
+
+        col.update("{user_id:#,friend_id:#,status:#}", id, userId, 0)
+            .with("{$set:{status:#,modified':#}}", 4, date);
+
+        col.remove("{user_id:#,friend_id:#,status:#}", userId, id, 1);
+    }
+
     public void follow(ObjectId userId) {
         MongoCollection following = jongo.getCollection("following");
         MongoCollection follower = jongo.getCollection("follower");
@@ -224,6 +298,10 @@ public class User extends Other {
         return user == null ? null : token;
     }
 
+    public Page getFriend(int skip, int limit) {
+        return page(friends, skip, limit, Skim.class);
+    }
+
     public Page getFollower(int skip, int limit) {
         return page(followers, skip, limit, Skim.class);
     }
@@ -286,6 +364,7 @@ public class User extends Other {
                 User user = userCol.findOne(userId).projection("{password:0}").as(User.class);
 
                 if (user != null) {
+                    user.friends = Friend.getFriendIds(userId);
                     user.followings = Following.getFollowingIds(userId);
                     user.followers = Follower.getFollowerIds(userId);
                 }

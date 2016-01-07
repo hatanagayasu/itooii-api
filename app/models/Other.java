@@ -10,6 +10,7 @@ import org.bson.types.ObjectId;
 @lombok.Getter
 public class Other extends Skim {
     protected Date created;
+    protected Set<ObjectId> friends;
     protected Set<ObjectId> followings;
     protected Set<ObjectId> followers;
     @JsonDeserialize(using=CustomJsonDeserializer.class)
