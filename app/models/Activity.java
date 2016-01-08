@@ -39,8 +39,8 @@ public class Activity extends Model {
     private Date created;
 
     static {
-        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 14, 15, 16})));
-        types.put("followings", new HashSet<Integer>(Arrays.asList(new Integer[] {12})));
+        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 12, 14, 17})));
+        types.put("friends", new HashSet<Integer>(Arrays.asList(new Integer[] {18, 19})));
 
         new Thread(new Runnable() {
             public void run() {
@@ -63,7 +63,7 @@ public class Activity extends Model {
     private Activity(ObjectId userId, ActivityType type, ObjectId postId) {
         this.id = new ObjectId();
         this.action = types.get("notifications").contains(type.value()) ? "activity/notifications" :
-            (types.get("followings").contains(type.value()) ? "activity/followings" : "activity");
+            (types.get("friends").contains(type.value()) ? "activity/friends" : "activity");
         this.userId = userId;
         this.type = type.value();
         this.postId = postId;

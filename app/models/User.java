@@ -150,6 +150,8 @@ public class User extends Other {
             col.update("{user_id:#,friend_id:#,status:#}", userId, id, 1)
                 .upsert()
                 .with("{$setOnInsert:{created:#}}", date);
+
+            new Activity(id, ActivityType.friendRequest, null, userId).queue();
         }
     }
 
@@ -168,6 +170,8 @@ public class User extends Other {
 
             unfollow(user.getId());
             user.unfollow(id);
+
+            new Activity(id, ActivityType.friendAccept, null, user.getId()).queue();
         }
     }
 
