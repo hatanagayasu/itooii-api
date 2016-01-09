@@ -112,7 +112,7 @@ public class HttpController extends AppController {
                     continue;
 
                 if (line.startsWith("@Anonymous")) {
-                    validations.remove("access_token");
+                    validations.with("access_token").put("require", false);
                 } else if (line.startsWith("@Privilege")) {
                     Matcher matcher = parenthesesPattern.matcher(line);
                     if (matcher.find()) {
