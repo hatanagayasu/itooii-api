@@ -31,8 +31,9 @@ public class UsersController extends AppController {
 
     public static Result get(JsonNode params) {
         ObjectId userId = getObjectId(params, "user_id");
+        User me = params.has("access_token") ? getMe(params) : null;
 
-        Other other = Other.get(userId);
+        Other other = Other.get(userId, me == null ? null : me);
         if (other == null)
             return Error(Error.USER_NOT_FOUND);
 
@@ -155,6 +156,23 @@ public class UsersController extends AppController {
         return Ok();
     }
 
+    public static Result unfriend(JsonNode params) {
+        User me = getMe(params);
+        ObjectId userId = getObjectId(params, "user_id");
+        User user = User.get(userId);
+
+        if (user == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        if (userId.equals(me.getId()))
+            return Error(Error.SELF_FORBIDDEN);
+
+        if (me.getFriends().contains(userId))
+            me.unfriend(userId);
+
+        return Ok();
+    }
+
     public static Result follow(JsonNode params) {
         User me = getMe(params);
         ObjectId userId = getObjectId(params, "user_id");
@@ -169,7 +187,8 @@ public class UsersController extends AppController {
         if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
             return Error(Error.FORBIDDEN);
 
-        if (me.getFollowings() == null || !me.getFollowings().contains(userId))
+        if ((me.getFriends().contains(userId)) ||
+            (me.getFollowings() == null || !me.getFollowings().contains(userId)))
             me.follow(userId);
 
         return Ok();
@@ -186,7 +205,8 @@ public class UsersController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        if (me.getFollowings() != null && me.getFollowings().contains(userId))
+        if ((me.getFriends().contains(userId)) ||
+            (me.getFollowings() != null && me.getFollowings().contains(userId)))
             me.unfollow(userId);
 
         return Ok();
@@ -337,6 +357,20 @@ public class UsersController extends AppController {
         }
 
         return Ok(user.getFriend(skip, limit));
+    }
+
+    public static Result getMutualFriend(JsonNode params) {
+        ObjectId userId = getObjectId(params, "user_id");
+        User me = params.has("access_token") ? getMe(params) : null;
+        int skip = params.has("skip") ? params.get("skip").intValue() : 0;
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        Other other = Other.get(userId, me);
+
+        if (other == null)
+            return Error(Error.USER_NOT_FOUND);
+
+        return Ok(other.getMutualFriend(skip, limit));
     }
 
     public static Result getFollower(JsonNode params) {

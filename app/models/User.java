@@ -115,7 +115,7 @@ public class User extends Other {
         del(this.id);
     }
 
-    // 0: send, 1: receive, 2: accept, 3: ignore 4: cancel
+    // 0: send, 1: receive, 2: accept, 3: ignore
     public List<Friend> getFriendRequest(int status) {
         MongoCollection col = jongo.getCollection("friend");
 
@@ -134,6 +134,17 @@ public class User extends Other {
         }
 
         return friends;
+    }
+
+    public boolean friendRequest(ObjectId userId) {
+        //TODO cache
+        MongoCollection col = jongo.getCollection("friend");
+
+        Friend friend = col.findOne("{user_id:#,friend_id:#,status:#}", id, userId, 0)
+            .projection("{_id:1}")
+            .as(Friend.class);
+
+        return friend == null;
     }
 
     public void sendFriendRequest(ObjectId userId) {
@@ -185,44 +196,66 @@ public class User extends Other {
 
     public void cancelFriendRequest(ObjectId userId) {
         MongoCollection col = jongo.getCollection("friend");
-        Date date = new Date();
 
-        col.update("{user_id:#,friend_id:#,status:#}", id, userId, 0)
-            .with("{$set:{status:#,modified':#}}", 4, date);
-
+        col.remove("{user_id:#,friend_id:#,status:#}", id, userId, 0);
         col.remove("{user_id:#,friend_id:#,status:#}", userId, id, 1);
     }
 
-    public void follow(ObjectId userId) {
-        MongoCollection following = jongo.getCollection("following");
-        MongoCollection follower = jongo.getCollection("follower");
+    public void unfriend(ObjectId userId) {
+        MongoCollection col = jongo.getCollection("friend");
 
-        List<Attachment> attachments = new ArrayList<Attachment>(1);
-        attachments.add(new Attachment(AttachmentType.follow, userId));
-        Post post = new Post(id, null, attachments, true);
-        post.save();
-
-        if (followers != null) {
-            followers.remove(userId);
-            new Activity(id, ActivityType.follow, post.getId(), followers).queue();
-        }
-
-        new Activity(id, ActivityType.followYou, post.getId(), userId).queue();
-
-        following.save(new Following(id, userId));
-        follower.save(new Follower(userId, id));
+        col.remove("{user_id:#,friend_id:#,status:#}", id, userId, 2);
+        col.remove("{user_id:#,friend_id:#,status:#}", userId, id, 2);
 
         del(id, userId);
     }
 
+    public void follow(ObjectId userId) {
+        if (friends.contains(userId)) {
+            MongoCollection col = jongo.getCollection("user");
+            col.update(userId)
+                .with("{$pull:{unfollowers:#}}", id);
+
+            del(userId);
+        } else {
+            MongoCollection following = jongo.getCollection("following");
+            MongoCollection follower = jongo.getCollection("follower");
+
+            List<Attachment> attachments = new ArrayList<Attachment>(1);
+            attachments.add(new Attachment(AttachmentType.follow, userId));
+            Post post = new Post(id, null, attachments, true);
+            post.save();
+
+            if (followers != null) {
+                followers.remove(userId);
+                new Activity(id, ActivityType.follow, post.getId(), followers).queue();
+            }
+
+            new Activity(id, ActivityType.followYou, post.getId(), userId).queue();
+
+            following.save(new Following(id, userId));
+            follower.save(new Follower(userId, id));
+
+            del(id, userId);
+        }
+    }
+
     public void unfollow(ObjectId userId) {
-        MongoCollection following = jongo.getCollection("following");
-        MongoCollection follower = jongo.getCollection("follower");
+        if (friends.contains(userId)) {
+            MongoCollection col = jongo.getCollection("user");
+            col.update(userId)
+                .with("{$addToSet:{unfollowers:#}}", id);
 
-        following.remove("{user_id:#,following_id:#}", id, userId);
-        follower.remove("{user_id:#,follower_id:#}", userId, id);
+            del(userId);
+        } else {
+            MongoCollection following = jongo.getCollection("following");
+            MongoCollection follower = jongo.getCollection("follower");
 
-        del(id, userId);
+            following.remove("{user_id:#,following_id:#}", id, userId);
+            follower.remove("{user_id:#,follower_id:#}", userId, id);
+
+            del(id, userId);
+        }
     }
 
     public void blocking(ObjectId userId) {

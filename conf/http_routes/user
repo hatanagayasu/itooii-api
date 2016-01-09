@@ -56,6 +56,7 @@ GET     /user/blockings             UsersController/getBlocking
 @Validation(name="skip",type="integer",rule="min=0")
 @Validation(name="limit",type="integer",rule="min=1,max=25")
 GET     /user/friends/@user_id      UsersController/getFriend
+GET     /user/mutual_friends/@user_id   UsersController/getMutualFriend
 GET     /user/followers/@user_id    UsersController/getFollower
 GET     /user/followings/@user_id   UsersController/getFollowing
 
@@ -77,6 +78,7 @@ POST    /user/friend/request        UsersController/sendFriendRequest
 POST    /user/friend/cancel         UsersController/cancelFriendRequest
 POST    /user/friend/accept         UsersController/acceptFriendRequest
 POST    /user/friend/ignore         UsersController/ignoreFriendRequest
+DELETE  /user/friend/@user_id       UsersController/unfriend
 POST    /user/following/@user_id    UsersController/follow
 DELETE  /user/following/@user_id    UsersController/unfollow
 POST    /user/blocking/@user_id     UsersController/blocking
