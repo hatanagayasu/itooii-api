@@ -20,9 +20,6 @@ public class Other extends Skim {
     protected Set<ObjectId> mutualFriends;
     @JsonIgnore
     protected boolean followed;
-    @JsonIgnore
-    @JsonProperty("friend_request")
-    protected boolean friendRequest;
     @JsonDeserialize(using=CustomJsonDeserializer.class)
     protected JsonNode metadata;
 
@@ -49,9 +46,6 @@ public class Other extends Skim {
         if (followers.contains(id) ||
             (friends.contains(id) && (unfollowers == null || !unfollowers.contains(id))))
             followed = true;
-
-        friendRequest = friends.contains(id) ?
-            true : user.friendRequest(userId);
 
         mutualFriends = new HashSet<ObjectId>(friends);
         mutualFriends.retainAll(user.friends);

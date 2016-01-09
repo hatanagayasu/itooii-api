@@ -26,6 +26,8 @@ public class User extends Other {
     private boolean emailVerified;
     private String password;
     private Set<ObjectId> blockings;
+    @JsonProperty("friend_requests")
+    private Set<ObjectId> friendRequests;
     private int tos;
     @JsonProperty("last_read_notification")
     private ObjectId lastReadNotification;
@@ -404,6 +406,7 @@ public class User extends Other {
                     user.friends = Friend.getFriendIds(userId);
                     user.followings = Following.getFollowingIds(userId);
                     user.followers = Follower.getFollowerIds(userId);
+                    user.friendRequests = Friend.getFriendRequestIds(userId);
                 }
 
                 return user;

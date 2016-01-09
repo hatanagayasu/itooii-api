@@ -31,8 +31,16 @@ public class Friend extends Model {
     }
 
     public static Set<ObjectId> getFriendIds(ObjectId userId) {
+        return getIds(userId, 2);
+    }
+
+    public static Set<ObjectId> getFriendRequestIds(ObjectId userId) {
+        return getIds(userId, 0);
+    }
+
+    private static Set<ObjectId> getIds(ObjectId userId, int status) {
         MongoCollection friendCol = jongo.getCollection("friend");
-        MongoCursor<Friend> cursor = friendCol.find("{user_id:#,status:#}", userId, 2)
+        MongoCursor<Friend> cursor = friendCol.find("{user_id:#,status:#}", userId, status)
             .projection("{friend_id:1}")
             .as(Friend.class);
 
