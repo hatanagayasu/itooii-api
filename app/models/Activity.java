@@ -154,6 +154,9 @@ public class Activity extends Model {
         while (cursor.hasNext()) {
             activity = cursor.next();
             activities.add(activity);
+
+            if (activity.type == ActivityType.friendAccept.value())
+                activity.remove();
         }
 
         try {
@@ -179,5 +182,17 @@ public class Activity extends Model {
             previous = String.format("until=%d&limit=%d", activity.created.getTime(), limit);
 
         return new Page(activities, previous);
+    }
+
+    public void remove() {
+        MongoCollection col = jongo.getCollection("activity");
+
+        col.remove(id);
+    }
+
+    public static void remove(ObjectId userId, ActivityType type, ObjectId receiver) {
+        MongoCollection col = jongo.getCollection("activity");
+
+        col.remove("{user_id:#,receivers:[#],type:#}", userId, receiver, type.value());
     }
 }

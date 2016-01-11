@@ -183,6 +183,8 @@ public class User extends Other {
             col.update("{user_id:#,friend_id:#,status:#}", user.getId(), id, 0)
                 .with("{$set:{status:#,modified':#}}", 2, date);
 
+            Activity.remove(user.getId(), ActivityType.friendRequest, id);
+
             unfollow(user.getId());
             user.unfollow(id);
 
@@ -196,6 +198,8 @@ public class User extends Other {
 
         col.update("{user_id:#,friend_id:#,status:#}", id, userId, 1)
             .with("{$set:{status:#,modified':#}}", 3, date);
+
+        Activity.remove(userId, ActivityType.friendRequest, id);
     }
 
     public void cancelFriendRequest(ObjectId userId) {
@@ -205,6 +209,8 @@ public class User extends Other {
         col.remove("{user_id:#,friend_id:#,status:#}", userId, id, 1);
 
         del(id);
+
+        Activity.remove(id, ActivityType.friendRequest, userId);
     }
 
     public void unfriend(ObjectId userId) {
