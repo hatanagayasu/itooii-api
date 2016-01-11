@@ -44,7 +44,7 @@ public class Other extends Skim {
         ObjectId userId = user.getId();
 
         if (followers.contains(id) ||
-            (friends.contains(id) && (unfollowers == null || !unfollowers.contains(id))))
+            (user.friends.contains(id) && (unfollowers == null || !unfollowers.contains(id))))
             followed = true;
 
         mutualFriends = new HashSet<ObjectId>(friends);
