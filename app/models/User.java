@@ -203,6 +203,8 @@ public class User extends Other {
 
         col.remove("{user_id:#,friend_id:#,status:#}", id, userId, 0);
         col.remove("{user_id:#,friend_id:#,status:#}", userId, id, 1);
+
+        del(id);
     }
 
     public void unfriend(ObjectId userId) {
