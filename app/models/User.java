@@ -160,6 +160,8 @@ public class User extends Other {
             .as(Friend.class);
 
         if (friend == null) {
+            del(id);
+
             col.update("{user_id:#,friend_id:#,status:#}", userId, id, 1)
                 .upsert()
                 .with("{$setOnInsert:{created:#}}", date);
