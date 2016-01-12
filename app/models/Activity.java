@@ -39,8 +39,8 @@ public class Activity extends Model {
     private Date created;
 
     static {
-        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 14, 15, 16})));
-        types.put("followings", new HashSet<Integer>(Arrays.asList(new Integer[] {12})));
+        types.put("notifications", new HashSet<Integer>(Arrays.asList(new Integer[] {3, 4, 5, 6, 8, 9, 12, 14, 17})));
+        types.put("friends", new HashSet<Integer>(Arrays.asList(new Integer[] {18, 19})));
 
         new Thread(new Runnable() {
             public void run() {
@@ -63,7 +63,7 @@ public class Activity extends Model {
     private Activity(ObjectId userId, ActivityType type, ObjectId postId) {
         this.id = new ObjectId();
         this.action = types.get("notifications").contains(type.value()) ? "activity/notifications" :
-            (types.get("followings").contains(type.value()) ? "activity/followings" : "activity");
+            (types.get("friends").contains(type.value()) ? "activity/friends" : "activity");
         this.userId = userId;
         this.type = type.value();
         this.postId = postId;
@@ -154,6 +154,9 @@ public class Activity extends Model {
         while (cursor.hasNext()) {
             activity = cursor.next();
             activities.add(activity);
+
+            if (activity.type == ActivityType.friendAccept.value())
+                activity.remove();
         }
 
         try {
@@ -179,5 +182,17 @@ public class Activity extends Model {
             previous = String.format("until=%d&limit=%d", activity.created.getTime(), limit);
 
         return new Page(activities, previous);
+    }
+
+    public void remove() {
+        MongoCollection col = jongo.getCollection("activity");
+
+        col.remove(id);
+    }
+
+    public static void remove(ObjectId userId, ActivityType type, ObjectId receiver) {
+        MongoCollection col = jongo.getCollection("activity");
+
+        col.remove("{user_id:#,receivers:[#],type:#}", userId, receiver, type.value());
     }
 }

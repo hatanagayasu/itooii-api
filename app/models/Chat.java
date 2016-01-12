@@ -34,8 +34,12 @@ public class Chat extends Model {
     }
 
     public static ObjectId getChatId(ObjectId userId0, ObjectId userId1) {
-        String key = "chatId:" +
-            (userId0.compareTo(userId1) < 0 ? userId0 + ":" + userId1 : userId1 + ":" + userId0);
+        return userId0.compareTo(userId1) < 0 ?
+            _getChatId(userId0, userId1) : _getChatId(userId1, userId0);
+    }
+
+    private static ObjectId _getChatId(ObjectId userId0, ObjectId userId1) {
+        String key = "chatId:" + userId0 + ":" + userId1;
 
         Chat chat = cache(key, Chat.class, new Callable<Chat>() {
             public Chat call() {

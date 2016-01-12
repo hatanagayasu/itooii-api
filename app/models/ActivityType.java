@@ -16,7 +16,10 @@ public enum ActivityType {
     changeProfilePhoto(13),
     hi(14),
     postOnEvent(15),
-    postOnEventYouJoin(16);
+    postOnEventYouJoin(16),
+    friend(17),
+    friendRequest(18),
+    friendAccept(19);
 
     private int type;
 

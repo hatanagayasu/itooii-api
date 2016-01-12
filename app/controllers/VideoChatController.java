@@ -148,8 +148,7 @@ public class VideoChatController extends AppController {
             if (!event.isOnline(me.getId()) || !event.isOnline(userId))
                 return Error(Error.OBJECT_FORBIDDEN);
         } else {
-            if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
-                user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
+            if (me.getFriends() == null || !me.getFriends().contains(userId))
                 return Error(Error.NOT_FRIEND);
         }
 
