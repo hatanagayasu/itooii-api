@@ -187,8 +187,7 @@ public class VideoChatController extends AppController {
             if (event == null)
                 return Error(Error.EVENT_NOT_FOUND);
         } else {
-            if (me.getFollowings() == null || !me.getFollowings().contains(userId) ||
-                user.getFollowings() == null || !user.getFollowings().contains(me.getId()))
+            if (me.getFriends() == null || !me.getFriends().contains(userId))
                 return Error(Error.NOT_FRIEND);
         }
 
