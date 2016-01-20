@@ -6,6 +6,7 @@ import play.libs.ws.*;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -52,6 +53,19 @@ public class User extends Other {
         activity = new Date();
         privilege = Privilege.Observer.value();
         tos = 1;
+    }
+
+    public Set<ObjectId> getSubscribers() {
+        Set<ObjectId> subscribers = new HashSet<ObjectId>();
+
+        if (friends != null)
+            subscribers.addAll(friends);
+        if (unfollowers != null)
+            subscribers.removeAll(unfollowers);
+        if (followers != null)
+            subscribers.addAll(followers);
+
+        return subscribers;
     }
 
     public void save() {
