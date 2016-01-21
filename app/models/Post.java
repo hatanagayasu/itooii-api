@@ -2,7 +2,6 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -89,10 +88,8 @@ public class Post extends Model {
         postCol.save(this);
 
         if (user != null) {
-            Set<ObjectId> ids = new HashSet<ObjectId>();
+            Set<ObjectId> ids = user.getSubscribers();
             ids.add(user.getId());
-            if (user.getFollowers() != null)
-                ids.addAll(user.getFollowers());
 
             if (eventId == null) {
                 new Activity(userId, ActivityType.post, id, ids).queue();
