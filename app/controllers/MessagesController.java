@@ -43,8 +43,8 @@ public class MessagesController extends AppController {
 
         ObjectId chatId = Chat.getChatId(me.getId(), userId);
 
-        Message message = new Message(me.getId(), text, getAttachments(params));
-        message.save(chatId);
+        Message message = new Message(chatId, me.getId(), text, getAttachments(params));
+        message.save();
 
         sendEvent(userId, message);
         sendEvent(me.getId(), message);

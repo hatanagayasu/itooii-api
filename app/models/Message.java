@@ -16,6 +16,8 @@ public class Message extends Model {
     @Id
     private ObjectId id;
     @JsonIgnore
+    private ObjectId chatId;
+    @JsonIgnore
     private String action;
     @JsonProperty("user_id")
     @Postproduct
@@ -27,8 +29,9 @@ public class Message extends Model {
     public Message() {
     }
 
-    public Message(ObjectId userId, String text, List<Attachment> attachments) {
+    public Message(ObjectId chatId, ObjectId userId, String text, List<Attachment> attachments) {
         this.id = new ObjectId();
+        this.chatId = chatId;
         this.action = "message";
         this.userId = userId;
         this.text = text;
@@ -37,7 +40,7 @@ public class Message extends Model {
         this.created = new Date();
     }
 
-    public void save(ObjectId chatId) {
+    public void save() {
         MongoCollection chatCol = jongo.getCollection("chat");
         MongoCollection messageCol = jongo.getCollection("message");
 
