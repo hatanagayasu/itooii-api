@@ -551,6 +551,13 @@ public class HttpController extends AppController {
                     } catch (NumberFormatException e) {
                         throw new MalformedParamException(validation);
                     }
+                } else if (type.equals("boolean") && param.isTextual()) {
+                    try {
+                        params.put(name, Boolean.parseBoolean(param.textValue()));
+                        param = params.get(name);
+                    } catch (NumberFormatException e) {
+                        throw new MalformedParamException(validation);
+                    }
                 }
 
                 validation(validation, param);
