@@ -2,6 +2,7 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -27,19 +28,21 @@ public class Chat extends Model {
     @JsonProperty("message_count")
     private int messageCount;
     private Date created;
+    @JsonProperty("unread_user_ids")
+    private Set<ObjectId> unreadUserIds;
     @JsonProperty("last_message")
     private Message lastMessage;
 
     public Chat() {
     }
 
-    public static ObjectId getChatId(ObjectId userId0, ObjectId userId1) {
+    public static Chat get(ObjectId userId0, ObjectId userId1) {
         return userId0.compareTo(userId1) < 0 ?
-            _getChatId(userId0, userId1) : _getChatId(userId1, userId0);
+            _get(userId0, userId1) : _get(userId1, userId0);
     }
 
-    private static ObjectId _getChatId(ObjectId userId0, ObjectId userId1) {
-        String key = "chatId:" + userId0 + ":" + userId1;
+    private static Chat _get(ObjectId userId0, ObjectId userId1) {
+        String key = "chat:" + userId0 + ":" + userId1;
 
         Chat chat = cache(key, Chat.class, new Callable<Chat>() {
             public Chat call() {
@@ -48,6 +51,7 @@ public class Chat extends Model {
                 Chat chat = chatCol
                     .findAndModify("{user_ids:[#,#]}", userId0, userId1)
                     .with("{$setOnInsert:{user_ids:[#,#],created:#}}", userId0, userId1, new Date())
+                    .projection("{unread_user_ids:0,last_message:0}")
                     .upsert()
                     .returnNew()
                     .as(Chat.class);
@@ -56,10 +60,10 @@ public class Chat extends Model {
             }
         });
 
-        return chat.id;
+        return chat;
     }
 
-    public static Page list(ObjectId userId, Date until, int limit) {
+    public static Page list(ObjectId userId, Date until, int limit, boolean reset) {
         MongoCollection col = jongo.getCollection("chat");
         String previous = null;
 
@@ -96,6 +100,32 @@ public class Chat extends Model {
                 chat.lastMessage.getCreated().getTime(), limit);
         }
 
+        if (reset) {
+            col.update("{unread_user_ids:#}", userId)
+                .with("{$pull:{unread_user_ids:#}}", userId);
+        }
+
         return new Page(chats, previous);
+    }
+
+    public static Set<ObjectId> getUnreadChatIds(ObjectId userId) {
+        MongoCollection col = jongo.getCollection("chat");
+
+        MongoCursor<Chat> cursor = col
+            .find("{unread_user_ids:#}", userId)
+            .projection("{_id:1}")
+            .as(Chat.class);
+
+        Set<ObjectId> ids = new HashSet<ObjectId>();
+        while (cursor.hasNext())
+            ids.add(cursor.next().getId());
+
+        try {
+            cursor.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return ids;
     }
 }

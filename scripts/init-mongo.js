@@ -26,7 +26,8 @@ var indexSpec = {
         {index:{user_id:1,modified:-1},option:{name:"user_id_modified",background:true}}
     ],
     "chat":[
-        {index:{user_ids:1},option:{name:"user_ids",background:true}}
+        {index:{user_ids:1},option:{name:"user_ids",background:true}},
+        {index:{unread_user_ids:1},option:{name:"unread_user_ids",background:true}}
     ],
     "event":[
         {index:{user_id:1,from:-1},option:{name:"user_id",background:true}},
@@ -36,6 +37,9 @@ var indexSpec = {
         {index:{chat_id:1,page:1},option:{name:"chat_id_page",unique:true,background:true}},
         {index:{chat_id:1,created:-1},option:{name:"chat_id_created",background:true}},
         {index:{"messages._id":1},option:{name:"message_id",unique:true,background:true}}
+    ],
+    "last_read_message_id":[
+        {index:{user_id:1,chat_id:1},option:{name:"user_id_chat_id",unique:true,background:true}}
     ]
 };
 

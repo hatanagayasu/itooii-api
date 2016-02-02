@@ -58,6 +58,8 @@ public class Model {
 
     private static SendGrid sendgrid;
 
+    public static ObjectId epochId = new ObjectId(new Date(0));
+
     public static void init() {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

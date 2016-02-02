@@ -21,9 +21,9 @@ public class MessagesController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        ObjectId chatId = Chat.getChatId(me.getId(), userId);
+        Chat chat = Chat.get(me.getId(), userId);
 
-        return Ok(Message.get(chatId, until, limit));
+        return Ok(Message.get(me.getId(), chat.getId(), until, limit));
     }
 
     public static Result add(JsonNode params) {
@@ -41,10 +41,10 @@ public class MessagesController extends AppController {
         if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
             return Error(Error.OBJECT_FORBIDDEN);
 
-        ObjectId chatId = Chat.getChatId(me.getId(), userId);
+        Chat chat = Chat.get(me.getId(), userId);
 
-        Message message = new Message(chatId, me.getId(), text, getAttachments(params));
-        message.save();
+        Message message = new Message(chat.getId(), me.getId(), text, getAttachments(params));
+        message.save(chat.getUserIds());
 
         sendEvent(userId, message);
         sendEvent(me.getId(), message);
@@ -56,7 +56,8 @@ public class MessagesController extends AppController {
         User me = getMe(params);
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+        boolean reset = params.has("reset") ? params.get("reset").booleanValue() : false;
 
-        return Ok(Chat.list(me.getId(), new Date(until), limit));
+        return Ok(Chat.list(me.getId(), new Date(until), limit, reset));
     }
 }

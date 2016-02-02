@@ -1,12 +1,16 @@
 package controllers;
 
 import models.Activity;
+import models.Chat;
 import models.User;
 
 import java.util.Date;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.bson.types.ObjectId;
 
 public class ActivitiesController extends AppController {
     public static Result getBadges(JsonNode params) {
@@ -16,6 +20,9 @@ public class ActivitiesController extends AppController {
 
         result.put("notifications", Activity.getUnreadNotificationCount(me, "notifications"));
         result.put("friends", Activity.getUnreadNotificationCount(me, "friends"));
+        ArrayNode node = result.putArray("chats");
+        for (ObjectId id : Chat.getUnreadChatIds(me.getId()))
+            node.add(id.toString());
 
         return Ok(result);
     }
