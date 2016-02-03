@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -32,6 +33,8 @@ public class Chat extends Model {
     private Set<ObjectId> unreadUserIds;
     @JsonProperty("last_message")
     private Message lastMessage;
+    @JsonIgnore
+    private boolean read;
 
     public Chat() {
     }
@@ -77,6 +80,8 @@ public class Chat extends Model {
         Chat chat = null;
         while (cursor.hasNext()) {
             chat = cursor.next();
+            chat.read = chat.lastMessage.getId().compareTo(
+                LastReadMessageId.getLastReadMessageId(userId, chat.getId())) == 0;
             chats.add(chat);
 
             if (chat.oneOnOne) {
