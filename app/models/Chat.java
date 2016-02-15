@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
@@ -108,6 +109,12 @@ public class Chat extends Model {
         if (reset) {
             col.update("{unread_user_ids:#}", userId)
                 .with("{$pull:{unread_user_ids:#}}", userId);
+
+            ObjectNode event = mapper.createObjectNode();
+            event.put("action", "badge/update")
+                .putArray("chats");
+
+            publish("user", userId + "\n" + event);
         }
 
         return new Page(chats, previous);
