@@ -231,6 +231,11 @@ public class VideoChatController extends AppController {
             event.put("confirm", true);
 
             sendEvent(offer.getToken(), event);
+
+            event.removeAll();
+            event.put("action", "video/talking");
+            event.put("access_token", token);
+            sendEvent(me.getId(), event);
         } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");
