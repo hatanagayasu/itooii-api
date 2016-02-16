@@ -18,6 +18,7 @@ public class Message extends Model {
     private ObjectId id;
     @JsonIgnore
     private ObjectId chatId;
+    private int type; // 0:message 1:miss 2:called
     @JsonIgnore
     private String action;
     @JsonProperty("user_id")
@@ -31,8 +32,14 @@ public class Message extends Model {
     }
 
     public Message(ObjectId chatId, ObjectId userId, String text, List<Attachment> attachments) {
+        this(chatId, 0, userId, text, attachments);
+    }
+
+    public Message(ObjectId chatId, int type, ObjectId userId, String text,
+        List<Attachment> attachments) {
         this.id = new ObjectId();
         this.chatId = chatId;
+        this.type = type;
         this.action = "message";
         this.userId = userId;
         this.text = text;
