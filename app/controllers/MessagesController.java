@@ -9,6 +9,7 @@ import models.User;
 import java.util.Date;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
 public class MessagesController extends AppController {
@@ -23,7 +24,11 @@ public class MessagesController extends AppController {
 
         Chat chat = Chat.get(me.getId(), userId);
 
-        return Ok(Message.get(me.getId(), chat.getId(), until, limit));
+        ObjectNode result = mapper.createObjectNode();
+        result.putPOJO("chat", chat)
+            .putPOJO("messages", Message.get(me.getId(), chat.getId(), until, limit));
+
+        return Ok(result);
     }
 
     public static Result add(JsonNode params) {
