@@ -31,14 +31,13 @@ public class Message extends Model {
     public Message() {
     }
 
-    public Message(ObjectId chatId, ObjectId userId, String text, List<Attachment> attachments) {
-        this(chatId, 0, userId, text, attachments);
+    public Message(ObjectId userId, String text, List<Attachment> attachments) {
+        this(0, userId, text, attachments);
     }
 
-    public Message(ObjectId chatId, int type, ObjectId userId, String text,
+    public Message(int type, ObjectId userId, String text,
         List<Attachment> attachments) {
         this.id = new ObjectId();
-        this.chatId = chatId;
         this.type = type;
         this.action = "message";
         this.userId = userId;
@@ -48,21 +47,24 @@ public class Message extends Model {
         this.created = new Date();
     }
 
-    public void save(Set<ObjectId> userIds) {
+    public void save(Chat chat) {
         MongoCollection chatCol = jongo.getCollection("chat");
         MongoCollection messageCol = jongo.getCollection("message");
 
-        userIds.remove(userId);
+        chat.getUserIds().remove(userId);
 
-        Chat chat = chatCol
-            .findAndModify("{_id:#}", chatId)
-            .with("{$set:{last_message:#,unread_user_ids:#},$inc:{message_count:1}}", this, userIds)
+        chat = chatCol
+            .findAndModify("{_id:#}", chat.getId())
+            .with("{$set:{last_message:#,unread_user_ids:#},$inc:{message_count:1}}",
+                this, chat.getUserIds())
             .projection("{message_count:1}")
             .as(Chat.class);
 
         int page = chat.getMessageCount() / 50;
-        messageCol.update("{chat_id:#,page:#}", chatId, page).upsert()
+        messageCol.update("{chat_id:#,page:#}", chat.getId(), page).upsert()
             .with("{$push:{messages:#},$setOnInsert:{created:#}}", this, created);
+
+        chatId = chat.getId();
     }
 
     public static Page get(ObjectId myId, ObjectId chatId, long until, int limit) {
