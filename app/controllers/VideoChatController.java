@@ -206,8 +206,8 @@ public class VideoChatController extends AppController {
         if (eventId == null) {
             Chat chat = Chat.get(me.getId(), userId);
 
-            Message message = new Message(1/*miss*/, me.getId(), null, null);
-            message.save(chat);
+            Message message = new Message(chat.getId(), 1/*miss*/, me.getId(), null, null);
+            message.save(chat.getUserIds());
 
             sendEvent(userId, message);
             sendEvent(me.getId(), message);
@@ -251,8 +251,8 @@ public class VideoChatController extends AppController {
             if (offer.getEventId() == null) {
                 Chat chat = Chat.get(me.getId(), userId);
 
-                Message message = new Message(2/*called*/, userId, null, null);
-                message.save(chat);
+                Message message = new Message(chat.getId(), 2/*called*/, userId, null, null);
+                message.save(chat.getUserIds());
 
                 sendEvent(userId, message);
                 sendEvent(me.getId(), message);

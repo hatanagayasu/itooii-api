@@ -40,25 +40,6 @@ public class Chat extends Model {
     public Chat() {
     }
 
-    public static Chat get(ObjectId chatId) {
-        String key = "chat:" + chatId;
-
-        Chat chat = cache(key, Chat.class, new Callable<Chat>() {
-            public Chat call() {
-                MongoCollection chatCol = jongo.getCollection("chat");
-
-                Chat chat = chatCol
-                    .findOne(chatId)
-                    .projection("{unread_user_ids:0,last_message:0}")
-                    .as(Chat.class);
-
-                return chat;
-            }
-        });
-
-        return chat;
-    }
-
     public static Chat get(ObjectId userId0, ObjectId userId1) {
         return userId0.compareTo(userId1) < 0 ?
             _get(userId0, userId1) : _get(userId1, userId0);

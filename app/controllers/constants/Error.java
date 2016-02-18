@@ -24,7 +24,6 @@ public enum Error {
     NOT_FOUND(40400, "Not Found"),
     USER_NOT_FOUND(40401, "User Not Found"),
     EVENT_NOT_FOUND(40402, "Event Not Found"),
-    CHAT_NOT_FOUND(40403, "Chat Not Found"),
 
     METHOD_NOT_ALLOWED(40500, "Method Not Allowed"),
 
