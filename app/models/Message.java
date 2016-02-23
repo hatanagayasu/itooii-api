@@ -3,6 +3,7 @@ package models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,6 +17,9 @@ public class Message extends Model {
     @Id
     private ObjectId id;
     @JsonIgnore
+    private ObjectId chatId;
+    private int type; // 0:message 1:miss 2:called
+    @JsonIgnore
     private String action;
     @JsonProperty("user_id")
     @Postproduct
@@ -27,8 +31,15 @@ public class Message extends Model {
     public Message() {
     }
 
-    public Message(ObjectId userId, String text, List<Attachment> attachments) {
+    public Message(ObjectId chatId, ObjectId userId, String text, List<Attachment> attachments) {
+        this(chatId, 0, userId, text, attachments);
+    }
+
+    public Message(ObjectId chatId, int type, ObjectId userId, String text,
+        List<Attachment> attachments) {
         this.id = new ObjectId();
+        this.chatId = chatId;
+        this.type = type;
         this.action = "message";
         this.userId = userId;
         this.text = text;
@@ -37,25 +48,24 @@ public class Message extends Model {
         this.created = new Date();
     }
 
-    public void save(ObjectId chatId) {
+    public void save(Set<ObjectId> userIds) {
         MongoCollection chatCol = jongo.getCollection("chat");
         MongoCollection messageCol = jongo.getCollection("message");
 
+        userIds.remove(userId);
+
         Chat chat = chatCol
             .findAndModify("{_id:#}", chatId)
-            .with("{$set:{last_message:#},$inc:{message_count:1}}", this)
+            .with("{$set:{last_message:#,unread_user_ids:#},$inc:{message_count:1}}", this, userIds)
             .projection("{message_count:1}")
             .as(Chat.class);
-
-        if (chat == null)
-            return;
 
         int page = chat.getMessageCount() / 50;
         messageCol.update("{chat_id:#,page:#}", chatId, page).upsert()
             .with("{$push:{messages:#},$setOnInsert:{created:#}}", this, created);
     }
 
-    public static Page get(ObjectId chatId, long until, int limit) {
+    public static Page get(ObjectId myId, ObjectId chatId, long until, int limit) {
         MongoCollection messageCol = jongo.getCollection("message");
         String previous = null;
 
@@ -89,6 +99,11 @@ public class Message extends Model {
         if (messages.size() == limit) {
             until = messages.get(0).getCreated().getTime();
             previous = String.format("until=%d&limit=%d", until, limit);
+        }
+
+        if (messages.size() > 0) {
+            LastReadMessageId.updateLastReadMessageId(myId, chatId,
+                messages.get(messages.size() - 1).getId());
         }
 
         return new Page(messages, previous);

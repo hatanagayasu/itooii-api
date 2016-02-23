@@ -5,7 +5,9 @@ import play.Configuration;
 
 import controllers.constants.Error;
 
+import models.Chat;
 import models.Event;
+import models.Message;
 import models.Pair;
 import models.PracticeLanguage;
 import models.User;
@@ -201,6 +203,16 @@ public class VideoChatController extends AppController {
 
         sendEvent(userId, event);
 
+        if (eventId == null) {
+            Chat chat = Chat.get(me.getId(), userId);
+
+            Message message = new Message(chat.getId(), 1/*miss*/, me.getId(), null, null);
+            message.save(chat.getUserIds());
+
+            sendEvent(userId, message);
+            sendEvent(me.getId(), message);
+        }
+
         return Ok();
     }
 
@@ -231,6 +243,20 @@ public class VideoChatController extends AppController {
             event.put("confirm", true);
 
             sendEvent(offer.getToken(), event);
+
+            event.removeAll();
+            event.put("action", "video/talking");
+            sendEvent(me.getId(), event);
+
+            if (offer.getEventId() == null) {
+                Chat chat = Chat.get(me.getId(), userId);
+
+                Message message = new Message(chat.getId(), 2/*called*/, userId, null, null);
+                message.save(chat.getUserIds());
+
+                sendEvent(userId, message);
+                sendEvent(me.getId(), message);
+            }
         } else {
             ObjectNode event = mapper.createObjectNode();
             event.put("action", "video/response");

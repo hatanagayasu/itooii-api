@@ -9,6 +9,7 @@ import models.User;
 import java.util.Date;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 
 public class MessagesController extends AppController {
@@ -21,9 +22,13 @@ public class MessagesController extends AppController {
         if (userId.equals(me.getId()))
             return Error(Error.SELF_FORBIDDEN);
 
-        ObjectId chatId = Chat.getChatId(me.getId(), userId);
+        Chat chat = Chat.get(me.getId(), userId);
 
-        return Ok(Message.get(chatId, until, limit));
+        ObjectNode result = mapper.createObjectNode();
+        result.putPOJO("chat", chat)
+            .putPOJO("messages", Message.get(me.getId(), chat.getId(), until, limit));
+
+        return Ok(result);
     }
 
     public static Result add(JsonNode params) {
@@ -41,10 +46,10 @@ public class MessagesController extends AppController {
         if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
             return Error(Error.OBJECT_FORBIDDEN);
 
-        ObjectId chatId = Chat.getChatId(me.getId(), userId);
+        Chat chat = Chat.get(me.getId(), userId);
 
-        Message message = new Message(me.getId(), text, getAttachments(params));
-        message.save(chatId);
+        Message message = new Message(chat.getId(), me.getId(), text, getAttachments(params));
+        message.save(chat.getUserIds());
 
         sendEvent(userId, message);
         sendEvent(me.getId(), message);
@@ -56,7 +61,8 @@ public class MessagesController extends AppController {
         User me = getMe(params);
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+        boolean reset = params.has("reset") ? params.get("reset").booleanValue() : false;
 
-        return Ok(Chat.list(me.getId(), new Date(until), limit));
+        return Ok(Chat.list(me.getId(), new Date(until), limit, reset));
     }
 }
