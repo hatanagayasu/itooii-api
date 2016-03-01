@@ -60,6 +60,10 @@ GET     /user/mutual_friends/@user_id   UsersController/getMutualFriend
 GET     /user/followers/@user_id    UsersController/getFollower
 GET     /user/followings/@user_id   UsersController/getFollowing
 
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /user/friends/online        UsersController/getOnlineFriend
+
 @Anonymous
 @Validation(name="until",type="long")
 @Validation(name="limit",type="integer",rule="min=1,max=25")

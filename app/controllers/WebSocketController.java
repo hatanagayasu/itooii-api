@@ -85,7 +85,7 @@ public class WebSocketController extends AppController {
                 final String userId = User.getUserIdByAccessToken(token);
 
                 if (userId != null) {
-                    User.newAccessToken(userId, session);
+                    User.online(userId, session);
 
                     Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
                     if (sockets == null) {
@@ -115,7 +115,7 @@ public class WebSocketController extends AppController {
                             if (sockets.isEmpty())
                                 userToSockets.remove(userId);
 
-                            User.deleteAccessToken(session);
+                            User.offline(userId, session);
 
                             VideoChat videoChat = VideoChat.get(new ObjectId(userId));
                             if (videoChat != null)

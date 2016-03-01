@@ -359,6 +359,14 @@ public class UsersController extends AppController {
         return Ok(user.getFriend(skip, limit));
     }
 
+    public static Result getOnlineFriend(JsonNode params) {
+        User me = getMe(params);
+        long until = params.has("until") ? params.get("until").longValue() : now();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(me.getOnlineFriend(until, limit));
+    }
+
     public static Result getMutualFriend(JsonNode params) {
         ObjectId userId = getObjectId(params, "user_id");
         User me = params.has("access_token") ? getMe(params) : null;

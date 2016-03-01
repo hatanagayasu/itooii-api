@@ -6,8 +6,11 @@ import play.libs.ws.*;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -19,6 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
+
+import redis.clients.jedis.Tuple;
 
 @lombok.Getter
 public class User extends Other {
@@ -479,6 +484,85 @@ public class User extends Other {
 
     public static void deleteAccessToken(String token) {
         del("token:" + token);
+    }
+
+    public static void online(String userId, String token) {
+        newAccessToken(userId, token);
+
+        @SuppressWarnings("unchecked")
+        long online = (Long)evalScript("online", userId, token, Long.toString(now()));
+
+        if (online == 1) {
+            User user = get(new ObjectId(userId));
+
+            ObjectNode result = mapper.createObjectNode();
+            result.put("action", "online")
+                .put("user_id", userId)
+                .put("name", user.getName())
+                .put("avatar", user.getAvatar().toString());
+
+            if (user.getFriends() != null)
+                publish("user", user.getFriends() + "\n" + result);
+        }
+    }
+
+    public static void offline(String userId, String token) {
+        deleteAccessToken(token);
+
+        @SuppressWarnings("unchecked")
+        long offline = (Long)evalScript("offline", userId, token);
+
+        if (offline == 1) {
+            User user = get(new ObjectId(userId));
+
+            ObjectNode result = mapper.createObjectNode();
+            result.put("action", "offline")
+                .put("user_id", userId)
+                .put("name", user.getName())
+                .put("avatar", user.getAvatar().toString());
+
+            if (user.getFriends() != null)
+                publish("user", user.getFriends() + "\n" + result);
+        }
+    }
+
+    public Page getOnlineFriend(long until, int limit) {
+        List<Skim> skims = new ArrayList<Skim>();
+        String previous = null;
+
+        Set<ObjectId> ids = getFriends();
+        if (ids == null || ids.size() == 0)
+            return new Page(skims, previous);
+
+        if (!exists("friends:user_id:" + id)) {
+            Map<String, Double>scoreMembers = new HashMap<String, Double>(ids.size());
+            Iterator<ObjectId> iterator = ids.iterator();
+            while (iterator.hasNext())
+                scoreMembers.put(iterator.next().toString(), 0.0);
+
+            zadd("friends:user_id:" + id, scoreMembers);
+        }
+
+        zinterstore("friends:online:" + id, "online:user_id", "friends:user_id:" + id);
+
+        Set<Tuple> tuple = zrevrangeByScoreWithScores("friends:online:" + id,
+            until - 1, 0, 0, limit);
+
+        if (tuple != null && tuple.size() > 0) {
+            for (Tuple t : tuple) {
+                Skim skim = Skim.get(new ObjectId(t.getElement()));
+                if (skim != null) {
+                    until = (long)t.getScore();
+                    skim.activity = new Date(until);
+                    skims.add(skim);
+                }
+            }
+        }
+
+        if (tuple.size() == limit)
+            previous = String.format("until=%d&limit=%d", until, limit);
+
+        return new Page(skims, previous);
     }
 
     private static void del(ObjectId id) {
