@@ -104,8 +104,9 @@ public class User extends Other {
             ObjectNode result = mapper.createObjectNode();
             result.put("action", params.get("invisibility").booleanValue() ? "offline" : "online")
                 .put("user_id", id.toString())
-                .put("name", name)
-                .putPOJO("avatar", avatar);
+                .put("name", name);
+            if (avatar != null)
+                result.put("avatar", avatar.toString());
 
             if (friends != null)
                 publish("user", friends + "\n" + result);
@@ -511,8 +512,9 @@ public class User extends Other {
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "online")
                 .put("user_id", userId)
-                .put("name", user.getName())
-                .putPOJO("avatar", user.getAvatar());
+                .put("name", user.getName());
+            if (user.getAvatar() != null)
+                result.put("avatar", user.getAvatar().toString());
 
             if (user.getFriends() != null)
                 publish("user", user.getFriends() + "\n" + result);
@@ -532,8 +534,9 @@ public class User extends Other {
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "offline")
                 .put("user_id", userId)
-                .put("name", user.getName())
-                .putPOJO("avatar", user.getAvatar());
+                .put("name", user.getName());
+            if (user.getAvatar() != null)
+                result.put("avatar", user.getAvatar().toString());
 
             if (user.getFriends() != null)
                 publish("user", user.getFriends() + "\n" + result);
