@@ -499,7 +499,7 @@ public class User extends Other {
             result.put("action", "online")
                 .put("user_id", userId)
                 .put("name", user.getName())
-                .put("avatar", user.getAvatar().toString());
+                .putPOJO("avatar", user.getAvatar());
 
             if (user.getFriends() != null)
                 publish("user", user.getFriends() + "\n" + result);
@@ -519,7 +519,7 @@ public class User extends Other {
             result.put("action", "offline")
                 .put("user_id", userId)
                 .put("name", user.getName())
-                .put("avatar", user.getAvatar().toString());
+                .putPOJO("avatar", user.getAvatar());
 
             if (user.getFriends() != null)
                 publish("user", user.getFriends() + "\n" + result);
@@ -566,12 +566,12 @@ public class User extends Other {
     }
 
     private static void del(ObjectId id) {
-        del("user:" + id, "name:" + id, "avatar:" + id);
+        del("user:" + id, "name:" + id, "avatar:" + id, "friends:user_id:" + id);
     }
 
     private static void del(ObjectId id1, ObjectId id2) {
-        del("user:" + id1, "name:" + id1, "avatar:" + id1,
-            "user:" + id2, "name:" + id1, "avatar:" + id1);
+        del("user:" + id1, "name:" + id1, "avatar:" + id1, "friends:user_id:" + id1,
+            "user:" + id2, "name:" + id2, "avatar:" + id2, "friends:user_id:" + id2);
     }
 
     public void addGCM(String id, String lang) {
