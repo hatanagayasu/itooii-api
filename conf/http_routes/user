@@ -39,6 +39,7 @@ POST    /user                       UsersController/add
 @Validation(name="country",rule="length=2")
 @Validation(name="city")
 @Validation(name="metadata",type="object",rule="passUnder")
+@Validation(name="invisibility",type="boolean")
 PUT     /user                       UsersController/update
 
 @Validation(name="id",type="id",require=true)

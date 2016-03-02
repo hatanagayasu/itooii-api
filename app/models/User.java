@@ -38,6 +38,7 @@ public class User extends Other {
     @JsonProperty("last_read_notification")
     private ObjectId lastReadNotification;
     private Set<Gcm> gcms;
+    private boolean invisibility;
 
     public User() {
     }
@@ -98,6 +99,17 @@ public class User extends Other {
 
         if (params.size() > 0)
             userCol.update(id).with("{$set:#}", params);
+
+        if (params.has("invisibility")) {
+            ObjectNode result = mapper.createObjectNode();
+            result.put("action", params.get("invisibility").booleanValue() ? "offline" : "online")
+                .put("user_id", id.toString())
+                .put("name", name)
+                .putPOJO("avatar", avatar);
+
+            if (friends != null)
+                publish("user", friends + "\n" + result);
+        }
 
         del(id);
     }
@@ -487,13 +499,14 @@ public class User extends Other {
     }
 
     public static void online(String userId, String token) {
-        newAccessToken(userId, token);
-
         @SuppressWarnings("unchecked")
         long online = (Long)evalScript("online", userId, token, Long.toString(now()));
 
         if (online == 1) {
             User user = get(new ObjectId(userId));
+
+            if (user.invisibility)
+                return;
 
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "online")
@@ -507,13 +520,14 @@ public class User extends Other {
     }
 
     public static void offline(String userId, String token) {
-        deleteAccessToken(token);
-
         @SuppressWarnings("unchecked")
         long offline = (Long)evalScript("offline", userId, token);
 
         if (offline == 1) {
             User user = get(new ObjectId(userId));
+
+            if (user.invisibility)
+                return;
 
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "offline")
