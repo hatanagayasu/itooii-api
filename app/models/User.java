@@ -567,8 +567,9 @@ public class User extends Other {
 
         if (tuple != null && tuple.size() > 0) {
             for (Tuple t : tuple) {
-                Skim skim = Skim.get(new ObjectId(t.getElement()));
-                if (skim != null) {
+                User user = User.get(new ObjectId(t.getElement()));
+                if (user != null && !user.invisibility) {
+                    Skim skim = Skim.get(new ObjectId(t.getElement()));
                     until = (long)t.getScore();
                     skim.activity = new Date(until);
                     skims.add(skim);
