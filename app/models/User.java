@@ -61,6 +61,10 @@ public class User extends Other {
         tos = 1;
     }
 
+    public boolean getInvisibility() {
+        return invisibility;
+    }
+
     public Set<ObjectId> getSubscribers() {
         Set<ObjectId> subscribers = new HashSet<ObjectId>();
 
