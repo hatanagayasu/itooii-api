@@ -154,7 +154,9 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        return Ok(event.getOnlineUser(eventId, until, limit));
+        User me = params.has("access_token") ? getMe(params) : null;
+
+        return Ok(event.getOnlineUser(me, eventId, until, limit));
     }
 
     public static Result delete(JsonNode params) {

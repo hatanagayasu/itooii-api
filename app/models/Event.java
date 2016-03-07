@@ -138,7 +138,7 @@ public class Event extends Model {
         del("event:" + id);
     }
 
-    public Page getOnlineUser(ObjectId eventId, long until, int limit) {
+    public Page getOnlineUser(User me, ObjectId eventId, long until, int limit) {
         String previous = null;
 
         Set<Tuple> tuple = zrevrangeByScoreWithScores("event:online_user_id:" + eventId,
@@ -150,6 +150,12 @@ public class Event extends Model {
             for (Tuple t : tuple) {
                 Skim skim = Skim.get(new ObjectId(t.getElement()));
                 if (skim != null) {
+                    if (me != null) {
+                        User user = User.get(skim.getId());
+                        if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+                            continue;
+                    }
+
                     until = (long)t.getScore();
                     skim.activity = new Date(until);
                     skim.setTalking(sismember("event:talking:" + eventId, skim.getId().toString()));
