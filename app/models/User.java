@@ -319,7 +319,7 @@ public class User extends Other {
         follower.remove("{user_id:#,follower_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        del(id, userId);
+        unfriend(userId);
     }
 
     public void unblocking(ObjectId userId) {
@@ -399,7 +399,7 @@ public class User extends Other {
         return page(blockings, skip, limit, Skim.class);
     }
 
-    public static Page search(JsonNode params, Date until, int limit) {
+    public static Page search(User me, JsonNode params, Date until, int limit) {
         MongoCollection userCol = jongo.getCollection("user");
         String previous = null;
 
@@ -424,6 +424,11 @@ public class User extends Other {
         while (cursor.hasNext()) {
             skim = cursor.next();
             count++;
+            if (me != null) {
+                User user = User.get(skim.getId());
+                if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+                    continue;
+            }
             if (skim.privilege > Privilege.Observer.value())
                 skims.add(skim);
         }

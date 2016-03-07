@@ -37,6 +37,10 @@ public class UsersController extends AppController {
         if (other == null)
             return Error(Error.USER_NOT_FOUND);
 
+        User user = User.get(userId);
+        if (me != null && user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+            return Error(Error.OBJECT_FORBIDDEN);
+
         return Ok(other);
     }
 
@@ -424,10 +428,11 @@ public class UsersController extends AppController {
     }
 
     public static Result search(JsonNode params) {
+        User me = params.has("access_token") ? getMe(params) : null;
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        return Ok(User.search(params, new Date(until), limit));
+        return Ok(User.search(me, params, new Date(until), limit));
     }
 
     public static Result hi(JsonNode params) {
