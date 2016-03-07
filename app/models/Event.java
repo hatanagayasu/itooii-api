@@ -195,8 +195,12 @@ public class Event extends Model {
             Iterator<String> iterator = sessions.iterator();
             while (iterator.hasNext()) {
                 User user = User.getByAccessToken(iterator.next());
-                if (user != null && user.getBlockings() != null &&
-                    user.getBlockings().contains(me.getId()))
+                if (user == null)
+                    continue;
+
+                if (me.getBlockings() != null && me.getBlockings().contains(user.getId()))
+                    iterator.remove();
+                if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
                     iterator.remove();
             }
 
@@ -228,8 +232,12 @@ public class Event extends Model {
             Iterator<String> iterator = sessions.iterator();
             while (iterator.hasNext()) {
                 User user = User.getByAccessToken(iterator.next());
-                if (user != null &&
-                    user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+                if (user == null)
+                    continue;
+
+                if (me.getBlockings() != null && me.getBlockings().contains(user.getId()))
+                    iterator.remove();
+                if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
                     iterator.remove();
             }
 
