@@ -6,8 +6,6 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
 
 @lombok.Getter
@@ -20,8 +18,6 @@ public class Other extends Skim {
     protected Set<ObjectId> mutualFriends;
     @JsonIgnore
     protected boolean followed;
-    @JsonDeserialize(using=CustomJsonDeserializer.class)
-    protected JsonNode metadata;
 
     public Other() {
     }

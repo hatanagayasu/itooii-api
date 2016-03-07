@@ -8,6 +8,8 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.Id;
 
@@ -31,6 +33,8 @@ public class Skim extends Model {
     @JsonIgnore
     @lombok.Setter
     private Boolean talking;
+    @JsonDeserialize(using=CustomJsonDeserializer.class)
+    protected JsonNode metadata;
 
     public Skim() {
     }
