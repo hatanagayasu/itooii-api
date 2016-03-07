@@ -9,6 +9,7 @@ HEAD    /user                       UsersController/exist
 @Anonymous
 @Validation(name="user_id",type="id")
 GET     /user/@user_id              UsersController/get
+GET     /skim/@user_id              UsersController/getSkim
 
 @Anonymous
 @Validation(name="email",rule="email",require=true)

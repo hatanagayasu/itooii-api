@@ -40,9 +40,15 @@ public class UsersController extends AppController {
 
         User user = User.get(userId);
         if (me != null && user.getBlockings() != null && user.getBlockings().contains(me.getId()))
-            return Ok(Skim.get(userId));
+            return Error(Error.OBJECT_FORBIDDEN);
 
         return Ok(other);
+    }
+
+    public static Result getSkim(JsonNode params) {
+        ObjectId userId = getObjectId(params, "user_id");
+
+        return Ok(Skim.get(userId));
     }
 
     public static Result exist(JsonNode params) {
