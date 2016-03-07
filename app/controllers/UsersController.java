@@ -4,6 +4,7 @@ import controllers.constants.Error;
 
 import models.Model;
 import models.Other;
+import models.Skim;
 import models.PracticeLanguage;
 import models.User;
 
@@ -39,7 +40,7 @@ public class UsersController extends AppController {
 
         User user = User.get(userId);
         if (me != null && user.getBlockings() != null && user.getBlockings().contains(me.getId()))
-            return Error(Error.OBJECT_FORBIDDEN);
+            return Ok(Skim.get(userId));
 
         return Ok(other);
     }
