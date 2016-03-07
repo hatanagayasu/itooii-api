@@ -118,7 +118,7 @@ public class EventController extends AppController {
     }
 
     public static Result enter(JsonNode params) {
-        User me = getMe(params);
+        User me = params.has("access_token") ? getMe(params) : null;
         String token = params.get("access_token").textValue();
         ObjectId eventId = getObjectId(params, "event_id");
 
@@ -126,13 +126,13 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        event.enter(me == null ? null : me.getId(), token);
+        event.enter(me, token);
 
         return Ok();
     }
 
     public static Result exit(JsonNode params) {
-        User me = getMe(params);
+        User me = params.has("access_token") ? getMe(params) : null;
         String token = params.get("access_token").textValue();
         ObjectId eventId = getObjectId(params, "event_id");
 
@@ -140,7 +140,7 @@ public class EventController extends AppController {
         if (event == null || event.getDeleted() != null)
             return NotFound();
 
-        event.exit(me == null ? null : me.getId(), token);
+        event.exit(me, token);
 
         return Ok();
     }

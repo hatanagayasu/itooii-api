@@ -3,6 +3,7 @@ package models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -174,21 +175,29 @@ public class Event extends Model {
         return zrank("event:online_user_id:" + id, userId.toString()) != null;
     }
 
-    public void enter(ObjectId userId, String token) {
-        ObjectId eventId = id;
+    public void enter(User me, String token) {
+        String eventId = id.toString();
+        String userId = me == null ? "" : me.getId().toString();
 
         @SuppressWarnings("unchecked")
-        List<String> sessions = (List<String>)evalScript("enter_event", eventId.toString(),
-            userId == null ? "" : userId.toString(), token, Long.toString(now()));
+        List<String> sessions = (List<String>)evalScript("enter_event",
+            eventId, userId, token, Long.toString(now()));
         sessions.remove(token);
-        if (userId != null && sessions != null && sessions.size() > 0) {
-            Skim skim = Skim.get(userId);
-            skim.setTalking(sismember("event:talking:" + eventId, userId.toString()));
+        if (me != null && sessions != null && sessions.size() > 0) {
+            Skim skim = Skim.get(new ObjectId(userId));
+            skim.setTalking(sismember("event:talking:" + eventId, userId));
 
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "event/enter")
-                .put("event_id", eventId.toString())
+                .put("event_id", eventId)
                 .putPOJO("data", skim);
+
+            Iterator<String> iterator = sessions.iterator();
+            while (iterator.hasNext()) {
+                User user = User.getByToken(iterator.next());
+                if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+                    iterator.remove();
+            }
 
             publish("session", sessions + "\n" + result);
         }
@@ -197,22 +206,30 @@ public class Event extends Model {
     public static void exit(String userId, String token) {
         String eventId = hget("token:event", token);
 
-        if (eventId != null)
-            exit(eventId, userId, token);
+        if (eventId != null) {
+            Event event = Event.get(new ObjectId(eventId));
+            event.exit(User.get(new ObjectId(userId)), token);
+        }
     }
 
-    public void exit(ObjectId userId, String token) {
-        exit(id.toString(), userId == null ? "" : userId.toString(), token);
-    }
+    public void exit(User me, String token) {
+        String eventId = id.toString();
+        String userId = me == null ? "" : me.getId().toString();
 
-    private static void exit(String eventId, String userId, String token) {
         @SuppressWarnings("unchecked")
         List<String> sessions = (List<String>)evalScript("exit_event", eventId, userId, token);
-        if (userId != null && sessions != null && sessions.size() > 0) {
+        if (me != null && sessions != null && sessions.size() > 0) {
             ObjectNode result = mapper.createObjectNode();
             result.put("action", "event/exit")
                 .put("event_id", eventId)
                 .put("user_id", userId);
+
+            Iterator<String> iterator = sessions.iterator();
+            while (iterator.hasNext()) {
+                User user = User.getByToken(iterator.next());
+                if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+                    iterator.remove();
+            }
 
             publish("session", sessions + "\n" + result);
         }
