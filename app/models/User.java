@@ -426,6 +426,8 @@ public class User extends Other {
             count++;
             if (me != null) {
                 User user = User.get(skim.getId());
+                if (me.getBlockings() != null && me.getBlockings().contains(user.getId()))
+                    continue;
                 if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
                     continue;
             }
