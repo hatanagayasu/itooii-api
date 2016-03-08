@@ -4,6 +4,7 @@ import controllers.constants.Error;
 
 import models.Model;
 import models.Other;
+import models.Skim;
 import models.PracticeLanguage;
 import models.User;
 
@@ -37,7 +38,17 @@ public class UsersController extends AppController {
         if (other == null)
             return Error(Error.USER_NOT_FOUND);
 
+        User user = User.get(userId);
+        if (me != null && user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+            return Error(Error.OBJECT_FORBIDDEN);
+
         return Ok(other);
+    }
+
+    public static Result getSkim(JsonNode params) {
+        ObjectId userId = getObjectId(params, "user_id");
+
+        return Ok(Skim.get(userId));
     }
 
     public static Result exist(JsonNode params) {
@@ -359,6 +370,14 @@ public class UsersController extends AppController {
         return Ok(user.getFriend(skip, limit));
     }
 
+    public static Result getOnlineFriend(JsonNode params) {
+        User me = getMe(params);
+        long until = params.has("until") ? params.get("until").longValue() : now();
+        int limit = params.has("limit") ? params.get("limit").intValue() : 25;
+
+        return Ok(me.getOnlineFriend(until, limit));
+    }
+
     public static Result getMutualFriend(JsonNode params) {
         ObjectId userId = getObjectId(params, "user_id");
         User me = params.has("access_token") ? getMe(params) : null;
@@ -416,10 +435,11 @@ public class UsersController extends AppController {
     }
 
     public static Result search(JsonNode params) {
+        User me = params.has("access_token") ? getMe(params) : null;
         long until = params.has("until") ? params.get("until").longValue() : now();
         int limit = params.has("limit") ? params.get("limit").intValue() : 25;
 
-        return Ok(User.search(params, new Date(until), limit));
+        return Ok(User.search(me, params, new Date(until), limit));
     }
 
     public static Result hi(JsonNode params) {

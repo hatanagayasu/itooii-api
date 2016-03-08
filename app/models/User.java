@@ -6,8 +6,11 @@ import play.libs.ws.*;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -19,6 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
+
+import redis.clients.jedis.Tuple;
 
 @lombok.Getter
 public class User extends Other {
@@ -33,6 +38,7 @@ public class User extends Other {
     @JsonProperty("last_read_notification")
     private ObjectId lastReadNotification;
     private Set<Gcm> gcms;
+    private boolean invisibility;
 
     public User() {
     }
@@ -53,6 +59,10 @@ public class User extends Other {
         activity = new Date();
         privilege = Privilege.Observer.value();
         tos = 1;
+    }
+
+    public boolean getInvisibility() {
+        return invisibility;
     }
 
     public Set<ObjectId> getSubscribers() {
@@ -93,6 +103,18 @@ public class User extends Other {
 
         if (params.size() > 0)
             userCol.update(id).with("{$set:#}", params);
+
+        if (params.has("invisibility")) {
+            ObjectNode result = mapper.createObjectNode();
+            result.put("action", params.get("invisibility").booleanValue() ? "offline" : "online")
+                .put("user_id", id.toString())
+                .put("name", name);
+            if (avatar != null)
+                result.put("avatar", avatar.toString());
+
+            if (friends != null)
+                publish("user", friends + "\n" + result);
+        }
 
         del(id);
     }
@@ -297,7 +319,7 @@ public class User extends Other {
         follower.remove("{user_id:#,follower_id:#}", id, userId);
         follower.remove("{user_id:#,follower_id:#}", userId, id);
 
-        del(id, userId);
+        unfriend(userId);
     }
 
     public void unblocking(ObjectId userId) {
@@ -377,7 +399,7 @@ public class User extends Other {
         return page(blockings, skip, limit, Skim.class);
     }
 
-    public static Page search(JsonNode params, Date until, int limit) {
+    public static Page search(User me, JsonNode params, Date until, int limit) {
         MongoCollection userCol = jongo.getCollection("user");
         String previous = null;
 
@@ -402,6 +424,13 @@ public class User extends Other {
         while (cursor.hasNext()) {
             skim = cursor.next();
             count++;
+            if (me != null) {
+                User user = User.get(skim.getId());
+                if (me.getBlockings() != null && me.getBlockings().contains(user.getId()))
+                    continue;
+                if (user.getBlockings() != null && user.getBlockings().contains(me.getId()))
+                    continue;
+            }
             if (skim.privilege > Privilege.Observer.value())
                 skims.add(skim);
         }
@@ -448,7 +477,7 @@ public class User extends Other {
     }
 
     public static User getByAccessToken(String token) {
-        String id = get("token:" + token);
+        String id = getex("token:" + token, 86400 * 7);
 
         if (id == null)
             return null;
@@ -481,13 +510,97 @@ public class User extends Other {
         del("token:" + token);
     }
 
+    public static void online(String userId, String token) {
+        @SuppressWarnings("unchecked")
+        long online = (Long)evalScript("online", userId, token, Long.toString(now()));
+
+        if (online == 1) {
+            User user = get(new ObjectId(userId));
+
+            if (user.invisibility)
+                return;
+
+            ObjectNode result = mapper.createObjectNode();
+            result.put("action", "online")
+                .put("user_id", userId)
+                .put("name", user.getName());
+            if (user.getAvatar() != null)
+                result.put("avatar", user.getAvatar().toString());
+
+            if (user.getFriends() != null)
+                publish("user", user.getFriends() + "\n" + result);
+        }
+    }
+
+    public static void offline(String userId, String token) {
+        @SuppressWarnings("unchecked")
+        long offline = (Long)evalScript("offline", userId, token);
+
+        if (offline == 1) {
+            User user = get(new ObjectId(userId));
+
+            if (user.invisibility)
+                return;
+
+            ObjectNode result = mapper.createObjectNode();
+            result.put("action", "offline")
+                .put("user_id", userId)
+                .put("name", user.getName());
+            if (user.getAvatar() != null)
+                result.put("avatar", user.getAvatar().toString());
+
+            if (user.getFriends() != null)
+                publish("user", user.getFriends() + "\n" + result);
+        }
+    }
+
+    public Page getOnlineFriend(long until, int limit) {
+        List<Skim> skims = new ArrayList<Skim>();
+        String previous = null;
+
+        Set<ObjectId> ids = getFriends();
+        if (ids == null || ids.size() == 0)
+            return new Page(skims, previous);
+
+        if (!exists("friends:user_id:" + id)) {
+            Map<String, Double>scoreMembers = new HashMap<String, Double>(ids.size());
+            Iterator<ObjectId> iterator = ids.iterator();
+            while (iterator.hasNext())
+                scoreMembers.put(iterator.next().toString(), 0.0);
+
+            zadd("friends:user_id:" + id, scoreMembers);
+        }
+
+        zinterstore("friends:online:" + id, "online:user_id", "friends:user_id:" + id);
+
+        Set<Tuple> tuple = zrevrangeByScoreWithScores("friends:online:" + id,
+            until - 1, 0, 0, limit);
+
+        if (tuple != null && tuple.size() > 0) {
+            for (Tuple t : tuple) {
+                User user = User.get(new ObjectId(t.getElement()));
+                if (user != null && !user.invisibility) {
+                    Skim skim = Skim.get(new ObjectId(t.getElement()));
+                    until = (long)t.getScore();
+                    skim.activity = new Date(until);
+                    skims.add(skim);
+                }
+            }
+        }
+
+        if (tuple.size() == limit)
+            previous = String.format("until=%d&limit=%d", until, limit);
+
+        return new Page(skims, previous);
+    }
+
     private static void del(ObjectId id) {
-        del("user:" + id, "name:" + id, "avatar:" + id);
+        del("user:" + id, "name:" + id, "avatar:" + id, "friends:user_id:" + id);
     }
 
     private static void del(ObjectId id1, ObjectId id2) {
-        del("user:" + id1, "name:" + id1, "avatar:" + id1,
-            "user:" + id2, "name:" + id1, "avatar:" + id1);
+        del("user:" + id1, "name:" + id1, "avatar:" + id1, "friends:user_id:" + id1,
+            "user:" + id2, "name:" + id2, "avatar:" + id2, "friends:user_id:" + id2);
     }
 
     public void addGCM(String id, String lang) {

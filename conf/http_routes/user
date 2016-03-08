@@ -9,6 +9,7 @@ HEAD    /user                       UsersController/exist
 @Anonymous
 @Validation(name="user_id",type="id")
 GET     /user/@user_id              UsersController/get
+GET     /skim/@user_id              UsersController/getSkim
 
 @Anonymous
 @Validation(name="email",rule="email",require=true)
@@ -39,6 +40,7 @@ POST    /user                       UsersController/add
 @Validation(name="country",rule="length=2")
 @Validation(name="city")
 @Validation(name="metadata",type="object",rule="passUnder")
+@Validation(name="invisibility",type="boolean")
 PUT     /user                       UsersController/update
 
 @Validation(name="id",type="id",require=true)
@@ -59,6 +61,10 @@ GET     /user/friends/@user_id      UsersController/getFriend
 GET     /user/mutual_friends/@user_id   UsersController/getMutualFriend
 GET     /user/followers/@user_id    UsersController/getFollower
 GET     /user/followings/@user_id   UsersController/getFollowing
+
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /user/friends/online        UsersController/getOnlineFriend
 
 @Anonymous
 @Validation(name="until",type="long")
