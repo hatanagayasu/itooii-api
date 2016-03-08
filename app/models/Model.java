@@ -326,6 +326,23 @@ public class Model {
         return result;
     }
 
+    public static String getex(String key, int expire) {
+        Jedis jedis = jedisPool.getResource();
+        String result = null;
+
+        try {
+            result = jedis.get(key);
+            jedis.expire(key, expire);
+
+            jedisPool.returnResource(jedis);
+        } catch (JedisConnectionException e) {
+            jedisPool.returnBrokenResource(jedis);
+            errorlog(e);
+        }
+
+        return result;
+    }
+
     public static void set(String key, String value) {
         set(key, 3600, value);
     }

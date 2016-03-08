@@ -477,7 +477,7 @@ public class User extends Other {
     }
 
     public static User getByAccessToken(String token) {
-        String id = get("token:" + token);
+        String id = getex("token:" + token, 86400);
 
         if (id == null)
             return null;
