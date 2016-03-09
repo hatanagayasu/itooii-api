@@ -5,6 +5,7 @@ public enum Privilege {
     Premium(30),
     Member(20),
     Observer(10),
+    Suspended(5),
     Anonymous(0);
 
     private int privilege;
