@@ -17,6 +17,7 @@ import org.jongo.marshall.jackson.oid.Id;
 public class Post extends Model {
     @Id
     private ObjectId id;
+    @Postproduct("event")
     @JsonProperty("event_id")
     private ObjectId eventId;
     @JsonProperty("user_id")

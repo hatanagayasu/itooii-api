@@ -1,5 +1,6 @@
 # DO NOT DELETE THE FOLLOWING BLANK LINE
 
+@Privilege(Suspended)
 GET     /user                       UsersController/me
 
 @Anonymous
@@ -110,4 +111,5 @@ POST    /token                      UsersController/loginByToken
 @Validation(name="password",require=true)
 POST    /access_token               UsersController/login
 
+@Privilege(Suspended)
 DELETE  /access_token               UsersController/logout

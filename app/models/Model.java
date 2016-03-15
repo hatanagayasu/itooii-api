@@ -174,15 +174,23 @@ public class Model {
 
                     Postproduct postproduct = field.getAnnotation(Postproduct.class);
                     if (postproduct != null) {
-                        result.append(",\"").append((postproduct.value().length() > 0 ?
-                                postproduct.value() + "_name" : "name")).append("\":\"")
-                            .append(name((ObjectId)value)).append("\"");
-
-                        ObjectId avatar = avatar((ObjectId)value);
-                        if (avatar != null) {
+                        if (postproduct.value().equals("event")) {
+                            Event event = Event.get((ObjectId)value);
+                            result.append(",\"").append("event_name").append("\":\"")
+                                .append(event.getName()).append("\"")
+                                .append(",\"").append("event_alias").append("\":\"")
+                                .append(event.getAlias()).append("\"");
+                        } else {
                             result.append(",\"").append((postproduct.value().length() > 0 ?
-                                    postproduct.value() + "_avatar" : "avatar")).append("\":\"")
-                                .append(avatar).append("\"");
+                                    postproduct.value() + "_name" : "name")).append("\":\"")
+                                .append(name((ObjectId)value)).append("\"");
+
+                            ObjectId avatar = avatar((ObjectId)value);
+                            if (avatar != null) {
+                                result.append(",\"").append((postproduct.value().length() > 0 ?
+                                        postproduct.value() + "_avatar" : "avatar")).append("\":\"")
+                                    .append(avatar).append("\"");
+                            }
                         }
                     }
                 }
