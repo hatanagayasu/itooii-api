@@ -30,6 +30,7 @@ public class User extends Other {
     private String email;
     @JsonProperty("email_verified")
     private boolean emailVerified;
+    @lombok.Setter
     private String password;
     private Set<ObjectId> blockings;
     @JsonProperty("friend_requests")
@@ -453,7 +454,7 @@ public class User extends Other {
         return cache(key, User.class, new Callable<User>() {
             public User call() {
                 MongoCollection userCol = jongo.getCollection("user");
-                User user = userCol.findOne(userId).projection("{password:0}").as(User.class);
+                User user = userCol.findOne(userId).as(User.class);
 
                 if (user != null) {
                     user.friends = Friend.getFriendIds(userId);
