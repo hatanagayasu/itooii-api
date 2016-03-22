@@ -27,6 +27,8 @@ public class UsersController extends AppController {
         if (user == null)
             return Error(Error.INVALID_ACCESS_TOKEN);
 
+        user.setPassword(null);
+
         return Ok(user);
     }
 
@@ -95,6 +97,19 @@ public class UsersController extends AppController {
 
     public static Result update(JsonNode params) {
         User me = getMe(params);
+        me.update(params);
+
+        return Ok();
+    }
+
+    public static Result updatePassword(JsonNode params) {
+        User me = getMe(params);
+        String oldPassword = params.get("old_password").textValue();
+        ((ObjectNode)params).remove("old_password");
+
+        if (!me.getPassword().equals(Model.md5(oldPassword)))
+            return Error(Error.INCORRECT_PASSWORD);
+
         me.update(params);
 
         return Ok();

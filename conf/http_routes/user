@@ -44,6 +44,11 @@ POST    /user                       UsersController/add
 @Validation(name="invisibility",type="boolean")
 PUT     /user                       UsersController/update
 
+
+@Validation(name="old_password",require=true)
+@Validation(name="password",require=true)
+PUT     /user/password              UsersController/updatePassword
+
 @Validation(name="id",type="id",require=true)
 PUT     /user/avatar                UsersController/updateAvatar
 
