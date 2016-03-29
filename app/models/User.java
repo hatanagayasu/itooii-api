@@ -256,6 +256,11 @@ public class User extends Other {
         col.remove("{user_id:#,friend_id:#,status:#}", id, userId, 2);
         col.remove("{user_id:#,friend_id:#,status:#}", userId, id, 2);
 
+        MongoCollection userCol = jongo.getCollection("user");
+
+        userCol.update(id).with("{$pull:{unfollowers:#}}", userId);
+        userCol.update(userId).with("{$pull:{unfollowers:#}}", id);
+
         del(id, userId);
     }
 
