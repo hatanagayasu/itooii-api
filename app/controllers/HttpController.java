@@ -713,10 +713,9 @@ public class HttpController extends AppController {
                 os.close();
 
                 response().setHeader("Access-Control-Allow-Origin", "*");
-                response().setContentType("application/json; charset=utf-8");
                 response().setHeader("Content-Encoding", "gzip");
 
-                return status(status, baos.toByteArray());
+                return status(status, baos.toByteArray()).as("application/json; charset=utf-8");
             } catch (IOException e) {
                 errorlog(e);
 

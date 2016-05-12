@@ -124,11 +124,11 @@ public class MediaController extends AppController {
         ObjectNode result = mapper.createObjectNode();
         ArrayNode files = result.putArray("files");
 
-        MultipartFormData body = request().body().asMultipartFormData();
+        MultipartFormData<File> body = request().body().asMultipartFormData();
         if (body == null)
             return Error(Error.MALFORMED_MULTIPART_FORM);
 
-        for (MultipartFormData.FilePart part : body.getFiles()) {
+        for (MultipartFormData.FilePart<File> part : body.getFiles()) {
             //TODO part.getContentType();
             if (part.getContentType().startsWith("audio")) {
                 Media media = new Media(me.getId(), AttachmentType.audio);
@@ -150,7 +150,8 @@ public class MediaController extends AppController {
         return Ok(result);
     }
 
-    private static void upload(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {
+    private static void upload(ObjectId id, MultipartFormData.FilePart<File> part,
+        ArrayNode files) {
         try {
             FFprobe ffprobe = new FFprobe("/usr/bin/ffprobe");
             FFmpegProbeResult result = ffprobe.probe(part.getFile().getAbsolutePath());
@@ -174,7 +175,8 @@ public class MediaController extends AppController {
         }
     }
 
-    private static void uploadPohto(ObjectId id, MultipartFormData.FilePart part, ArrayNode files) {
+    private static void uploadPohto(ObjectId id, MultipartFormData.FilePart<File> part,
+        ArrayNode files) {
         try {
             Metadata metadata = ImageMetadataReader.readMetadata(part.getFile());
             int orientation = 0;

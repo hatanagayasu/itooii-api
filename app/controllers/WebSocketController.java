@@ -2,6 +2,7 @@ package controllers;
 
 import play.libs.F.*;
 import play.mvc.WebSocket;
+import play.mvc.LegacyWebSocket;
 
 import models.Event;
 import models.Model;
@@ -76,58 +77,52 @@ public class WebSocketController extends AppController {
         }).start();
     }
 
-    public static WebSocket<String> websocket() {
+    public static LegacyWebSocket<String> websocket() {
         String token = request().getQueryString("access_token");
         final String session = UUID.randomUUID().toString();
 
-        return new WebSocket<String>() {
-            public void onReady(WebSocket.In<String> in, final WebSocket.Out<String> out) {
-                final String userId = User.getUserIdByAccessToken(token);
+        return WebSocket.whenReady((in, out) -> {
+            final String userId = User.getUserIdByAccessToken(token);
+
+            if (userId != null) {
+                User.newAccessToken(userId, session);
+                User.online(userId, session);
+
+                Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
+                if (sockets == null) {
+                    sockets = Collections.synchronizedSet(new HashSet<WebSocket.Out<String>>());
+                    userToSockets.put(userId, sockets);
+                }
+                sockets.add(out);
+
+                out.write("{\"action\":\"video/session\",\"session\":\"" + session + "\"}");
+            }
+
+            sessionToSocket.put(session, out);
+
+            in.onMessage((event) -> {
+                out.write(HttpController.webSocketDispath(event, session).toString());
+            });
+
+            in.onClose(() -> {
+                sessionToSocket.remove(session);
 
                 if (userId != null) {
-                    User.newAccessToken(userId, session);
-                    User.online(userId, session);
-
                     Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
-                    if (sockets == null) {
-                        sockets = Collections.synchronizedSet(new HashSet<WebSocket.Out<String>>());
-                        userToSockets.put(userId, sockets);
-                    }
-                    sockets.add(out);
+                    sockets.remove(out);
+                    if (sockets.isEmpty())
+                        userToSockets.remove(userId);
 
-                    out.write("{\"action\":\"video/session\",\"session\":\"" + session + "\"}");
+                    User.offline(userId, session);
+                    User.deleteAccessToken(session);
+
+                    VideoChat videoChat = VideoChat.get(new ObjectId(userId));
+                    if (videoChat != null)
+                        videoChat.leave();
                 }
 
-                sessionToSocket.put(session, out);
-
-                in.onMessage(new Callback<String>() {
-                    public void invoke(String event) {
-                        out.write(HttpController.webSocketDispath(event, session).toString());
-                    }
-                });
-
-                in.onClose(new Callback0() {
-                    public void invoke() {
-                        sessionToSocket.remove(session);
-
-                        if (userId != null) {
-                            Set<WebSocket.Out<String>>sockets = userToSockets.get(userId);
-                            sockets.remove(out);
-                            if (sockets.isEmpty())
-                                userToSockets.remove(userId);
-
-                            User.offline(userId, session);
-                            User.deleteAccessToken(session);
-
-                            VideoChat videoChat = VideoChat.get(new ObjectId(userId));
-                            if (videoChat != null)
-                                videoChat.leave();
-                        }
-
-                        Event.exit(userId, session);
-                    }
-                });
-            }
-        };
+                Event.exit(userId, session);
+            });
+        });
     }
 }
