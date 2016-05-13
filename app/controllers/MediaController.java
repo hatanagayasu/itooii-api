@@ -49,9 +49,9 @@ public class MediaController extends AppController {
     private static String bucket;
 
     static {
-        String access = conf.getString("media.s3.access");
-        String secret = conf.getString("media.s3.secret");
-        bucket = conf.getString("media.s3.bucket");
+        String access = props.getProperty("media.s3.access");
+        String secret = props.getProperty("media.s3.secret");
+        bucket = props.getProperty("media.s3.bucket");
 
         AWSCredentials credentials = new BasicAWSCredentials(access, secret);
         s3client = new AmazonS3Client(credentials);

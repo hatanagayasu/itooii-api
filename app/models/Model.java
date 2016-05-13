@@ -2,6 +2,7 @@ package models;
 
 import play.*;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -45,7 +47,7 @@ import redis.clients.jedis.Tuple;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class Model {
-    public static Configuration conf = Play.application().configuration();
+    public static Properties props;
     public static ObjectMapper mapper = new ObjectMapper();
     private static JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 
@@ -60,19 +62,22 @@ public class Model {
 
     public static ObjectId epochId = new ObjectId(new Date(0));
 
-    public static void init() {
+    static {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        String mongodbHost = conf.getString("mongodb.host", "localhost");
-        int mongodbPort = conf.getInt("mongodb.port", 27017);
-        String mongodbDB = conf.getString("mongodb.db", "itooii");
-
-        String redisHost = conf.getString("redis.host", "localhost");
-        int redisPort = conf.getInt("redis.port", 6379);
-
-        sendgrid = new SendGrid(conf.getString("sendgrid.api_key"));
-
         try {
+            props = new Properties();
+            props.load(new FileInputStream("conf/application.conf"));
+
+            String mongodbHost = props.getProperty("mongodb.host", "localhost");
+            int mongodbPort = Integer.parseInt(props.getProperty("mongodb.port", "27017"));
+            String mongodbDB = props.getProperty("mongodb.db", "itooii");
+
+            String redisHost = props.getProperty("redis.host", "localhost");
+            int redisPort = Integer.parseInt(props.getProperty("redis.port", "6379"));
+
+            sendgrid = new SendGrid(props.getProperty("sendgrid.api_key"));
+
             mongodb = new MongoClient(mongodbHost, mongodbPort).getDB(mongodbDB);
             jongo = new Jongo(mongodb);
 
@@ -80,6 +85,8 @@ public class Model {
         } catch (UnknownHostException e) {
             //TODO
         } catch (JedisConnectionException e) {
+            //TODO
+        } catch (IOException e) {
             //TODO
         }
     }

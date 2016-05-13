@@ -77,7 +77,7 @@ public class WebSocketController extends AppController {
         }).start();
     }
 
-    public static LegacyWebSocket<String> websocket() {
+    public LegacyWebSocket<String> websocket() {
         String token = request().getQueryString("access_token");
         final String session = UUID.randomUUID().toString();
 

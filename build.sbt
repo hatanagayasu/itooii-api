@@ -24,4 +24,4 @@ sources in (Compile,doc) := Seq.empty
 
 publishArtifact in (Compile, packageDoc) := false
 
-routesGenerator := StaticRoutesGenerator
+routesGenerator := InjectedRoutesGenerator

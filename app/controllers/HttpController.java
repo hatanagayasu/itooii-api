@@ -86,7 +86,7 @@ public class HttpController extends AppController {
             ObjectNode validations = null;
             int maxAge = 0;
 
-            File file = new File(Play.application().path(), "conf/http_routes/" + conf);
+            File file = new File("conf/http_routes/" + conf);
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
             boolean accumulation = false;
@@ -302,11 +302,11 @@ public class HttpController extends AppController {
         regexes.with(regex).set(parts[0], route);
     }
 
-    public static play.mvc.Result index() {
+    public play.mvc.Result index() {
         return ok();
     }
 
-    public static play.mvc.Result options(String path) {
+    public play.mvc.Result options(String path) {
         play.mvc.Http.Response response = response();
 
         response.setHeader("Access-Control-Allow-Origin", "*");
@@ -724,7 +724,7 @@ public class HttpController extends AppController {
         }
     }
 
-    public static play.mvc.Result dispatch(String path) {
+    public play.mvc.Result dispatch(String path) {
         try {
             String method = request().method();
             JsonNode route = match(method, path);
