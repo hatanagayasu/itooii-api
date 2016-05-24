@@ -1,7 +1,5 @@
 package controllers;
 
-import play.Play;
-
 import java.io.File;
 import java.io.IOException;
 

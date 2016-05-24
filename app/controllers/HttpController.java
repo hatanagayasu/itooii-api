@@ -1,7 +1,5 @@
 package controllers;
 
-import play.Play;
-
 import controllers.constants.Error;
 import controllers.exceptions.InvalidSigningException;
 import controllers.exceptions.ObjectForbiddenException;
@@ -702,9 +700,7 @@ public class HttpController extends AppController {
 
             return status(status);
         } else if (content instanceof File) {
-            response().setContentType("image/jpg");
-
-            return ok((File) content, true);
+            return ok((File) content, true).as("image/jpg");
         } else {
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();

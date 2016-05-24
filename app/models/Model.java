@@ -293,7 +293,7 @@ public class Model {
         try {
             String sha1 = luasha1.get(name);
             if (sha1 == null || !jedis.scriptExists(sha1)) {
-                String path = Play.application().path() + "/scripts/lua/";
+                String path = "scripts/lua/";
                 String script = new String(Files.readAllBytes(Paths.get(path + name + ".lua")));
 
                 sha1 = jedis.scriptLoad(script);

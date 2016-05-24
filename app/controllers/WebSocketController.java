@@ -1,6 +1,5 @@
 package controllers;
 
-import play.libs.F.*;
 import play.mvc.WebSocket;
 import play.mvc.LegacyWebSocket;
 

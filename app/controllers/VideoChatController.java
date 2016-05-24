@@ -1,8 +1,5 @@
 package controllers;
 
-import play.Play;
-import play.Configuration;
-
 import controllers.constants.Error;
 
 import models.Chat;
