@@ -1,7 +1,5 @@
 package controllers;
 
-import play.Play;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -19,7 +17,7 @@ public class Application extends AppController {
 
     private static void init() {
         try {
-            String path = Play.application().path() + "/conf/";
+            String path = "./conf/";
 
             countries = mapper.readValue(new File(path + "country.json"), JsonNode.class);
             cities = mapper.readValue(new File(path + "city.json"), JsonNode.class);

@@ -1,7 +1,5 @@
 package controllers;
 
-import play.Play;
-
 import controllers.constants.Error;
 import controllers.exceptions.InvalidSigningException;
 import controllers.exceptions.ObjectForbiddenException;
@@ -86,7 +84,7 @@ public class HttpController extends AppController {
             ObjectNode validations = null;
             int maxAge = 0;
 
-            File file = new File(Play.application().path(), "conf/http_routes/" + conf);
+            File file = new File("conf/http_routes/" + conf);
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
             boolean accumulation = false;
@@ -302,11 +300,11 @@ public class HttpController extends AppController {
         regexes.with(regex).set(parts[0], route);
     }
 
-    public static play.mvc.Result index() {
+    public play.mvc.Result index() {
         return ok();
     }
 
-    public static play.mvc.Result options(String path) {
+    public play.mvc.Result options(String path) {
         play.mvc.Http.Response response = response();
 
         response.setHeader("Access-Control-Allow-Origin", "*");
@@ -702,9 +700,7 @@ public class HttpController extends AppController {
 
             return status(status);
         } else if (content instanceof File) {
-            response().setContentType("image/jpg");
-
-            return ok((File) content, true);
+            return ok((File) content, true).as("image/jpg");
         } else {
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -713,10 +709,9 @@ public class HttpController extends AppController {
                 os.close();
 
                 response().setHeader("Access-Control-Allow-Origin", "*");
-                response().setContentType("application/json; charset=utf-8");
                 response().setHeader("Content-Encoding", "gzip");
 
-                return status(status, baos.toByteArray());
+                return status(status, baos.toByteArray()).as("application/json; charset=utf-8");
             } catch (IOException e) {
                 errorlog(e);
 
@@ -725,7 +720,7 @@ public class HttpController extends AppController {
         }
     }
 
-    public static play.mvc.Result dispatch(String path) {
+    public play.mvc.Result dispatch(String path) {
         try {
             String method = request().method();
             JsonNode route = match(method, path);

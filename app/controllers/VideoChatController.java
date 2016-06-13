@@ -1,8 +1,5 @@
 package controllers;
 
-import play.Play;
-import play.Configuration;
-
 import controllers.constants.Error;
 
 import models.Chat;
@@ -14,26 +11,24 @@ import models.User;
 import models.VideoChat;
 import models.VideoChatType;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.bson.types.ObjectId;
 
 public class VideoChatController extends AppController {
-    private static ArrayNode iceServers = null;
+    private static JsonNode iceServers = null;
 
     static {
-        iceServers = mapper.createArrayNode();
-        Configuration conf = Play.application().configuration();
-        conf.getObjectList("webrtc.iceServers").forEach(
-            m -> {
-                ObjectNode node = iceServers.addObject();
-                m.forEach((k, v) -> node.put(k, v.toString()));
-            }
-        );
+        try {
+            iceServers = mapper.readValue(new File("conf/ice_servers.json"), JsonNode.class);
+        } catch (IOException e) {
+            errorlog(e);
+        }
     }
 
     public static Result getPaired(JsonNode params) {

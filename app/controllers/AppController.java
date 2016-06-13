@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,9 +27,10 @@ import org.bson.types.ObjectId;
 
 public class AppController extends Controller {
     public static final ObjectMapper mapper = new ObjectMapper();
-    public static final Configuration conf = Model.conf;
-    public static final String webServer = conf.getString("web_server");
-    private static final boolean sendmail = conf.getBoolean("sendmail", false);
+    public static final Properties props = Model.props;
+    public static final String webServer = props.getProperty("web_server");
+    private static final boolean sendmail =
+        Boolean.parseBoolean(props.getProperty("sendmail", "false"));
 
     public static Result Ok() {
         return new Result(200);

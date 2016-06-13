@@ -4,11 +4,9 @@ version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayJava)
 
-scalaVersion := "2.11.1"
+scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
-  javaJdbc,
-  javaEbean,
   cache,
   javaWs,
   "com.amazonaws" % "aws-java-sdk" % "1.9.21",
@@ -25,3 +23,5 @@ libraryDependencies ++= Seq(
 sources in (Compile,doc) := Seq.empty
 
 publishArtifact in (Compile, packageDoc) := false
+
+routesGenerator := InjectedRoutesGenerator
