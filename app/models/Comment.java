@@ -36,8 +36,7 @@ public class Comment extends Model {
         this.id = new ObjectId();
         this.userId = userId;
         this.text = text;
-        this.attachments = attachments == null ? null :
-            (attachments.isEmpty() ? null : attachments);
+        this.attachments = attachments;
         this.created = new Date();
     }
 
