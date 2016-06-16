@@ -61,7 +61,8 @@ public class Event extends Model {
 
         List<Attachment> attachments = new ArrayList<Attachment>(1);
         attachments.add(new Attachment(AttachmentType.create_event, id, name));
-        Post post = new Post(user.getId(), null, attachments, true);
+        Post post = new Post(user.getId(), null, attachments);
+        post.setAutomatic(true);
         post.save();
 
         if (user.getFollowers() != null) {
@@ -114,7 +115,8 @@ public class Event extends Model {
 
         List<Attachment> attachments = new ArrayList<Attachment>(1);
         attachments.add(new Attachment(AttachmentType.join_event, id, name));
-        Post post = new Post(userId, null, attachments, true);
+        Post post = new Post(userId, null, attachments);
+        post.setAutomatic(true);
         post.save();
 
         if (user.getFollowers() != null) {

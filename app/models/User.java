@@ -139,7 +139,8 @@ public class User extends Other {
         if (followers != null) {
             List<Attachment> attachments = new ArrayList<Attachment>(1);
             attachments.add(new Attachment(AttachmentType.change_profile_photo, avatar));
-            Post post = new Post(id, null, attachments, true);
+            Post post = new Post(id, null, attachments);
+            post.setAutomatic(true);
             post.save();
 
             new Activity(id, ActivityType.changeProfilePhoto, post.getId(), followers).queue();
@@ -277,7 +278,8 @@ public class User extends Other {
 
             List<Attachment> attachments = new ArrayList<Attachment>(1);
             attachments.add(new Attachment(AttachmentType.follow, userId));
-            Post post = new Post(id, null, attachments, true);
+            Post post = new Post(id, null, attachments);
+            post.setAutomatic(true);
             post.save();
 
             if (followers != null) {

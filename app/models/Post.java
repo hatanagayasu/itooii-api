@@ -14,6 +14,7 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.oid.Id;
 
 @lombok.Getter
+@lombok.Setter
 public class Post extends Model {
     @Id
     private ObjectId id;
@@ -39,32 +40,18 @@ public class Post extends Model {
     @JsonIgnore
     private List<Relevant> relevants;
     private Boolean deleted;
+    @JsonDeserialize(using=CustomJsonDeserializer.class)
+    protected JsonNode metadata;
 
     public Post() {
     }
 
     public Post(ObjectId userId, String text, List<Attachment> attachments) {
-        this(null, userId, text, attachments, null);
-    }
-
-    public Post(ObjectId userId, String text, List<Attachment> attachments, Boolean automatic) {
-        this(null, userId, text, attachments, automatic);
-    }
-
-    public Post(ObjectId eventId, ObjectId userId, String text, List<Attachment> attachments) {
-        this(eventId, userId, text, attachments, null);
-    }
-
-    public Post(ObjectId eventId, ObjectId userId, String text, List<Attachment> attachments,
-        Boolean automatic) {
         this.id = new ObjectId();
-        this.eventId = eventId;
         this.userId = userId;
         this.text = text;
         this.attachments = attachments;
         this.created = new Date();
-        this.commentCount = 0;
-        this.automatic = automatic;
     }
 
     public void save() {
