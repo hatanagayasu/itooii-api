@@ -20,6 +20,7 @@ public enum Error {
     INVALID_VIDEO_CHAT_ID(40303, "Invalid Video Chat Id"),
     SELF_FORBIDDEN(40304, "Self Forbidden"),
     OBJECT_FORBIDDEN(40305, "Object Forbidden"),
+    REQUESTED(40306, "Requested"),
 
     NOT_FOUND(40400, "Not Found"),
     USER_NOT_FOUND(40401, "User Not Found"),

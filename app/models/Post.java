@@ -8,6 +8,8 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
@@ -18,6 +20,7 @@ import org.jongo.marshall.jackson.oid.Id;
 public class Post extends Model {
     @Id
     private ObjectId id;
+    private String type;
     @Postproduct("event")
     @JsonProperty("event_id")
     private ObjectId eventId;
@@ -40,6 +43,7 @@ public class Post extends Model {
     @JsonIgnore
     private List<Relevant> relevants;
     private Boolean deleted;
+    private String status;
     @JsonDeserialize(using=CustomJsonDeserializer.class)
     protected JsonNode metadata;
 
@@ -130,12 +134,13 @@ public class Post extends Model {
         return post;
     }
 
-    public static Page getTimeline(ObjectId userId, ObjectId myId, Date until, int limit) {
+    public static Page getTimeline(ObjectId userId, ObjectId myId, Date until, int limit,
+            boolean type) {
         MongoCollection postCol = jongo.getCollection("post");
         String previous = null;
 
         MongoCursor<Post> cursor = postCol
-            .find("{user_id:#,created:{$lt:#}}", userId, until)
+            .find("{user_id:#,type:{$exists:#},created:{$lt:#}}", userId, type, until)
             .sort("{created:-1}")
             .limit(limit)
             .as(Post.class);
@@ -244,5 +249,28 @@ public class Post extends Model {
 
         if (post != null)
             del("post:" + postId);
+    }
+
+    public static boolean isRequested(ObjectId userId, String type) {
+        MongoCollection postCol = jongo.getCollection("post");
+
+        return postCol.count("{user_id:#,type:#,status:{$in:['apply','approved']}}", userId, type) > 0;
+    }
+
+    public static void updateRequest(ObjectId userId, ObjectId postId, JsonNode metadata) {
+        MongoCollection postCol = jongo.getCollection("post");
+
+        Post post = postCol.findAndModify("{_id:#,user_id:#,type:{$exists:true}}", postId, userId)
+            .with("{$set:{metadata:#}}", metadata)
+            .as(Post.class);
+    }
+
+    public static void cancelRequest(ObjectId userId, ObjectId postId) {
+        MongoCollection postCol = jongo.getCollection("post");
+
+        Post post = postCol
+            .findAndModify("{_id:#,user_id:#,type:{$exists:true},status:'apply'}", postId, userId)
+            .with("{$set:{status:'cancel'}}")
+            .as(Post.class);
     }
 }
