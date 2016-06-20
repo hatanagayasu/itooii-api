@@ -43,8 +43,7 @@ public class Message extends Model {
         this.action = "message";
         this.userId = userId;
         this.text = text;
-        this.attachments = attachments == null ? null :
-            (attachments.isEmpty() ? null : attachments);
+        this.attachments = attachments;
         this.created = new Date();
     }
 

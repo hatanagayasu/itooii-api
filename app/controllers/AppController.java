@@ -134,7 +134,7 @@ public class AppController extends Controller {
             }
         }
 
-        return attachments;
+        return attachments.size() > 0 ? attachments : null;
     }
 
     public static void publish(String channel, Object event) {

@@ -180,7 +180,8 @@ public class EventController extends AppController {
         ObjectId eventId = getObjectId(params, "event_id");
         String text = params.has("text") ? params.get("text").textValue() : null;
 
-        Post post = new Post(eventId, me.getId(), text, getAttachments(params));
+        Post post = new Post(me.getId(), text, getAttachments(params));
+        post.setEventId(eventId);
         post.save(me);
 
         return Ok(post);

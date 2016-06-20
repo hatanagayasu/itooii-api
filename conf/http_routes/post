@@ -38,3 +38,23 @@ DELETE  /post/@post_id              PostsController/delete
 POST    /comment/@comment_id/like   PostsController/likeComment
 DELETE  /comment/@comment_id/like   PostsController/unlikeComment
 DELETE  /comment/@comment_id        PostsController/deleteComment
+
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=25")
+GET     /request                    PostsController/getRequest
+
+@Privilege(Member)
+@Validation(name="type",rule="(tutor)",require=true)
+@Validation(name="text")
+@attachments
+@Validation(name="metadata",type="object",rule="passUnder")
+POST    /request                    PostsController/addRequest
+
+@Privilege(Member)
+@Validation(name="post_id",type="id")
+@Validation(name="metadata",type="object",rule="passUnder",require=true)
+PUT     /request/@post_id           PostsController/updateRequest
+
+@Privilege(Member)
+@Validation(name="post_id",type="id")
+POST    /request/@post_id/cancel    PostsController/cancelRequest
