@@ -40,3 +40,14 @@ GET     /app/locales                Application/getLocale
 POST    /echo                       TestController/echo
 
 POST    /push_notification          TestController/pushNotification
+
+@Validation(name="amount",type="integer")
+PUT     /paypal                     PaypalController/create
+
+@Validation(name="payid",type="id")
+@Validation(name="success",type="boolean")
+@Validation(name="paymentId",type="string")
+@Validation(name="PayerID",type="string")
+@Validation(name="token",type="string")
+GET     /paypal/@payid/:success     PaypalController/pay
+GET     /paypal/@payid              PaypalController/get

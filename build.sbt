@@ -17,6 +17,7 @@ libraryDependencies ++= Seq(
   "org.jongo" % "jongo" % "1.1",
   "org.mongodb" % "mongo-java-driver" % "2.13.0",
   "org.projectlombok" % "lombok" % "1.16.2",
+  "com.paypal.sdk" % "rest-api-sdk" % "1.5.0",
   "redis.clients"% "jedis" % "2.6.2"
 )
 
