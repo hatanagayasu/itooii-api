@@ -1,0 +1,13 @@
+@Anonymous
+@Validation(name="name",require=true)
+@Validation(name="password",require=true)
+POST    /employee                   EmployeesController/add
+
+GET     /employee                   EmployeesController/me
+
+@Anonymous
+@Validation(name="name",require=true)
+@Validation(name="password",require=true)
+POST    /access_token               EmployeesController/login
+
+DELETE  /access_token               EmployeesController/logout

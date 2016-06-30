@@ -6,6 +6,7 @@ import controllers.exceptions.ObjectForbiddenException;
 
 import models.Privilege;
 import models.User;
+import models.admin.Employee;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -87,6 +88,7 @@ public class HttpController extends AppController {
             File file = new File("conf/http_routes/" + conf);
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
+            boolean admin = conf.matches("^admin/.*");
             boolean accumulation = false;
             String line;
             int no = 0;
@@ -98,6 +100,7 @@ public class HttpController extends AppController {
 
                     validations = mapper.createObjectNode();
                     validations.putObject("access_token")
+                        .put("admin", admin)
                         .put("fullName", "access_token")
                         .put("type", "access_token")
                         .put("require", true)
@@ -153,7 +156,7 @@ public class HttpController extends AppController {
                     }
                 } else {
                     accumulation = false;
-                    parseRoute(line, validations, maxAge);
+                    parseRoute(line, validations, admin, maxAge);
                 }
             }
 
@@ -254,10 +257,12 @@ public class HttpController extends AppController {
             parent.set(segs[segs.length - 1], validation);
     }
 
-    private static void parseRoute(String line, ObjectNode validations, int maxAge)
+    private static void parseRoute(String line, ObjectNode validations, boolean admin, int maxAge)
         throws ClassNotFoundException, NoSuchMethodException {
         // method path controller/action
         String[] parts = line.split("\\s+");
+        if (admin)
+            parts[1] = "/admin" + parts[1];
         String[] segs = parts[1].split("/");
         String[] pair = parts[2].split("/");
 
@@ -268,7 +273,7 @@ public class HttpController extends AppController {
         ObjectNode route = mapper.createObjectNode();
         ObjectNode pathParamsMap = mapper.createObjectNode();
 
-        Class<?> clazz = Class.forName("controllers." + pair[0]);
+        Class<?> clazz = Class.forName("controllers." + (admin ? "admin." : "") + pair[0]);
         Method method = clazz.getMethod(pair[1], new Class[] { JsonNode.class });
         route.putPOJO("method", method);
 
@@ -504,13 +509,19 @@ public class HttpController extends AppController {
                 if (!token.matches(regex))
                     throw new InvalidAccessTokenException();
 
-                User user = User.getByAccessToken(token);
-                if (user == null)
-                    throw new InvalidAccessTokenException();
+                if (validation.get("admin").booleanValue()) {
+                    Employee employee = Employee.getByAccessToken(token);
+                    if (employee == null)
+                        throw new InvalidAccessTokenException();
+                } else {
+                    User user = User.getByAccessToken(token);
+                    if (user == null)
+                        throw new InvalidAccessTokenException();
 
-                int privilege = validation.get("privilege").intValue();
-                if (user.getPrivilege() < privilege)
-                    throw new ForbiddenException();
+                    int privilege = validation.get("privilege").intValue();
+                    if (user.getPrivilege() < privilege)
+                        throw new ForbiddenException();
+                }
             } else if (type.equals("long")) {
                 if (param.isTextual()) {
                     try {
