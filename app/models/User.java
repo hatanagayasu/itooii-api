@@ -662,4 +662,8 @@ public class User extends Other {
         if (activity == null)
             new Activity(id, ActivityType.hi, null, userId).queue();
     }
+    
+    public Date getCreatedTime(){
+        return created;
+    }
 }

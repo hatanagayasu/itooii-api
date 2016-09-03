@@ -2,13 +2,17 @@ package controllers.admin;
 
 import controllers.Result;
 import controllers.constants.Error;
-
+import models.Other;
+import models.User;
 import models.admin.Employee;
+
+import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class EmployeesController extends AppController {
+    
     public static Result add(JsonNode params) {
         String name = params.get("name").textValue();
         String password = params.get("password").textValue();
@@ -33,6 +37,21 @@ public class EmployeesController extends AppController {
         return Ok(employee);
     }
 
+    public static Result get(JsonNode params) {
+        //ObjectId userId = getObjectId(params, "user_id");
+        //User me = params.has("access_token") ? getMe(params) : null;
+
+        //Other other = Other.get(userId, me == null ? null : me);
+        //if (other == null)
+        //    return Error(Error.USER_NOT_FOUND);
+        String accesstoken = params.get("access_token").textValue();
+        Employee employee = Employee.getByAccessToken(accesstoken);
+        if (employee == null )
+            return Error(Error.USER_NOT_FOUND);
+
+        return Ok(employee);
+    }
+    
     public static Result login(JsonNode params) {
         String name = params.get("name").textValue();
         String password = params.get("password").textValue();

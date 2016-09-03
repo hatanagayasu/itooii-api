@@ -1,0 +1,12 @@
+@Anonymous
+@Validation(name="postid",type="id")
+GET     /post/@postid              PostController/get
+
+@Anonymous
+@Validation(name="postid",type="id")
+DELETE  /post/@postid              PostController/delete
+
+
+@Anonymous
+@Validation(name="comment_id",type="id")
+DELETE  /comment/@comment_id              PostController/deleteComment
