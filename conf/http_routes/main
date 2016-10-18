@@ -19,6 +19,9 @@
 @Include(push_notification)
 
 @Include(admin/employee)
+@Include(admin/user)
+@Include(admin/post)
+@Include(admin/tutor)
 
 @Anonymous
 @CacheControl(31536000)

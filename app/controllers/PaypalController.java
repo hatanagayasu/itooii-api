@@ -178,7 +178,7 @@ public class PaypalController extends AppController {
             pay.setState(state);
             pay.setPaypalExecuteResponseData( payment.getLastResponse() );
             
-            message.put("state", state);
+            message.put("status", state);
             
             ObjectId userId = params.has("access_token") ? getMe(params).getId() : null;
             

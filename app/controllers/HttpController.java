@@ -89,6 +89,9 @@ public class HttpController extends AppController {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
             boolean admin = conf.matches("^admin/.*");
+            if(admin){
+                int debug = 1;
+            }
             boolean accumulation = false;
             String line;
             int no = 0;

@@ -1,0 +1,16 @@
+
+@Anonymous
+GET     /user/count                     UserController/getCount
+
+@Anonymous
+@Validation(name="until",type="long")
+@Validation(name="limit",type="integer",rule="min=1,max=50")
+GET     /user/get						UserController/get
+
+@Anonymous
+@Validation(name="userid",type="id")
+POST	/user/suspend					UserController/suspend
+
+@Anonymous
+@Validation(name="userid",type="id")
+POST	/user/unsuspend					UserController/unsuspend
