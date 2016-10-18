@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cd ~/itooii-api
+
+if [ -f RUNNING_PID ]; then
+  sudo kill `cat RUNNING_PID`
+fi

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+target=itooii-api-1.0-SNAPSHOT
+
+if [ -f ${target}/RUNNING_PID ]; then
+    kill `cat ${target}/RUNNING_PID`
+fi
+rm -rf $target
+./activator clean dist
+unzip target/universal/${target}.zip
+cd $target
+ln -s application-example.conf conf/application.conf
+bin/itooii-api -Dconfig.file=conf/application.conf $* &

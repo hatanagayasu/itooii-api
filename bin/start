@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd ~/itooii-api
+
+sudo bin/itooii-api \
+  -Dconfig.file=conf/application.conf \
+  -Dhttp.port=disabled \
+  -Dhttps.port=443 \
+  -Dhttps.keyStore=conf/speakaa.com.jks \
+  -Dhttps.keyStorePassword=P@ssw0rd
