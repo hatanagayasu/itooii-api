@@ -24,7 +24,6 @@
 @Include(admin/tutor)
 
 @Anonymous
-@CacheControl(31536000)
 @Validation(name="id",type="id")
 @Validation(name="size",type="integer",rule="min=1,max=1024")
 GET     /media/@id                  MediaController/download

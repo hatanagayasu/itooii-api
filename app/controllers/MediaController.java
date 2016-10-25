@@ -57,6 +57,18 @@ public class MediaController extends AppController {
         s3client = new AmazonS3Client(credentials);
     }
 
+    private static Result eTag(File file) {
+        String eTag = Model.md5(String.valueOf(file.lastModified()));
+        String ifNoneMatch = request().getHeader("If-None-Match");
+
+        if (ifNoneMatch != null && ifNoneMatch.equals(eTag))
+            return NotModified();
+
+        response().setHeader("ETAG", eTag);
+
+        return Ok(file);
+    }
+
     public static Result avatar(JsonNode params) {
         ObjectId id = getObjectId(params, "id");
 
@@ -68,22 +80,24 @@ public class MediaController extends AppController {
             int size = params.get("size").intValue();
             File thumb = new File("/tmp/" + id + "_avatar_" + size);
 
-            BufferedImage img = ImageIO.read(file);
-            String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
-                "png" : "jpg";
-            BufferedImage resizedImg;
-            int width = img.getWidth();
-            int height = img.getHeight();
+            if (!thumb.exists()) {
+                BufferedImage img = ImageIO.read(file);
+                String type = img.getTransparency() == BufferedImage.TRANSLUCENT ?
+                    "png" : "jpg";
+                BufferedImage resizedImg;
+                int width = img.getWidth();
+                int height = img.getHeight();
 
-            if (width > height)
-                resizedImg = Scalr.crop(img, (width - height) / 2, 0, height, height);
-            else
-                resizedImg = Scalr.crop(img, 0, (height - width) / 2, width, width);
+                if (width > height)
+                    resizedImg = Scalr.crop(img, (width - height) / 2, 0, height, height);
+                else
+                    resizedImg = Scalr.crop(img, 0, (height - width) / 2, width, width);
 
-            resizedImg = Scalr.resize(resizedImg, size);
-            ImageIO.write(resizedImg, type, thumb);
+                resizedImg = Scalr.resize(resizedImg, size);
+                ImageIO.write(resizedImg, type, thumb);
+            }
 
-            return Ok(thumb);
+            return eTag(thumb);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -110,12 +124,12 @@ public class MediaController extends AppController {
                     ImageIO.write(resizedImg, type, thumb);
                 }
 
-                return Ok(thumb);
+                return eTag(thumb);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            return Ok(file);
+            return eTag(file);
         }
     }
 

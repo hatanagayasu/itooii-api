@@ -68,6 +68,10 @@ public class AppController extends Controller {
         return Error(Error.OBJECT_FORBIDDEN);
     }
 
+    public static Result NotModified() {
+        return new Result(304);
+    }
+
     public static Result NotFound() {
         return new Result(404);
     }
