@@ -18,4 +18,3 @@ tags
 .DS_Store
 conf/application.conf
 dump.rdb
-/bin/
