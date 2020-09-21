@@ -1,0 +1,5 @@
+cat 1ccd34d8b00f7590.crt gd_bundle-g2-g1.crt > tmp.crt
+ 
+openssl pkcs12 -export -name speakaa.com -in tmp.crt -inkey $path_to/speakaa.com.key -out speakaa.com.p12
+keytool -delete -alias speakaa.com -keystore $path_to/speakaa.com.jks
+keytool -importkeystore -destkeystore $path_to/speakaa.com.jks -srckeystore speakaa.com.p12 -srcstoretype pkcs12 -alias speakaa.com
